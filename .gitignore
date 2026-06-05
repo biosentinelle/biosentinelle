@@ -5,6 +5,7 @@ example_of_results/
 results_example/
 results/
 work/
+apptainer/
 singularity/
 .nextflow*
 .mailmap

@@ -4,8 +4,7 @@ process Fastq_dump { // section 24.1 of the labbook 20200707
     cache 'true'
 
     input:
-    val file_name
-    path sra_fastq
+    path fastq_path
 
     output:
     path "*.fastq", emit: fastq_dump_ch
@@ -14,6 +13,6 @@ process Fastq_dump { // section 24.1 of the labbook 20200707
     script:
     """
     echo -e "\\n\\n<br /><br />\\n\\n### SRA decompression\\n\\n" >> fastq_dump_report.txt
-    fastq-dump --split-3 ${sra_fastq} |& tee -a fastq_dump_report.txt
+    fastq-dump --split-3 ${fastq_path} |& tee -a fastq_dump_report.txt
     """
 }

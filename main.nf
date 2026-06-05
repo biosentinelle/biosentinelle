@@ -27,6 +27,7 @@ include {CheckVariables} from './conf/CheckVariables.nf'
 include {reportEmptyProcess; copyLogFile} from './modules/Functions.nf'
 include {Unzip} from './modules/Unzip.nf'
 include {WorkflowParam} from './modules/WorkflowParam.nf'
+include {Fastq_dump} from './modules/Fastq_dump.nf'
 include {Bowtie2} from './modules/Bowtie2.nf'
 include {Print_warnings} from './modules/Print_warnings.nf'
 include {Print_report} from './modules/Print_report.nf'
@@ -115,6 +116,12 @@ workflow {
             fastq_path
         ) 
         fastq = Unzip.out.unzip_ch.flatten()
+    }else if(fastq_path =~ /SRR.*/){
+        Fastq_dump(
+            fastq_path
+        )
+        fastq = Fastq_dump.out.fastq_dump_ch.flatten()
+        copyLogFile('fastq_dump_report.log', Fastq_dump.out.fastq_dump_log_ch, out_path)
     }else{
         fastq = Channel.fromPath("${fastq_path}", checkIfExists: false) // in channel because many files 
     }
@@ -129,20 +136,11 @@ workflow {
         ref = Channel.fromPath("${ref_path}", checkIfExists: false) // in channel because many files 
     }
 
-    if(fastq =~ /SRR.*/){
-        Fastq_dump(
-            fastq
-        )
-        sra_fastq = Fastq_dump.out.fastq_dump_ch.flatten()
-        copyLogFile('fastq_dump_report.log', Fastq_dump.out.fastq_dump_log_ch, out_path)
-    }else{
-        sra_fastq = fastq // in channel because many files 
-    }
 
     Bowtie2(
         fastq_name,
         ref_name,
-        sra_fastq,
+        fastq,
         ref
     )
     copyLogFile('bowtie2_report.log', Bowtie2.out.bowtie2_log_ch, out_path)
