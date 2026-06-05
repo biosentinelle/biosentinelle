@@ -1,0 +1,166 @@
+---
+title: 'Biosentinelle Report'
+date: ''
+output:
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+params:
+    warning_collect: ""
+---
+
+\n\n<br><br>\n\n
+
+
+
+
+[comment 1]: <> (The following script is used to be able to zoom on images)
+
+<script>
+  function toggleFullscreen(img) {
+    if (img.classList.contains('fullscreen')) {
+      img.classList.remove('fullscreen');
+    } else {
+      document.querySelectorAll('.fullscreen').forEach(el => el.classList.remove('fullscreen'));
+      img.classList.add('fullscreen');
+    }
+  }
+</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Images cliquables</title>
+    <style>
+        .image-container {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+        }
+        .image-container img {
+            width: 33%;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            object-fit: contain;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            transform: scale(1);
+        }
+    </style>
+</head>
+
+[comment 2]: <> (End of script to zoom on images)
+
+[comment 3]: <> (The following script is meant to display the tsv files in a readable way)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+read_tsv_with_dummy <- function(file_path, nb){
+    if( ! file.exists(file_path)){
+        stop(paste0("\n\n================\n\nINTERNAL ERROR IN Print_report PROCESS.\nfile_path DOES NOT EXISTS: ", file_path, "\n\nPLEASE, REPORT AN ISSUE HERE https://gitlab.pasteur.fr/gmillot/repertoire_profiler/-/issues OR AT gael.millot<AT>pasteur.fr.\n\n========\n\n"), call. = FALSE)
+    }else if(file.info(file_path)$size == 0){
+        stop(paste0("\n\n================\n\nINTERNAL ERROR IN Print_report PROCESS.\nfile_path FILE IS EMPTY BUT SHOULD NOT BE READ HERE. PATH IS: ", file_path, "\n\nPLEASE, REPORT AN ISSUE HERE https://gitlab.pasteur.fr/gmillot/repertoire_profiler/-/issues OR AT gael.millot<AT>pasteur.fr.\n\n========\n\n"), call. = FALSE)
+    }else{
+        df <- read.table(file_path, header = TRUE, sep = "\t", fill = TRUE, quote = "", comment.char = "", stringsAsFactors = FALSE)
+        truncated <- FALSE
+        # If the file is empty but has column names, add an empty line to make the column names readable
+        if (nrow(df) == 0){
+            dummy_row <- as.data.frame(matrix("", nrow = 1, ncol = ncol(df)))
+            colnames(dummy_row) <- colnames(df)
+            df <- df[ -(1:nrow(df)), ]
+        }else if(nrow(df) > nb){
+            df <- df[1:nb, ]
+            truncated <- TRUE
+        }
+        return(list(df = df, truncated = truncated, nb = nb))
+    }
+}
+```
+
+<style>
+details.inline {display:inline-block;}
+</style>
+
+[comment 4]: <> (End tsv display)
+
+[comment 5]: <> (Openable .config file)
+
+```{r echo=FALSE, results='hide'}
+txt <- readLines("./config_file.txt", warn = FALSE)
+# basic HTML-escaping so config symbols display correctly
+escape <- function(x) {
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;",  x, fixed = TRUE)
+  x <- gsub(">", "&gt;",  x, fixed = TRUE)
+  x
+}
+out <- c(
+  "<!doctype html>",
+  "<meta charset='utf-8'>",
+  "<title>nextflow.config</title>",
+  "<pre style='white-space:pre; font-family:monospace;'>",
+  escape(txt),
+  "</pre>"
+)
+writeLines(out, "nextflow.config.html")
+``` 
+
+[comment 6]: <> (end Openable .config file)
+
+[comment 7]: <> (assignation of params, for later reassignation)
+
+```{r, echo=FALSE, results='asis'}
+    warning_collect <- params$warning_collect
+```
+
+[comment 8]: <> (end assignation of params, for later reassignation)
+
+
+Description of the folders and files can be found [here](https://github.com/gael-millot/repertoire_profiler?tab=readme-ov-file#output)
+<br>
+The <i>[nextflow.config](./reports/nextflow.config.html)</i> file mentioned here is the one gathering all the parameters set for the present analysis. A copy is saved in the [reports](./reports) folder.
+<br><br>
+
+### Initial dataset
+
+Number of initial input sequences: ```r nb_input```
+
+<br><br>
+
+###  Backup
+
+See the [reports](./reports) folder for all the details of the analysis, including:<br><ul><li>**nextflow.config** Parameter settings.<br></li><li>**Run_info.txt** Variables.<br></li><li>**trace.txt** and **timeline.html** Date of execution, CPU% and Memory requirement for each step.<br></ul>
+
+```{r include = FALSE}
+#remove work directory from current directory
+wd <- getwd()
+parts <- unlist(strsplit(wd, "/"))
+path <- paste(parts[1:(length(parts) - 3)], collapse = "/")
+path <- paste0(path, "/")
+```
+Warning: the full .nextflow.log is in: ```r path```. Indeed, the one in the [reports](./reports) folder is not complete (miss the end).
+
+
+<br><br>
+
+<style>
+  #TOC { max-width: 200px !important;}
+  /* .tocify-item { font-size: 100% !important; } */
+</style>
+
+<style> 
+  body .container, body .container-fluid { max-width: 90% !important; width: 100% !important; margin: 0 auto;  } 
+</style>
+
+<style>
+  .toc-content.col-xs-12.col-sm-8.col-md-9 { margin-left: 10px !important; padding-left: 0 !important; } 
+</style>
+
+<style> /* Force a fixated width, float left and add space on the right */ .col-xs-12.col-sm-4.col-md-3 { width: 250px !important; float: left; margin-right: 20px; /* reduce interior margin */ padding: 5px; } </style>
