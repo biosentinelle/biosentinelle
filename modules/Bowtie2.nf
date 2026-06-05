@@ -1,19 +1,17 @@
 // Save the config file and the log file for a specific run
 process Bowtie2 { // section 24.1 of the labbook 20200707
     label 'bowtie2' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out_path}/reports", mode: 'copy', pattern: "bowtie2_report.txt", overwrite: false //
-    // publishDir "${out_path}/files", mode: 'copy', pattern: "${file_name}_bowtie2.bam", overwrite: false // 
     cache 'true'
 
     input:
     val file_name
     val ref_name
-    file fastq
-    file ref
+    path fastq
+    path ref
 
     output:
-    file "${file_name}_bowtie2.bam" into bowtie2_ch1, bowtie2_ch2
-    file "bowtie2_report.txt" into bowtie2_log_ch
+    path "${file_name}_bowtie2.bam", emit: bowtie2_ch
+    path "bowtie2_report.txt", emit: bowtie2_log_ch
 
     script:
     """

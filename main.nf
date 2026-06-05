@@ -129,19 +129,29 @@ workflow {
         ref = Channel.fromPath("${ref_path}", checkIfExists: false) // in channel because many files 
     }
 
+    if(fastq =~ /SRR.*/){
+        Fastq_dump(
+            fastq
+        )
+        sra_fastq = Fastq_dump.out.fastq_dump_ch.flatten()
+        copyLogFile('fastq_dump_report.log', Fastq_dump.out.fastq_dump_log_ch, out_path)
+    }else{
+        sra_fastq = fastq // in channel because many files 
+    }
 
     Bowtie2(
         fastq_name,
         ref_name,
-        fastq,
+        sra_fastq,
         ref
     )
+    copyLogFile('bowtie2_report.log', Bowtie2.out.bowtie2_log_ch, out_path)
 
     Print_warnings(
         warning_ch.ifEmpty{''}.collectFile(name: "warnings_collect.txt")
     )
 
-
+/*
     Print_report(
         config_file, // from parameter
         template_rmd, // from parameter
@@ -153,6 +163,7 @@ workflow {
         config_file, 
         log_file
     )
+*/
 
 }
 

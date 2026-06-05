@@ -17,6 +17,7 @@ tested_files_modules = [
     "Backup.nf", 
     "Bowtie2.nf",
     "CopyLogFile.nf", 
+    "Fastq_dump.nf", 
     "Functions.nf",  
     "Print_report.nf", 
     "Print_warnings.nf", 
