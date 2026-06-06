@@ -4,7 +4,7 @@ process Fastq_dump { // section 24.1 of the labbook 20200707
     cache 'true'
 
     input:
-    path fastq_path
+    val fastq_path
 
     output:
     path "*.fastq", emit: fastq_dump_ch

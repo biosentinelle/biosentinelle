@@ -17,11 +17,14 @@ tested_files_modules = [
     "Backup.nf", 
     "Bowtie2.nf",
     "CopyLogFile.nf", 
+    "CountSnps.nf",
     "Fastq_dump.nf", 
     "Functions.nf",  
     "Print_report.nf", 
     "Print_warnings.nf", 
+    "Split_fasta.nf", 
     "Unzip.nf", 
+    "VariantCall.nf",
     "WorkflowParam.nf"
     ]
 for(i1 in tested_files_modules){
@@ -35,13 +38,24 @@ for(i1 in tested_files_modules){
 // Data
 if( ! (fastq_path in String || fastq_path in GString) ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID fastq_path PARAMETER IN nextflow.config FILE:\n${fastq_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}else if( ! (file(fastq_path).exists()) ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID fastq_path PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${fastq_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+}else if( ! (fastq_path =~ /SRR.*/ || fastq_path =~ /.*\.zip$/) ){
+    // Skip file existence check for SRA accessions and remote URLs
+    // SRA accessions will be downloaded by fastq-dump, zip files will be processed by Unzip
+    if( ! (file(fastq_path).exists()) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID fastq_path PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${fastq_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+    }
 }
 if( ! (ref_path in String || ref_path in GString) ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ref_path PARAMETER IN nextflow.config FILE:\n${ref_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}else if( ! (file(ref_path).exists()) ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ref_path PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${ref_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+}else {
+    // ref_path can contain multiple space-separated paths
+    ref_paths_list = ref_path.trim().split('\\s+')
+    print("\nValidating ${ref_paths_list.size()} reference(s)...")
+    for(ref in ref_paths_list){
+        if( ! (file(ref).exists()) ){
+            error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ref_path PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${ref}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+        }
+    }
 }
 //// end check of config file parameters
 }
