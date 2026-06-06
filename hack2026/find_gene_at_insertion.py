@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from pathlib import Path
 
-JSON_PATH = Path(__file__).parent / "insertion_site.json"
+JSON_PATH = Path(__file__).parent / "output" / "insertion_site.json"
 CSV_PATH  = Path(__file__).parent / "ncbi_dataset_R64-1-1.csv"
 
 # --- Load insertion site ---

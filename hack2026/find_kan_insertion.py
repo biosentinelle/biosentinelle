@@ -86,7 +86,7 @@ for b, cnt in bin_counts.most_common(10):
     print(f"  {b * WINDOW + 1:>12}  {(b + 1) * WINDOW:>10}  {cnt:>6}")
 
 # --- Save result for use by find_gene_at_insertion.py ---
-out_path = Path(__file__).parent / "insertion_site.json"
+out_path = Path(__file__).parent / "output" / "insertion_site.json"
 with open(out_path, "w") as f:
     json.dump({"chromosome": top_chrom, "estimated_position": estimated_pos}, f, indent=2)
 print(f"\nResult saved to {out_path}")

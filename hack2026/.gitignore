@@ -1,0 +1,21 @@
+# Large sequencing data files
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.sam
+*.bam
+*.bai
+
+# Alignment workdirs
+alignment/
+alignment2/
+
+# Annotation data (large, re-downloadable)
+ncbi_dataset_R64-1-1.csv
+
+# Script outputs
+output/
+
+# Editor lock files
+.~lock.*
