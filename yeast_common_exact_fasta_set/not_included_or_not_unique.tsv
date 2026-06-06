@@ -1,9 +1,0 @@
-name_or_family	reason_not_given_as_single_FASTA	recommended_source
-TDH3p/GPDp, TEF1p, ADH1p, PGK1p, CYC1p, CUP1p, MET25p/MET3p, PHO5p, HXT7p	promoter boundaries are not universal; exact upstream coordinate or plasmid version needed	SGD for genomic coordinates or Addgene YTK kit GenBank files
-CYC1t, ADH1t, TEF1t, PGK1t, TDH3t, ENO2t	terminator boundaries vary by vector/kit; exact sequence context needed	SGD or Addgene YTK kit GenBank files
-URA3, HIS3, LEU2, TRP1, ADE2, CAN1, SpHIS5, CaURA3, KlURA3, KlLEU2	native vs heterologous marker and flanking sequences differ	SGD/NCBI for native loci; Addgene/pRS/YTK plasmids for vector versions
-natMX, hphMX, bleMX	multiple MX4/MX6 and plasmid versions exist; not included in this pFA6a-kanMX-focused set	Addgene pAG25/pAG32/pUG66 or corresponding GenBank records
-tetO/tetO7-CYC1, tTA, rtTA	multiple versions and expression cassettes exist	exact pCM/tet plasmid accession or plasmid file required
-CRISPR guides/donor templates	guide spacer and donor sequence are experiment-specific	exact guide/donor design or plasmid accession required
-YKO UPTAG/DOWNTAG barcodes	strain-specific barcode sequences; not a single tool sequence	YKO/Horizon or deletion collection barcode files
-MoClo-YTK 96-part kit	complete exact set is best downloaded directly as GenBank ZIP from Addgene; not repackaged here	Addgene MoClo-YTK kit #1000000061
