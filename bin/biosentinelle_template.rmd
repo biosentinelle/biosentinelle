@@ -6,6 +6,7 @@ output:
     toc: TRUE
     toc_float: TRUE
 params:
+    nb_input: -1
     warning_collect: ""
 ---
 
@@ -117,22 +118,45 @@ writeLines(out, "nextflow.config.html")
 [comment 7]: <> (assignation of params, for later reassignation)
 
 ```{r, echo=FALSE, results='asis'}
+    nb_input <- params$nb_input
     warning_collect <- params$warning_collect
 ```
 
 [comment 8]: <> (end assignation of params, for later reassignation)
 
 
-Description of the folders and files can be found [here](https://github.com/gael-millot/repertoire_profiler?tab=readme-ov-file#output)
+Description of the folders and files can be found [here](https://github.com/biosentinelle/biosentinelle/tree/main#output)
 <br>
 The <i>[nextflow.config](./reports/nextflow.config.html)</i> file mentioned here is the one gathering all the parameters set for the present analysis. A copy is saved in the [reports](./reports) folder.
 <br><br>
 
 ### Initial dataset
 
-Number of initial input sequences: ```r nb_input```
+Number of reference genomes : ```r nb_input```
 
 <br><br>
+
+### Results
+
+```{r, echo=FALSE, results='asis'}
+        cat(paste0('
+&nbsp; <details class="inline"><summary style="color: #1a73e8; font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;">view</summary>
+<span style="color:green">snp_counts.tsv file in the [tsv](./tsv) folder</span>
+        '))
+        tempo_read <- read_tsv_with_dummy("tsv/snp_counts.tsv", 3)
+        df <- tempo_read$df
+        truncated_log <- tempo_read$truncated
+        if(is.data.frame(df) && truncated_log){
+            cat(paste0('<span style="color:green;font-style:italic;">(table truncated to ', tempo_read$nb, ' rows in the display):</span><br><br>'))
+        }else{
+            cat('<span style="color:green;font-style:italic;">:</span><br><br>')
+        }
+        cat(knitr::kable(df, format = "html", row.names = FALSE))
+        cat('
+<br>
+</details>
+        ')
+```
 
 ###  Backup
 

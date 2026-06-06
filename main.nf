@@ -32,6 +32,7 @@ include {Fastq_dump} from './modules/Fastq_dump.nf'
 include {Bowtie2} from './modules/Bowtie2.nf'
 include {VariantCall} from './modules/VariantCall.nf'
 include {CountSnps} from './modules/CountSnps.nf'
+include {Print_snp_count} from './modules/Print_snp_count.nf'
 include {Print_warnings} from './modules/Print_warnings.nf'
 include {Print_report} from './modules/Print_report.nf'
 include {Q20} from './modules/Q20.nf'
@@ -114,6 +115,13 @@ workflow {
     //////// Main
 
     CheckVariables()
+
+    WorkflowParam(
+        modules
+    )
+
+    file("${out_path}/tsv").mkdirs()
+
 
     if(fastq_path =~ /.*\.zip$/){
         Unzip( // warning: it is a process defined above
@@ -218,11 +226,16 @@ workflow {
     CountSnps(
         VariantCall.out.vcf_ch
     )
-    
     // Collect all SNP counts and find best reference
-    snp_counts = CountSnps.out.snp_count_ch.collect()
-
-
+    Print_snp_count(
+        CountSnps.out.snp_count_ch
+        .toSortedList { a, b -> a[1] <=> b[1] }   // ascending
+        .map { list ->
+            def lines = ["Name\tNb_of_variants"] + list.collect { "${it[0]}\t${it[1]}" }
+            lines.join("\n") + "\n"
+        }
+        .collectFile(name: 'snp_counts.tsv')
+    )
 
     Print_warnings(
         warning_ch.ifEmpty{''}.collectFile(name: "warnings_collect.txt")
@@ -232,6 +245,8 @@ workflow {
     Print_report(
         config_file, // from parameter
         template_rmd, // from parameter
+        nb_input, // mandatory
+        Print_snp_count.out.final_tsv_ch, // just so that print_report wait for all tsv
         Print_warnings.out.final_warning_ch // just so that print_report wait for all warnings // warning_ch.collect().map{it.join('\n\n')}.ifEmpty{'EMPTY'} // concatenate all warnings into a single string // finally, the gathered string is very loong. I prefer to use a file added in /reports/
     )
 

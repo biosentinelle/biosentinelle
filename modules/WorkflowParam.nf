@@ -24,7 +24,7 @@ process WorkflowParam { // create a file with the workflow parameters in out_pat
     echo "result path: ${out_path}" >> Run_info.txt
     echo "nextflow version: ${nextflow.version}" >> Run_info.txt
     echo -e "\\n\\nIMPLICIT VARIABLES:\\n\\nlaunchDir (directory where the workflow is run): ${launchDir}\\nprojectDir (directory where the main.nf script is located): ${projectDir}\\nworkDir (directory where tasks temporary files are created): ${workDir}" >> Run_info.txt
-    echo -e "\\n\\nUSER VARIABLES:\\n\\nout_path: ${out_path}\\nsample_path: ${sample_path}" >> Run_info.txt
+    echo -e "\\n\\nUSER VARIABLES:\\n\\nout_path: ${out_path}" >> Run_info.txt
     """
 }
 //${projectDir} nextflow variable

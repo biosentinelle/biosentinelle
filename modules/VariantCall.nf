@@ -1,6 +1,7 @@
 // Variant calling using bcftools mpileup and bcftools call
 process VariantCall {
     label 'bcftools'
+    publishDir path: "${out_path}/tsv", mode: 'copy', pattern: "{*.tsv}", overwrite: false
     cache 'true'
 
     input:
@@ -8,6 +9,7 @@ process VariantCall {
 
     output:
     tuple val(ref_name), path("${ref_name}_variants.vcf.gz"), emit: vcf_ch
+    path "${ref_name}_variants.tsv", emit: vcf_tsv_ch
     path "variant_call_report.txt", emit: variant_call_log_ch
 
     script:
@@ -24,6 +26,10 @@ process VariantCall {
     
     # Index the VCF
     bcftools index ${ref_name}_variants.vcf.gz 2>&1 | tee -a variant_call_report.txt
+    
+    # Export VCF to TSV format with base calling information
+    echo -e "\\n### Exporting VCF to TSV format\\n" >> variant_call_report.txt
+    bcftools query -H -f '%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t[%GT\t%DP\t%AD]\n' ${ref_name}_variants.vcf.gz > ${ref_name}_variants.tsv 2>&1 | tee -a variant_call_report.txt
     
     echo -e "\\nVariant calling complete for ${ref_name}" >> variant_call_report.txt
     """

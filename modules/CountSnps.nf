@@ -16,7 +16,6 @@ process CountSnps {
     
     # Count SNPs from VCF
     SNP_COUNT=\$(bcftools view -H -v snps ${vcf_file} 2>/dev/null | wc -l)
-    
     echo "SNPs vs ${ref_name}: \$SNP_COUNT" | tee -a snp_count_report.txt
     """
 }
