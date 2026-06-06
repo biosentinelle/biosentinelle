@@ -1,33 +1,39 @@
+import json
 import pandas as pd
 from pathlib import Path
 
-# --- Insertion site from find_kan_insertion.py output ---
-# Paste the chromosome and estimated insertion position here
-INSERTION_CHROM = "ref|NC_001136|"   # top chromosome from the SAM analysis
-INSERTION_POS   = 1344617            # estimated insertion position (1-based, median of densest bin)
+JSON_PATH = Path(__file__).parent / "insertion_site.json"
+CSV_PATH  = Path(__file__).parent / "ncbi_dataset_R64-1-1.csv"
 
-CSV_PATH = Path(__file__).parent / "ncbi_dataset_R64-1-1.csv"
+# --- Load insertion site ---
+if JSON_PATH.exists():
+    with open(JSON_PATH) as f:
+        site = json.load(f)
+    INSERTION_CHROM = site["chromosome"]
+    INSERTION_POS   = site["estimated_position"]
+    print(f"Loaded from {JSON_PATH.name}: {INSERTION_CHROM}  pos={INSERTION_POS}")
+else:
+    INSERTION_CHROM = "ref|NC_001136|"
+    INSERTION_POS   = 1342334
+    print("No insertion_site.json found — using hardcoded fallback values.")
 
 # --- Load annotation ---
 df = pd.read_csv(CSV_PATH, sep="\t")
 
 # The CSV accession looks like "NC_001136.9"; the SAM uses "ref|NC_001136|".
-# Strip the version suffix and "ref|...|" wrapper so both sides match.
-chrom_id = INSERTION_CHROM.replace("ref|", "").replace("|", "")  # → NC_001136
-df["chrom_id"] = df["Accession"].str.replace(r"\.\d+$", "", regex=True)  # NC_001136.9 → NC_001136
+chrom_id = INSERTION_CHROM.replace("ref|", "").replace("|", "")
+df["chrom_id"] = df["Accession"].str.replace(r"\.\d+$", "", regex=True)
 
-# --- Filter to the right chromosome ---
 chrom_df = df[df["chrom_id"] == chrom_id].copy()
 print(f"Genes on {chrom_id}: {len(chrom_df)}")
 
-# --- Look for overlap: insertion point falls inside a gene's Begin-End range ---
+# --- Look for overlap ---
 overlapping = chrom_df[(chrom_df["Begin"] <= INSERTION_POS) & (chrom_df["End"] >= INSERTION_POS)]
 
 if not overlapping.empty:
     print(f"\nInsertion at {INSERTION_POS} falls INSIDE {len(overlapping)} gene(s):")
     print(overlapping[["Symbol", "Name", "Begin", "End", "Orientation", "Locus tag", "Gene Type"]].to_string(index=False))
 else:
-    # --- Fallback: find the nearest gene upstream and downstream ---
     print(f"\nNo gene directly overlaps position {INSERTION_POS}. Finding nearest neighbors...")
 
     upstream   = chrom_df[chrom_df["End"]   < INSERTION_POS].sort_values("End",   ascending=False).head(1)

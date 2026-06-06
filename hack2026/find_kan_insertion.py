@@ -1,3 +1,4 @@
+import json
 import pysam
 from collections import Counter
 from pathlib import Path
@@ -62,25 +63,30 @@ for chrom, count in chrom_counts.most_common(5):
 top_chrom = chrom_counts.most_common(1)[0][0]
 all_positions = sorted(pos for chrom, pos in junction_positions if chrom == top_chrom)
 
-# Bin positions into 1000 bp windows and find the densest one.
-# The insertion site will be a tight spike; noise reads scatter evenly elsewhere.
-WINDOW = 1000
+# Bin positions into small windows and find the densest one.
+WINDOW = 200
 bin_counts = Counter(pos // WINDOW for pos in all_positions)
 best_bin = bin_counts.most_common(1)[0][0]
 best_bin_count = bin_counts.most_common(1)[0][1]
 
-# Collect only the reads inside that dense window
 cluster_positions = [p for p in all_positions if p // WINDOW == best_bin]
 
 # pysam uses 0-based positions; add 1 to convert to standard 1-based genomic coordinates
+estimated_pos = cluster_positions[len(cluster_positions) // 2] + 1
+
 print(f"\n=== Result ===")
 print(f"Chromosome : {top_chrom}")
-print(f"Densest 1 kb window: {best_bin * WINDOW + 1} – {(best_bin + 1) * WINDOW} bp  ({best_bin_count} reads)")
+print(f"Densest {WINDOW} bp window: {best_bin * WINDOW + 1} – {(best_bin + 1) * WINDOW} bp  ({best_bin_count} reads)")
 print(f"Cluster range (1-based): {cluster_positions[0] + 1} – {cluster_positions[-1] + 1}")
-print(f"Estimated insertion position (1-based): {cluster_positions[len(cluster_positions) // 2] + 1}")
+print(f"Estimated insertion position (1-based): {estimated_pos}")
 
-# Show the top 10 bins so you can see if there's a clear spike vs. background noise
-print(f"\nTop 10 densest 1 kb windows on {top_chrom}:")
+print(f"\nTop 10 densest {WINDOW} bp windows on {top_chrom}:")
 print(f"  {'Window start':>12}  {'Window end':>10}  {'Reads':>6}")
 for b, cnt in bin_counts.most_common(10):
     print(f"  {b * WINDOW + 1:>12}  {(b + 1) * WINDOW:>10}  {cnt:>6}")
+
+# --- Save result for use by find_gene_at_insertion.py ---
+out_path = Path(__file__).parent / "insertion_site.json"
+with open(out_path, "w") as f:
+    json.dump({"chromosome": top_chrom, "estimated_position": estimated_pos}, f, indent=2)
+print(f"\nResult saved to {out_path}")
