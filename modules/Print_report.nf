@@ -1,15 +1,6 @@
 // The render function only creates the html file with the rmardown
 // Inputs:
 //      template_rmd: rmardown template file used to create the html (file path is defined in config.nextflow)
-//      nb_input: number of fasta sequences in initial input
-//      nb_igblast: number of sequences that igblast could analyse
-//      nb_unigblast: number of sequences that igblast could not alayse
-//      donuts_png: provide links to the donut images needed in the rmd inside the work folder
-//      repertoire_png: provide links to the repertoire images needed in the rmd inside the work folder
-//      repertoire_constant_ch: names of the constant gene repertoire files to be displayed
-//      repertoire_vj_ch: names of the variable gene repertoire files to be displayed
-//      itol_subscription: nextflow.config parameter to know if user has paid the subscription to itol automated visualization of trees, process ITOL is only executed if TRUE
-//      heavy_chain: to know if the analyzed data is VL or VH, because "Amino acid sequences phylogeny" section in html report is only displayed for VH
 // Outputs:
 //      "report.html": finalized html report for a specific run
 //      "print_report.log": will contain any error or warning messages produced by rmardown::render
@@ -38,26 +29,72 @@ process Print_report{
     # remove symlink and import folder
     cp ${config_file} config_file.txt
     cp ${template_rmd} report_file.rmd
-    if [[ -d "${out_path}/phylo" ]]; then
-        cp -r "${out_path}/phylo" .
-    else
-        mkdir ./phylo
-    fi
     if [[ -d "${out_path}/tsv" ]]; then
         cp -r "${out_path}/tsv" .
     else
         mkdir ./tsv
-    fi
-    if [[ -d "${out_path}/pdf" ]]; then
-        cp -r "${out_path}/pdf" .
-    else
-        mkdir ./pdf
-    fi
     cp -r "${out_path}/reports" .
     # end remove symlink and import folder
 
     Rscript -e '
+        # empty "EMPTY" channel
+        nb_productive <- "${nb_productive}"
+        nb_unproductive <- "${nb_unproductive}"
+        nb_wanted <-  "${nb_wanted}"
+        nb_unwanted <-  "${nb_unwanted}"
+        nb_dist_ignored <- "${nb_dist_ignored}"
+        nb_clone_tot <- "${nb_clone_tot}"
+        nb_unclone_tot <- "${nb_unclone_tot}"
+        nb_clone_unassignment <- "${nb_clone_unassignment}"
+        nb_clone_ungermline <- "${nb_clone_ungermline}"
         warning_collect <- readLines("${final_warning_ch}", warn = FALSE) # one string per line
+        if(nb_productive == "EMPTY"){
+            nb_productive <- -1
+        }else{
+            nb_productive <- ${nb_productive}
+        }
+        if(nb_unproductive == "EMPTY"){
+            nb_unproductive <- -1
+        }else{
+            nb_unproductive <- ${nb_unproductive}
+        }
+        if(nb_wanted == "EMPTY"){
+            nb_wanted <- -1
+        }else{
+            nb_wanted <- ${nb_wanted}
+        }
+        if(nb_unwanted == "EMPTY"){
+            nb_unwanted <- -1
+        }else{
+            nb_unwanted <- ${nb_unwanted}
+        }
+        if(nb_dist_ignored == "EMPTY"){
+            nb_dist_ignored <- -1
+        }else{
+            nb_dist_ignored <- ${nb_dist_ignored}
+        }
+        if(nb_clone_tot == "EMPTY"){
+            nb_clone_tot <- -1
+        }else{
+            nb_clone_tot <- ${nb_clone_tot}
+        }
+        if(nb_unclone_tot == "EMPTY"){
+            nb_unclone_tot <- -1
+        }else{
+            nb_unclone_tot <- ${nb_unclone_tot}
+        }
+        if(nb_clone_unassignment == "EMPTY"){
+            nb_clone_unassignment <- -1
+        }else{
+            nb_clone_unassignment <- ${nb_clone_unassignment}
+        }
+        if(nb_clone_ungermline == "EMPTY"){
+            nb_clone_ungermline <- -1
+        }else{
+            nb_clone_ungermline <- ${nb_clone_ungermline}
+        }
+        # empty "EMPTY" channel
+
         rmarkdown::render(
         input = "report_file.rmd",
         output_file = "report.html",
