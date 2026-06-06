@@ -22,9 +22,11 @@ process Bowtie2 { // section 24.1 of the labbook 20200707
     # -t time displayed
     cat tempo.txt >> bowtie2_report.txt
     sed -i -e ':a;N;\$!ba;s/\\n/\\n<br \\/>/g' tempo.txt
-    echo -e "\\n\\n<br /><br />\\n\\n####  samtools conversion\\n\\n" >> bowtie2_report.txt
+    echo -e "\\n\\n<br /><br />\\n\\n####  samtools conversion bam -> sam\\n\\n" >> bowtie2_report.txt
     samtools view -bh -o tempo.bam ${fastq_name}_vs_${ref_name}.sam |& tee -a bowtie2_report.txt
+    echo -e "\\n\\n<br /><br />\\n\\n####  samtools sort\\n\\n" >> bowtie2_report.txt
     samtools sort -o ${fastq_name}_vs_${ref_name}.bam tempo.bam |& tee -a bowtie2_report.txt
+    echo -e "\\n\\n<br /><br />\\n\\n####  samtools index\\n\\n" >> bowtie2_report.txt
     samtools index ${fastq_name}_vs_${ref_name}.bam |& tee -a bowtie2_report.txt
     """
 }

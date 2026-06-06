@@ -29,6 +29,13 @@ process Print_report{
     """
     #!/bin/bash -ue
     set -o pipefail
+    cp ${config_file} config_file.txt
+    cp ${template_rmd} report_file.rmd
+    if [[ -d "${out_path}/tsv" ]]; then
+        cp -r "${out_path}/tsv" .
+    else
+        mkdir ./tsv
+    fi
     Rscript -e '
         warning_collect <- readLines("${final_warning_ch}", warn = FALSE) # one string per line
         rmarkdown::render(
@@ -46,6 +53,7 @@ process Print_report{
             quiet = TRUE,
             clean = TRUE
         )
+
     ' |& tee -a print_report.log
     """
 }
