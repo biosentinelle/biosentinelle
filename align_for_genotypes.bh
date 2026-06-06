@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#zgrep -w -E "ADE1|ADE2|CAN1|HIS3|LEU2|LYS2|TRP1|TRP5|URA3|URA4"   /home/axel/Desktop/markers/SGDref.asm01.HP0.nuclear_genome.tidy.gff3 |     grep -v "^#" |     awk '$3=="gene"' |     awk '{print $1,$4,$5,$7,$9}' |     grep -i -E "gene=ADE1|gene=ADE2|gene=CAN1|gene=HIS3|gene=LEU2|gene=LYS2|gene=TRP1|gene=TRP5|gene=URA3|gene=URA4"
+
+
+# --- Paramètres à modifier ---
+REFERENCE="/home/axel/Desktop/markers/S288C.fsa"  # based on S288C 
+FASTQ="/home/axel/Desktop/alignment/alignment3/SRR26617637.bis_1.fastq"
+
+bowtie2-build $REFERENCE ref_gen
+echo "aligning "$FASTQ" on "$REFERENCE
+bowtie2 --local --very-sensitive-local -p 10  $FASTQ  -x ref_gen -S sample.sam
+samtools sort sample.sam  -o sample.bam
+
+samtools index sample.bam
