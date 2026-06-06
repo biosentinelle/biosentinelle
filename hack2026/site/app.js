@@ -1,6 +1,7 @@
-const INSERTIONS_URLS = [
-  "/output/insertions.json",
+const DEFAULT_INSERTIONS_URLS = [
   "../output/insertions.json",
+  "./insertions.json",
+  "/output/insertions.json",
 ];
 const CHR_IV = "ref|NC_001136|";
 const CHR_IV_LENGTH = 1531933;
@@ -19,6 +20,7 @@ const state = {
   },
   isLoaded: false,
   loadPromise: null,
+  dataSource: "",
 };
 
 const statusEl = document.getElementById("status");
@@ -35,6 +37,33 @@ const modCenter = document.getElementById("modCenter");
 
 function formatInt(value) {
   return Math.round(value).toLocaleString("en-US");
+}
+
+function insertionUrls() {
+  const params = new URLSearchParams(window.location.search);
+  const dataUrl = params.get("data");
+  return dataUrl ? [dataUrl, ...DEFAULT_INSERTIONS_URLS] : DEFAULT_INSERTIONS_URLS;
+}
+
+function fetchInsertionsJson(url) {
+  return fetch(url, { cache: "no-store" })
+    .then((response) => {
+      if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+      return response.json();
+    })
+    .then((data) => {
+      if (!Array.isArray(data)) throw new Error(`${url}: JSON root is not an array`);
+      return { data, source: url };
+    });
+}
+
+function applyInsertions(data, source) {
+  state.insertions = data;
+  state.dataSource = source;
+  state.isLoaded = true;
+  if (statusEl) statusEl.textContent = "Pret";
+  updateSummary();
+  return state.insertions;
 }
 
 function updateSummary() {
@@ -212,29 +241,20 @@ function loadInsertions() {
   if (state.isLoaded) return Promise.resolve(state.insertions);
   if (state.loadPromise) return state.loadPromise;
 
-  if (Array.isArray(window.BIOSENTINEL_INSERTIONS)) {
-    state.insertions = window.BIOSENTINEL_INSERTIONS;
-    state.isLoaded = true;
-    if (statusEl) statusEl.textContent = "Prêt";
-    updateSummary();
-    return Promise.resolve(state.insertions);
-  }
-
-  state.loadPromise = INSERTIONS_URLS.reduce(
-    (promise, url) => promise.catch(() => fetch(url)),
+  state.loadPromise = insertionUrls().reduce(
+    (promise, url) => promise.catch(() => fetchInsertionsJson(url)),
     Promise.reject()
   )
-    .then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.json();
+    .catch((error) => {
+      if (Array.isArray(window.BIOSENTINEL_INSERTIONS)) {
+        return {
+          data: window.BIOSENTINEL_INSERTIONS,
+          source: "insertions-data.js",
+        };
+      }
+      throw error;
     })
-    .then((data) => {
-      state.insertions = data;
-      state.isLoaded = true;
-      if (statusEl) statusEl.textContent = "Prêt";
-      updateSummary();
-      return data;
-    })
+    .then(({ data, source }) => applyInsertions(data, source))
     .catch((error) => {
       state.loadPromise = null;
       if (statusEl) statusEl.textContent = "Erreur JSON";
@@ -256,8 +276,8 @@ function openModal() {
   loadInsertions().then(drawChrIVPlot).catch((error) => {
     plotTarget.innerHTML = `
       <div class="empty-plot">
-        Impossible de charger <code>output/insertions.json</code>.<br>
-        Ouvre la page via <code>http://127.0.0.1:8765/site/index.html</code>, pas en <code>file://</code>.
+        Impossible de charger le JSON externe ou le snapshot embarque.<br>
+        Ouvre la page via un serveur local, par exemple <code>http://127.0.0.1:8765/site/index.html</code>.
       </div>
     `;
     console.error(error);
