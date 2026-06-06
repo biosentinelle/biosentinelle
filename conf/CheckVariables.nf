@@ -15,18 +15,22 @@ for(i1 in tested_files_bin){
 //// check of the modules folder
 tested_files_modules = [
     "Backup.nf", 
-    "Bowtie2.nf",
+    "Bowtie2.nf", 
     "CopyLogFile.nf", 
-    "CountSnps.nf",
+    "CountSnps.nf", 
+    "Coverage.nf", 
     "Fastq_dump.nf", 
+    "FindBestRef.nf", 
     "Functions.nf", 
     "MultiQC.nf", 
+    "Plot_coverage.nf", 
     "Print_report.nf", 
+    "Print_snp_count.nf", 
     "Print_warnings.nf", 
     "Q20.nf", 
     "Split_fasta.nf", 
     "Unzip.nf", 
-    "VariantCall.nf",
+    "VariantCall.nf", 
     "WorkflowParam.nf"
     ]
 for(i1 in tested_files_modules){
@@ -53,6 +57,14 @@ if( ! (ref_path in String || ref_path in GString) ){
     // ref_path can contain multiple space-separated paths
     if( ! (file(ref_path).exists()) ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ref_path PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${ref_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
+    }
+}
+if( ! (features_path in String || features_path in GString) ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID features_path PARAMETER IN nextflow.config FILE:\n${features_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
+}else {
+    // features_path can contain multiple space-separated paths
+    if( ! (file(features_path).exists()) ){
+        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID features_path PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${features_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
     }
 }
 //// end check of config file parameters

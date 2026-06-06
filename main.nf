@@ -27,17 +27,27 @@ include {CheckVariables} from './conf/CheckVariables.nf'
 include {reportEmptyProcess; copyLogFile} from './modules/Functions.nf'
 include {Unzip} from './modules/Unzip.nf'
 include {WorkflowParam} from './modules/WorkflowParam.nf'
-include {Split_fasta} from './modules/Split_fasta.nf'
 include {Fastq_dump} from './modules/Fastq_dump.nf'
 include {Bowtie2} from './modules/Bowtie2.nf'
+include {Coverage} from './modules/Coverage.nf'
+include {Plot_coverage} from './modules/Plot_coverage.nf'
 include {VariantCall} from './modules/VariantCall.nf'
 include {CountSnps} from './modules/CountSnps.nf'
 include {Print_snp_count} from './modules/Print_snp_count.nf'
 include {Print_warnings} from './modules/Print_warnings.nf'
 include {Print_report} from './modules/Print_report.nf'
-include {Q20} from './modules/Q20.nf'
 include {Backup} from './modules/Backup.nf'
 
+//include {CopyLogFile as CopyLogFile_Closest_germline} from './modules/CopyLogFile.nf'
+include {Unzip as Unzip_fastq} from './modules/Unzip.nf'
+include {Unzip as Unzip_ref} from './modules/Unzip.nf'
+include {Unzip as Unzip_feat} from './modules/Unzip.nf'
+include {Split_fasta as Split_fasta_ref} from './modules/Split_fasta.nf'
+include {Split_fasta as Split_fasta_feat} from './modules/Split_fasta.nf'
+include {Bowtie2 as Bowtie2_ref} from './modules/Bowtie2.nf'
+include {Bowtie2 as Bowtie2_feat} from './modules/Bowtie2.nf'
+include {Q20 as Q20_ref} from './modules/Q20.nf'
+include {Q20 as Q20_feat} from './modules/Q20.nf'
 //////// end Modules
 
 
@@ -90,6 +100,7 @@ workflow {
     // Note: fastq_name will be set after file extraction (for SRA) or from the fastq_path directly (for local/zip files)
     // This is handled below in the channels section
     ref_name = file("${ref_path}").baseName
+    features_name = file("${features_path}").baseName
 
     //////// end Variable modification
 
@@ -122,13 +133,13 @@ workflow {
 
     file("${out_path}/tsv").mkdirs()
 
-
+    // fastq treatment
     if(fastq_path =~ /.*\.zip$/){
-        Unzip( // warning: it is a process defined above
+        Unzip_fastq( // warning: it is a process defined above
             Channel.fromPath(fastq_path),
             fastq_path
         ) 
-        fastq = Unzip.out.unzip_ch.flatten()
+        fastq = Unzip_fastq.out.unzip_ch.flatten()
         fastq_name = file("${fastq_path}").baseName
     }else if(fastq_path =~ /^SRR.*/){
         Fastq_dump(
@@ -159,21 +170,21 @@ workflow {
             multiple: true
                 return it
         }.set { branched }
+    // end fastq treatment
 
 
-
-
+    // fasta ref treatment
     if(ref_path =~ /.*\.zip$/){
-        Unzip( // warning: it is a process defined above
+        Unzip_ref( // warning: it is a process defined above
             Channel.fromPath(ref_path),
             ref_path
         ) 
-        dir_ch = Unzip.out.unzip_ch.flatten()
+        ref_dir_ch = Unzip_ref.out.unzip_ch.flatten()
     }else{
-        dir_ch = Channel.fromPath("${ref_path}", checkIfExists: false) // in channel because many files 
+        ref_dir_ch = Channel.fromPath("${ref_path}", checkIfExists: false) // in channel because many files 
     }
     // is the path a dir or a single file ?
-    dir_ch.branch {
+    ref_dir_ch.branch {
             dir: it.isDirectory()
             file: true
         }.set { branched }
@@ -190,38 +201,100 @@ workflow {
             multiple: true
                 return it
         }.set { branched }
-
-
-    Split_fasta(branched.single)
-    ref_ch2 = Split_fasta.out.split_fasta_ch.mix(branched.multiple.flatten()).flatten()
-
+    Split_fasta_ref(branched.single)
+    ref_ch2 = Split_fasta_ref.out.split_fasta_ch.mix(branched.multiple.flatten()).flatten()
     nb_input = ref_ch2.count()
     ref_ch3 = ref_ch2.map{file -> name = file.baseName ; tuple(file, name)}
+    // end fasta ref treatment
+
+
+    // fasta features treatment
+    if(features_path =~ /.*\.zip$/){
+        Unzip_feat( // warning: it is a process defined above
+            Channel.fromPath(features_path),
+            features_path
+        ) 
+        feat_dir_ch = Unzip_feat.out.unzip_ch.flatten()
+    }else{
+        feat_dir_ch = Channel.fromPath("${features_path}", checkIfExists: false) // in channel because many files 
+    }
+    // is the path a dir or a single file ?
+    feat_dir_ch.branch {
+            dir: it.isDirectory()
+            file: true
+        }.set { branched }
+    // Handle directories: list contents
+    feat_ch_from_dir = branched.dir.flatMap { it.listFiles() } // is it is a dir, then recover all the files
+    // Handle files: pass through
+    feat_ch_from_file = branched.file
+    // Merge back
+    feat_ch = feat_ch_from_dir.mix(feat_ch_from_file)
+    // end is the path a dir or a single file ?
+    feat_ch.toList().branch {
+            single: it.size() == 1
+                return it[0]
+            multiple: true
+                return it
+        }.set { branched }
+    Split_fasta_feat(branched.single)
+    feat_ch2 = Split_fasta_feat.out.split_fasta_ch.mix(branched.multiple.flatten()).flatten()
+    nb_input = feat_ch2.count()
+    feat_ch3 = feat_ch2.map{file -> name = file.baseName ; tuple(file, name)}
+    // end fasta features treatment
+
+
+
 
    // Align fastq against each reference (parallelization)
-    Bowtie2(
+    Bowtie2_ref(
         fastq_name,
         fastq_ch.first(),
         ref_ch3
     )
-    copyLogFile('bowtie2_report.log', Bowtie2.out.bowtie2_log_ch, out_path)
+    copyLogFile('bowtie2_ref__report.log', Bowtie2_ref.out.bowtie2_log_ch, out_path)
 
-    // Create bowtie2 input by combining reference info with fastq files
-    // For each reference, process against all fastq files
-    
-    // Create one job per reference that processes all fastq files
-
-    Q20(
-        Bowtie2.out.bowtie2_ch
+   // Align fastq against each reference (parallelization)
+    Bowtie2_feat(
+        fastq_name,
+        fastq_ch.first(),
+        feat_ch3
     )
-    copyLogFile('q20_report.log', Q20.out.q20_report_ch, out_path)
+    copyLogFile('bowtie2_feat_report.log', Bowtie2_feat.out.bowtie2_log_ch, out_path)
 
- 
+
+    Q20_ref(
+        Bowtie2_ref.out.bowtie2_ch
+    )
+    copyLogFile('q20_ref_report.log', Q20_ref.out.q20_report_ch, out_path)
+
+     Q20_feat(
+        Bowtie2_feat.out.bowtie2_ch
+    )
+    copyLogFile('q20_feat_report.log', Q20_feat.out.q20_report_ch, out_path)
+
+     Coverage(
+        Q20_feat.out.q20_ch
+    )
+    copyLogFile('coverage_report.log', Coverage.out.cov_report_ch, out_path)
+
+/*
+     Plot_coverage(
+        fastq_name,
+        Coverage.out.cov_ch,
+        Q20_feat.out.q20_bef_read_nb_ch,
+        Q20_feat.out.q20_after_read_nb_ch,
+        xlab,
+        cute_file
+    )
+    copyLogFile('coverage_report.log', Plot_coverage.out.plot_cov_report_ch, out_path)
+*/
+
     // Call variants for each reference
     VariantCall(
-        Bowtie2.out.bowtie2_ch
+        Q20_ref.out.q20_ch
     )
-    
+    copyLogFile('variantCall_report.log', VariantCall.out.variant_call_log_ch, out_path)
+
     // Count SNPs for each reference
     CountSnps(
         VariantCall.out.vcf_ch
