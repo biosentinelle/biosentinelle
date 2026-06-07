@@ -18,6 +18,7 @@ process Print_report{
     path template_rmd // to have the file in the work dir
     val nb_input
     path final_tsv_ch
+    path final_tsv_ch
     path final_warning_ch
 
     output:

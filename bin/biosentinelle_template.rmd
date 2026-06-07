@@ -130,13 +130,12 @@ Description of the folders and files can be found [here](https://github.com/bios
 The <i>[nextflow.config](./reports/nextflow.config.html)</i> file mentioned here is the one gathering all the parameters set for the present analysis. A copy is saved in the [reports](./reports) folder.
 <br><br>
 
-### Initial dataset
+### Most probable strain (by alignment)
 
-Number of reference genomes : ```r nb_input```
+Number of reference genomes tested : ```r nb_input```
 
-<br><br>
-
-### Results
+The table below indicates the number of variants compared to the indicated genome of reference.<br>
+The top one is the most probable background of the tested strain:
 
 ```{r, echo=FALSE, results='asis'}
         cat(paste0('
@@ -144,6 +143,32 @@ Number of reference genomes : ```r nb_input```
 <span style="color:green">snp_counts.tsv file in the [tsv](./tsv) folder</span>
         '))
         tempo_read <- read_tsv_with_dummy("tsv/snp_counts.tsv", 3)
+        df <- tempo_read$df
+        truncated_log <- tempo_read$truncated
+        if(is.data.frame(df) && truncated_log){
+            cat(paste0('<span style="color:green;font-style:italic;">(table truncated to ', tempo_read$nb, ' rows in the display):</span><br><br>'))
+        }else{
+            cat('<span style="color:green;font-style:italic;">:</span><br><br>')
+        }
+        cat(knitr::kable(df, format = "html", row.names = FALSE))
+        cat('
+<br>
+</details>
+        ')
+```
+
+### Features found (by alignment)
+
+Number of features tested : ```r nb_input```
+
+The table below indicates the max and mean coverage, meaning nb of reads covering the tested features:
+
+```{r, echo=FALSE, results='asis'}
+        cat(paste0('
+&nbsp; <details class="inline"><summary style="color: #1a73e8; font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;">view</summary>
+<span style="color:green">coverage.tsv file in the [tsv](./tsv) folder</span>
+        '))
+        tempo_read <- read_tsv_with_dummy("tsv/coverage.tsv", 3)
         df <- tempo_read$df
         truncated_log <- tempo_read$truncated
         if(is.data.frame(df) && truncated_log){
