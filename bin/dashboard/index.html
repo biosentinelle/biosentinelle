@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BioSentinel Insertion Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="brandbar">
+        <h1>BIOSENTINEL</h1>
+        <p class="subtitle">Insertion profile across yeast chromosomes</p>
+        <p class="metadata" id="metadata">Loading insertion signals</p>
+      </header>
+
+      <section class="viewer" aria-label="Vue genomique">
+        <div id="genomeOverview" class="overview"></div>
+      </section>
+    </main>
+
+    <div class="modal" id="modal" aria-hidden="true">
+      <div class="modal-backdrop" id="closeBackdrop"></div>
+      <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <header class="dialog-head">
+          <div>
+            <p class="eyebrow" id="modalChrom">chromosome</p>
+            <h2 id="modalTitle">Histogramme local</h2>
+          </div>
+          <div class="mod-center" id="modCenter">Centre modification: -</div>
+          <button class="close" id="closeModal" type="button" aria-label="Fermer">x</button>
+        </header>
+
+        <div class="plot-panel">
+          <div id="chromPlot"></div>
+        </div>
+      </section>
+    </div>
+
+    <script src="insertions-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

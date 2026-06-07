@@ -36,6 +36,8 @@ include {CountSnps} from './modules/CountSnps.nf'
 include {DetermineGenotype} from './modules/DetermineGenotype.nf'
 include {Print_snp_count} from './modules/Print_snp_count.nf'
 include {Print_warnings} from './modules/Print_warnings.nf'
+include {Detect_insertions} from './modules/Detect_insertions.nf'
+include {Prepare_dashboard} from './modules/Prepare_dashboard.nf'
 include {Print_report} from './modules/Print_report.nf'
 include {Backup} from './modules/Backup.nf'
 
@@ -121,6 +123,8 @@ workflow {
 
     template_rmd = file(template_rmd_path)
     cute_file = file(cute_path)
+    detect_insertions_script = file("${projectDir}/bin/detect_insertions.py")
+    dashboard_assets = Channel.fromPath("${projectDir}/bin/dashboard/*", checkIfExists: true).collect()
 
     //////// end files import
 
@@ -326,6 +330,21 @@ DetermineGenotype(
         warning_ch.ifEmpty{''}.collectFile(name: "warnings_collect.txt")
     )
 
+    Detect_insertions(
+        Bowtie2_ref.out.bowtie2_ch.map { r_name, r_file, sample_name, bam -> r_name }.collect(),
+        Bowtie2_ref.out.bowtie2_ch.map { r_name, r_file, sample_name, bam -> bam }.collect(),
+        Bowtie2_feat.out.bowtie2_ch.map { f_name, f_file, sample_name, bam -> f_name }.collect(),
+        Bowtie2_feat.out.bowtie2_ch.map { f_name, f_file, sample_name, bam -> bam }.collect(),
+        detect_insertions_script
+    )
+    copyLogFile('detect_insertions_report.log', Detect_insertions.out.detect_insertions_report_ch, out_path)
+
+    Prepare_dashboard(
+        Detect_insertions.out.insertions_json_ch,
+        dashboard_assets
+    )
+    copyLogFile('dashboard_report.log', Prepare_dashboard.out.dashboard_report_ch, out_path)
+
     Print_report(
         fastq_name, 
         config_file, // from parameter
@@ -334,6 +353,7 @@ DetermineGenotype(
         nb_feat, // mandatory
         Print_snp_count.out.final_tsv_ch, // just so that print_report wait for all tsv
         coverage_ch, 
+        Prepare_dashboard.out.dashboard_dir_ch,
         Print_warnings.out.final_warning_ch // just so that print_report wait for all warnings // warning_ch.collect().map{it.join('\n\n')}.ifEmpty{'EMPTY'} // concatenate all warnings into a single string // finally, the gathered string is very loong. I prefer to use a file added in /reports/
     )
 

@@ -3,7 +3,8 @@ workflow CheckVariables {
 //////// Checks
 //// check of the bin folder
 tested_files_bin = [
-    "biosentinelle_template.rmd", 
+    "biosentinelle_template.rmd",
+    "detect_insertions.py",
     ]
 for(i1 in tested_files_bin){
     if( ! (file("${projectDir}/bin/${i1}").exists()) ){
@@ -17,17 +18,19 @@ tested_files_modules = [
     "Backup.nf", 
     "Bowtie2.nf", 
     "CopyLogFile.nf", 
-    "CountSnps.nf", 
-    "Coverage.nf", 
-    "Fastq_dump.nf", 
+    "CountSnps.nf",
+    "Coverage.nf",
+    "Detect_insertions.nf",
+    "Fastq_dump.nf",
     "FindBestRef.nf", 
     "Functions.nf", 
     "MultiQC.nf", 
     "Plot_coverage.nf", 
     "Print_report.nf", 
-    "Print_snp_count.nf", 
-    "Print_warnings.nf", 
-    "Q20.nf", 
+    "Print_snp_count.nf",
+    "Print_warnings.nf",
+    "Prepare_dashboard.nf",
+    "Q20.nf",
     "Split_fasta.nf", 
     "Unzip.nf", 
     "VariantCall.nf", 

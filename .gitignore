@@ -10,3 +10,5 @@ singularity/
 .nextflow*
 .mailmap
 commit*
+__pycache__/
+*.py[cod]

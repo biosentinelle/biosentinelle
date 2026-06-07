@@ -199,6 +199,16 @@ The table below indicates the max and mean coverage, meaning nb of reads coverin
         ')
 ```
 
+### Insertion dashboard
+
+The insertion dashboard summarizes junction reads found between feature alignments and reference genome alignments:
+
+<p>
+  <a href="./dashboard/index.html" target="_blank" rel="noopener">Open the insertion dashboard</a>
+</p>
+
+<iframe src="./dashboard/index.html" title="BioSentinel insertion dashboard" style="width:100%; height:760px; border:1px solid #dde5ef; border-radius:8px;"></iframe>
+
 ###  Backup
 
 See the [reports](./reports) folder for all the details of the analysis, including:<br><ul><li>**nextflow.config** Parameter settings.<br></li><li>**Run_info.txt** Variables.<br></li><li>**trace.txt** and **timeline.html** Date of execution, CPU% and Memory requirement for each step.<br></ul>

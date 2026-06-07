@@ -1,0 +1,167 @@
+:root {
+  --ink: #172033;
+  --muted: #6b778c;
+  --line: #dde5ef;
+  --panel: #f6f8fb;
+  --card: #ffffff;
+  --kan: #2f9e73;
+  --vcf: #4e79a7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--panel);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.page {
+  width: min(1280px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+.brandbar {
+  margin-bottom: 18px;
+}
+
+.brandbar h1 {
+  margin: 0;
+  font-size: 31px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  margin: 7px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.metadata {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.viewer {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.overview {
+  padding: 18px;
+}
+
+.overview svg,
+#chromPlot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.empty-plot {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 24px;
+  z-index: 20;
+}
+
+.modal.is-open {
+  display: grid;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.dialog {
+  position: relative;
+  width: min(1080px, calc(100vw - 36px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  border: 1px solid #b9c7d8;
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.28);
+}
+
+.dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.mod-center {
+  margin-left: auto;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.plot-panel {
+  padding: 18px 20px 22px;
+}
+
+@media (max-width: 760px) {
+  .dialog-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

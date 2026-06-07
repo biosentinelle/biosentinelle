@@ -20,6 +20,7 @@ process Print_report{
     val nb_feat
     path final_tsv_ch
     path coverage_ch
+    path dashboard_dir_ch
     path final_warning_ch
 
     output:
