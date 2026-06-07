@@ -9,7 +9,7 @@ process Coverage { // section 24.5 of the labbook 20200707. Warning: USING 5' AN
     tuple val(ref_name), path(ref), val(file_name), path(bam)
 
     output:
-    path "*_mini.cov", emit: cov_ch // warning: 3 files
+    tuple val(ref_name), path("*_mini.cov"), emit: cov_ch // warning: 3 files
     // file "*.cov" // coverage per base if ever required but long process
     path "cov_report.txt", emit: cov_report_ch
 

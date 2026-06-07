@@ -6,8 +6,7 @@ process Plot_coverage { // section 24.6 of the labbook 20200707
     cache 'true'
 
     input:
-    val fastq_name
-    path cov // warning: 3 files
+    tuple val(feat_name), path(cov)
     path bef_read_nb
     path after_read_nb
     val ylab
@@ -20,6 +19,6 @@ process Plot_coverage { // section 24.6 of the labbook 20200707
 
     script:
     """
-    plot_coverage.R "${cov.baseName}" "${after_read_nb}" "${ylab}" "${fastq_name}" "${cute_file}" "plot_coverage_report.txt"
+    plot_coverage.R "${cov.baseName}" "${after_read_nb}" "${ylab}" "${feat_name}" "${cute_file}" "plot_coverage_report.txt"
     """
 }

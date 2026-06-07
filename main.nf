@@ -204,7 +204,7 @@ workflow {
         }.set { branched }
     Split_fasta_ref(branched.single)
     ref_ch2 = Split_fasta_ref.out.split_fasta_ch.mix(branched.multiple.flatten()).flatten()
-    nb_input = ref_ch2.count()
+    nb_ref = ref_ch2.count()
     ref_ch3 = ref_ch2.map{file -> name = file.baseName ; tuple(file, name)}
     // end fasta ref treatment
 
@@ -239,7 +239,7 @@ workflow {
         }.set { branched }
     Split_fasta_feat(branched.single)
     feat_ch2 = Split_fasta_feat.out.split_fasta_ch.mix(branched.multiple.flatten()).flatten()
-    nb_input = feat_ch2.count()
+    nb_feat = feat_ch2.count()
     feat_ch3 = feat_ch2.map{file -> name = file.baseName ; tuple(file, name)}
     // end fasta features treatment
 
@@ -278,8 +278,8 @@ workflow {
     )
     copyLogFile('coverage_report.log', Coverage.out.cov_report_ch, out_path)
 
+
      Plot_coverage(
-        fastq_name,
         Coverage.out.cov_ch,
         Q20_feat.out.q20_bef_read_nb_ch,
         Q20_feat.out.q20_after_read_nb_ch,
@@ -287,7 +287,8 @@ workflow {
         cute_file
     )
     copyLogFile('coverage_report.log', Plot_coverage.out.plot_cov_report_ch, out_path)
-    Plot_coverage.out.cov_tsv_ch.collectFile(name: "coverage.tsv", skip: 1, keepHeader: true).subscribe{it -> it.copyTo("${out_path}/tsv")}
+    coverage_ch = Plot_coverage.out.cov_tsv_ch.collectFile(name: "coverage.tsv", skip: 1, keepHeader: true)
+    coverage_ch.subscribe{it -> it.copyTo("${out_path}/tsv")}
 
     // Call variants for each reference
     VariantCall(
@@ -299,21 +300,9 @@ workflow {
     CountSnps(
         VariantCall.out.vcf_ch
     )
-
     // Collect all SNP counts and find best reference
     Print_snp_count(
         CountSnps.out.snp_count_ch
-        .toSortedList { a, b -> a[1] <=> b[1] }   // ascending
-        .map { list ->
-            def lines = ["Name\tNb_of_variants"] + list.collect { "${it[0]}\t${it[1]}" }
-            lines.join("\n") + "\n"
-        }
-        .collectFile(name: 'snp_counts.tsv')
-    )
-
-    // Collect all coverages and find best reference
-    Print_coverage(
-        Plot_coverage.out.cov_tsv_ch
         .toSortedList { a, b -> a[1] <=> b[1] }   // ascending
         .map { list ->
             def lines = ["Name\tNb_of_variants"] + list.collect { "${it[0]}\t${it[1]}" }
@@ -327,11 +316,13 @@ workflow {
     )
 
     Print_report(
+        fastq_name, 
         config_file, // from parameter
         template_rmd, // from parameter
-        nb_input, // mandatory
+        nb_ref, // mandatory
+        nb_feat, // mandatory
         Print_snp_count.out.final_tsv_ch, // just so that print_report wait for all tsv
-        Print_snp_count.out.final_tsv_ch, // just so that print_report wait for all tsv
+        coverage_ch, 
         Print_warnings.out.final_warning_ch // just so that print_report wait for all warnings // warning_ch.collect().map{it.join('\n\n')}.ifEmpty{'EMPTY'} // concatenate all warnings into a single string // finally, the gathered string is very loong. I prefer to use a file added in /reports/
     )
 

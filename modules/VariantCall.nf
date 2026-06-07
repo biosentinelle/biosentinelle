@@ -1,7 +1,7 @@
 // Variant calling using bcftools mpileup and bcftools call
 process VariantCall {
     label 'bcftools'
-    publishDir path: "${out_path}/tsv", mode: 'copy', pattern: "{*.tsv}", overwrite: false
+    publishDir path: "${out_path}/tsv/variant_calling", mode: 'copy', pattern: "{*.tsv}", overwrite: false
     cache 'true'
 
     input:

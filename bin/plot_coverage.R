@@ -363,12 +363,12 @@ if(ncol(df) > 0 & nrow(df) > 10){
         title = paste0(cov, " | NB OF READS: ", format(read_nb, big.mark = ",")), 
         title.text.size = 20
     )
-    tsv <- data.frame(REF = file_name, MAX = max(df$V4), MEAN = mean(df$V4))
+    tsv <- data.frame(REF = file_name, MAX = max(df$V4), MEAN = round(mean(df$V4), 1))
 
 }else{
     tsv <- data.frame(REF = "", MAX = 0, MEAN = 0)
     tsv <- tsv[0, ]
-    fun_gg_empty_graph(text = "EMPTY .cov FILE: NO PLOT DRAWN")
+    fun_gg_empty_graph(text = paste0("EMPTY\n", cov, "\nFILE\nNO PLOT DRAWN"))
 }
 
 write.table(tsv, file = paste0(file_name, ".tsv"), row.names = FALSE, col.names = TRUE, sep = "\t", quote = FALSE)

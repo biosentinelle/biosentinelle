@@ -6,7 +6,9 @@ output:
     toc: TRUE
     toc_float: TRUE
 params:
-    nb_input: -1
+    fastq_name: ""
+    nb_ref: -1
+    nb_feat: -1
     warning_collect: ""
 ---
 
@@ -63,7 +65,7 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-read_tsv_with_dummy <- function(file_path, nb){
+read_tsv_with_dummy <- function(file_path, row_nb){
     if( ! file.exists(file_path)){
         stop(paste0("\n\n================\n\nINTERNAL ERROR IN Print_report PROCESS.\nfile_path DOES NOT EXISTS: ", file_path, "\n\nPLEASE, REPORT AN ISSUE HERE https://gitlab.pasteur.fr/gmillot/repertoire_profiler/-/issues OR AT gael.millot<AT>pasteur.fr.\n\n========\n\n"), call. = FALSE)
     }else if(file.info(file_path)$size == 0){
@@ -76,11 +78,11 @@ read_tsv_with_dummy <- function(file_path, nb){
             dummy_row <- as.data.frame(matrix("", nrow = 1, ncol = ncol(df)))
             colnames(dummy_row) <- colnames(df)
             df <- df[ -(1:nrow(df)), ]
-        }else if(nrow(df) > nb){
-            df <- df[1:nb, ]
+        }else if(nrow(df) > row_nb){
+            df <- df[1:row_nb, ]
             truncated <- TRUE
         }
-        return(list(df = df, truncated = truncated, nb = nb))
+        return(list(df = df, truncated = truncated, nb = row_nb))
     }
 }
 ```
@@ -118,11 +120,22 @@ writeLines(out, "nextflow.config.html")
 [comment 7]: <> (assignation of params, for later reassignation)
 
 ```{r, echo=FALSE, results='asis'}
-    nb_input <- params$nb_input
+    fastq_name <- params$fastq_name
+    nb_ref <- params$nb_ref
+    nb_feat <- params$nb_feat
     warning_collect <- params$warning_collect
 ```
 
 [comment 8]: <> (end assignation of params, for later reassignation)
+
+```{r, echo=FALSE, results='asis'}
+        cat(paste0('
+<br>
+## ',
+fastq_name, '
+<br><br>
+        '))
+```
 
 
 Description of the folders and files can be found [here](https://github.com/biosentinelle/biosentinelle/tree/main#output)
@@ -132,7 +145,7 @@ The <i>[nextflow.config](./reports/nextflow.config.html)</i> file mentioned here
 
 ### Most probable strain (by alignment)
 
-Number of reference genomes tested : ```r nb_input```
+Number of reference genomes tested : ```r nb_ref```
 
 The table below indicates the number of variants compared to the indicated genome of reference.<br>
 The top one is the most probable background of the tested strain:
@@ -142,7 +155,7 @@ The top one is the most probable background of the tested strain:
 &nbsp; <details class="inline"><summary style="color: #1a73e8; font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;">view</summary>
 <span style="color:green">snp_counts.tsv file in the [tsv](./tsv) folder</span>
         '))
-        tempo_read <- read_tsv_with_dummy("tsv/snp_counts.tsv", 3)
+        tempo_read <- read_tsv_with_dummy("tsv/snp_counts.tsv", row_nb = 10)
         df <- tempo_read$df
         truncated_log <- tempo_read$truncated
         if(is.data.frame(df) && truncated_log){
@@ -159,7 +172,7 @@ The top one is the most probable background of the tested strain:
 
 ### Features found (by alignment)
 
-Number of features tested : ```r nb_input```
+Number of features tested : ```r nb_feat```
 
 The table below indicates the max and mean coverage, meaning nb of reads covering the tested features:
 
@@ -168,8 +181,11 @@ The table below indicates the max and mean coverage, meaning nb of reads coverin
 &nbsp; <details class="inline"><summary style="color: #1a73e8; font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;">view</summary>
 <span style="color:green">coverage.tsv file in the [tsv](./tsv) folder</span>
         '))
-        tempo_read <- read_tsv_with_dummy("tsv/coverage.tsv", 3)
+        tempo_read <- read_tsv_with_dummy("tsv/coverage.tsv", row_nb = 10)
         df <- tempo_read$df
+        if(nrow(df) > 1){
+            df <- df[order(df$MEAN, decreasing = TRUE), ]
+        }
         truncated_log <- tempo_read$truncated
         if(is.data.frame(df) && truncated_log){
             cat(paste0('<span style="color:green;font-style:italic;">(table truncated to ', tempo_read$nb, ' rows in the display):</span><br><br>'))

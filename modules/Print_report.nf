@@ -7,18 +7,19 @@
 
 process Print_report{
     label 'r_ig_clustering'
-
     publishDir path: "${out_path}/reports", mode: 'copy', pattern: "{nextflow.config.html}", overwrite: false
     publishDir path: "${out_path}", mode: 'copy', pattern: "{report.html}", overwrite: false
     publishDir path: "${out_path}/reports", mode: 'copy', pattern: "{print_report.log}", overwrite: false
     cache 'true'
 
     input:
+    val fastq_name
     path config_file // to have the file in the work dir
     path template_rmd // to have the file in the work dir
-    val nb_input
+    val nb_ref
+    val nb_feat
     path final_tsv_ch
-    path final_tsv_ch
+    path coverage_ch
     path final_warning_ch
 
     output:
@@ -44,7 +45,9 @@ process Print_report{
             output_file = "report.html",
             # list of the variables waiting to be replaced in the rmd file:
             params = list(
-                nb_input = ${nb_input},
+                fastq_name = "${fastq_name}", 
+                nb_ref = ${nb_ref},
+                nb_feat = ${nb_feat},
                 warning_collect = warning_collect
             ),
             # output_dir = ".",
@@ -54,7 +57,6 @@ process Print_report{
             quiet = TRUE,
             clean = TRUE
         )
-
     ' |& tee -a print_report.log
     """
 }
