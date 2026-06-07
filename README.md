@@ -1,4 +1,4 @@
-
+<img src="logo.png" align="center" width="300" alt="Biosentinelle Logo">
 <img src="images/repertoire_profiler.gif" align="right" width="300" alt="Demo GIF">
 
 | Usage | Requirement |
