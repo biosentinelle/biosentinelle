@@ -324,7 +324,10 @@ workflow {
 
     // Determine genotype based on SNP counts (MATA or MATALPHA)
     // Find the reference with the lowest SNP count
-    CountSnps.out.snp_count_ch.toSortedList { a, b -> a[1] <=> b[1] }.first().set { best_ref_ch }
+    CountSnps.out.snp_count_ch
+        .toSortedList { a, b -> a[1] <=> b[1] }
+        .map { list -> list[0] }
+        .set { best_ref_ch }
 
 DetermineGenotype(
         best_ref_ch

@@ -35,8 +35,8 @@ process Split_fasta {
     # end variables
 
     # checks
-    if [[ ! "\${FILE_EXTENSION}" =~ fasta|fa|fas|fna|txt|seq ]] ; then
-        echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nINVALID FILE EXTENSION IN THE sample_path PARAMETER OF THE nextflow.config FILE:\\n\${FILENAME}\\nMUST BE fasta|fa|fas|fna|txt|seq|faa\\n\\n========\\n\\n"
+    if [[ ! "\${FILE_EXTENSION}" =~ fasta|fa|fas|fna|fsa|txt|seq ]] ; then
+        echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nINVALID FILE EXTENSION IN THE sample_path PARAMETER OF THE nextflow.config FILE:\\n\${FILENAME}\\nMUST BE fasta|fa|fas|fna|fsa|txt|seq|faa\\n\\n========\\n\\n"
         exit 1
     fi
     # end checks
@@ -53,7 +53,7 @@ process Split_fasta {
     if read -n 1 char <"\${FILE}.ttt"; [[ \$char != ">" || \$TEMPO != 2 ]]; then
         awk '/^>/ {F=substr(\$1,2)".fasta"} {print >> F}' "\${FILE}.ttt"
     else
-        cp "\${FILE}.ttt" "\${FILE}.fasta"
+        cp "\${FILE}.ttt" "\${FILE}_split.fasta"
     fi
     """
 }

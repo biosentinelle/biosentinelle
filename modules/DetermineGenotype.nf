@@ -15,7 +15,7 @@ process DetermineGenotype {
     echo "SNP Count: ${snp_count}" >> genotype_report.txt
     echo "" >> genotype_report.txt
     
-    // Map the reference name to genotype
+    # Map the reference name to genotype
     if [[ "${ref_name}" == "MATA" ]]; then
         echo "DETECTED GENOTYPE: MATA" >> genotype_report.txt
     elif [[ "${ref_name}" == "MATALPHA" ]]; then
