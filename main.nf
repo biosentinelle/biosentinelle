@@ -28,13 +28,13 @@ include {reportEmptyProcess; copyLogFile} from './modules/Functions.nf'
 include {Unzip} from './modules/Unzip.nf'
 include {WorkflowParam} from './modules/WorkflowParam.nf'
 include {Fastq_dump} from './modules/Fastq_dump.nf'
-include {Bowtie2} from './modules/Bowtie2.nf'
 include {Coverage} from './modules/Coverage.nf'
 include {Plot_coverage} from './modules/Plot_coverage.nf'
-include {VariantCall} from './modules/VariantCall.nf'
-include {CountSnps} from './modules/CountSnps.nf'
-include {DetermineGenotype} from './modules/DetermineGenotype.nf'
-include {Print_snp_count} from './modules/Print_snp_count.nf'
+include {VariantCount} from './modules/VariantCount.nf'
+include {Sex2tsv} from './modules/Sex2tsv.nf'
+include {SexCount} from './modules/SexCount.nf'
+include {Print_var_count} from './modules/Print_var_count.nf'
+include {Print_sex_count} from './modules/Print_sex_count.nf'
 include {Print_warnings} from './modules/Print_warnings.nf'
 include {Print_report} from './modules/Print_report.nf'
 include {Backup} from './modules/Backup.nf'
@@ -43,12 +43,18 @@ include {Backup} from './modules/Backup.nf'
 include {Unzip as Unzip_fastq} from './modules/Unzip.nf'
 include {Unzip as Unzip_ref} from './modules/Unzip.nf'
 include {Unzip as Unzip_feat} from './modules/Unzip.nf'
+include {Unzip as Unzip_sex} from './modules/Unzip.nf'
 include {Split_fasta as Split_fasta_ref} from './modules/Split_fasta.nf'
 include {Split_fasta as Split_fasta_feat} from './modules/Split_fasta.nf'
+include {Split_fasta as Split_fasta_sex} from './modules/Split_fasta.nf'
 include {Bowtie2 as Bowtie2_ref} from './modules/Bowtie2.nf'
 include {Bowtie2 as Bowtie2_feat} from './modules/Bowtie2.nf'
+include {Bowtie2 as Bowtie2_sex} from './modules/Bowtie2.nf'
 include {Q20 as Q20_ref} from './modules/Q20.nf'
 include {Q20 as Q20_feat} from './modules/Q20.nf'
+include {Q20 as Q20_sex} from './modules/Q20.nf'
+include {VariantCall as VariantCall_ref} from './modules/VariantCall.nf'
+include {VariantCall as VariantCall_sex} from './modules/VariantCall.nf'
 //////// end Modules
 
 
@@ -102,7 +108,7 @@ workflow {
     // This is handled below in the channels section
     ref_name = file("${ref_path}").baseName
     features_name = file("${features_path}").baseName
-
+    sex_name = file("${sex_path}").baseName
     //////// end Variable modification
 
 
@@ -245,6 +251,40 @@ workflow {
     // end fasta features treatment
 
 
+    // fasta sex treatment
+    if(sex_path =~ /.*\.zip$/){
+        Unzip_sex( // warning: it is a process defined above
+            Channel.fromPath(sex_path),
+            sex_path
+        ) 
+        sex_dir_ch = Unzip_sex.out.unzip_ch.flatten()
+    }else{
+        sex_dir_ch = Channel.fromPath("${sex_path}", checkIfExists: false) // in channel because many files 
+    }
+    // is the path a dir or a single file ?
+    sex_dir_ch.branch {
+            dir: it.isDirectory()
+            file: true
+        }.set { branched }
+    // Handle directories: list contents
+    sex_ch_from_dir = branched.dir.flatMap { it.listFiles() } // is it is a dir, then recover all the files
+    // Handle files: pass through
+    sex_ch_from_file = branched.file
+    // Merge back
+    sex_ch = sex_ch_from_dir.mix(sex_ch_from_file)
+    // end is the path a dir or a single file ?
+    sex_ch.toList().branch {
+            single: it.size() == 1
+                return it[0]
+            multiple: true
+                return it
+        }.set { branched }
+    Split_fasta_sex(branched.single)
+    sex_ch2 = Split_fasta_sex.out.split_fasta_ch.mix(branched.multiple.flatten()).flatten()
+    nb_sex = sex_ch2.count()
+    sex_ch3 = sex_ch2.map{file -> name = file.baseName ; tuple(file, name)}
+    // end fasta sex treatment
+
 
 
    // Align fastq against each reference (parallelization)
@@ -263,6 +303,15 @@ workflow {
     )
     copyLogFile('bowtie2_feat_report.log', Bowtie2_feat.out.bowtie2_log_ch, out_path)
 
+   // Align fastq against each reference (parallelization)
+    Bowtie2_sex(
+        fastq_name,
+        fastq_ch.first(),
+        sex_ch3
+    )
+    copyLogFile('bowtie2_sex_report.log', Bowtie2_sex.out.bowtie2_log_ch, out_path)
+
+
 
     Q20_ref(
         Bowtie2_ref.out.bowtie2_ch
@@ -273,6 +322,13 @@ workflow {
         Bowtie2_feat.out.bowtie2_ch
     )
     copyLogFile('q20_feat_report.log', Q20_feat.out.q20_report_ch, out_path)
+
+     Q20_sex(
+        Bowtie2_sex.out.bowtie2_ch
+    )
+    copyLogFile('q20_sex_report.log', Q20_sex.out.q20_report_ch, out_path)
+
+
 
      Coverage(
         Q20_feat.out.q20_ch
@@ -292,35 +348,51 @@ workflow {
     coverage_ch.subscribe{it -> it.copyTo("${out_path}/tsv")}
 
     // Call variants for each reference
-    VariantCall(
+    VariantCall_ref(
         Q20_ref.out.q20_ch
     )
-    copyLogFile('variantCall_report.log', VariantCall.out.variant_call_log_ch, out_path)
+    copyLogFile('variantCall_ref_report.log', VariantCall_ref.out.variant_call_log_ch, out_path)
 
-// Count SNPs for each reference
-    CountSnps(
-        VariantCall.out.vcf_ch
+    // Call variants for each reference
+    VariantCall_sex(
+        Q20_sex.out.q20_ch
     )
-    
-    // Determine genotype based on SNP counts (MATA or MATALPHA)
-    // Find the reference with the lowest SNP count
-    CountSnps.out.snp_count_ch.toSortedList { a, b -> a[1] <=> b[1] }.first().set { best_ref_ch }
-    
-DetermineGenotype(
-        best_ref_ch
+    copyLogFile('variantCall_sex_report.log', VariantCall_sex.out.variant_call_log_ch, out_path)
+
+
+
+    // Count variants for each reference
+    VariantCount(
+        VariantCall_ref.out.vcf_ch
     )
-    copyLogFile('genotype_report.log', DetermineGenotype.out.genotype_report_ch, out_path)
-    
-    // Collect all SNP counts and find best reference
-    Print_snp_count(
-        CountSnps.out.snp_count_ch
+    Print_var_count(
+        VariantCount.out.var_count_ch
         .toSortedList { a, b -> a[1] <=> b[1] }   // ascending
         .map { list ->
             def lines = ["Name\tNb_of_variants"] + list.collect { "${it[0]}\t${it[1]}" }
             lines.join("\n") + "\n"
         }
-        .collectFile(name: 'snp_counts.tsv')
+        .collectFile(name: 'variant_counts.tsv')
     )
+
+/*
+    // Count genotypes for each MaT
+    Sex2tsv(
+        VariantCall_sex.out.vcf_ch
+    )
+    SexCount(
+        Sex2tsv.out.var_count_ch
+    )
+    Print_sex_count(
+        SexCount.out.sex_count_ch
+        .map { list ->
+            def lines = ["Name\t0:0\t1:0\t1:1"] + list.collect { "${it[0]}\t${it[1]}\t${it[2]}\t${it[3]}" }
+            lines.join("\n") + "\n"
+        }
+        .collectFile(name: 'sex.tsv')
+    )
+*/
+
 
     Print_warnings(
         warning_ch.ifEmpty{''}.collectFile(name: "warnings_collect.txt")
@@ -332,7 +404,7 @@ DetermineGenotype(
         template_rmd, // from parameter
         nb_ref, // mandatory
         nb_feat, // mandatory
-        Print_snp_count.out.final_tsv_ch, // just so that print_report wait for all tsv
+        Print_var_count.out.final_tsv_ch, // just so that print_report wait for all tsv
         coverage_ch, 
         Print_warnings.out.final_warning_ch // just so that print_report wait for all warnings // warning_ch.collect().map{it.join('\n\n')}.ifEmpty{'EMPTY'} // concatenate all warnings into a single string // finally, the gathered string is very loong. I prefer to use a file added in /reports/
     )

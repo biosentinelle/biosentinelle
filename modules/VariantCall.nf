@@ -29,8 +29,8 @@ process VariantCall {
     
     # Export VCF to TSV format with base calling information
     echo -e "\\n### Exporting VCF to TSV format\\n" >> variant_call_report.txt
-    bcftools query -H -f '%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t[%GT\t%DP\t%AD]\n' ${ref_name}_variants.vcf.gz > ${ref_name}_variants.tsv 2>&1 | tee -a variant_call_report.txt
-    
+    bcftools query -HH -f '%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t[%GT]\t[%TYPE]\n' ${ref_name}_variants.vcf.gz > ${ref_name}_variants.tsv 2>&1 | tee -a variant_call_report.txt
+    # see https://samtools.github.io/bcftools/bcftools.html#query
     echo -e "\\nVariant calling complete for ${ref_name}" >> variant_call_report.txt
     """
 }

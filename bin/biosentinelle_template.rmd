@@ -153,9 +153,9 @@ The top one is the most probable background of the tested strain:
 ```{r, echo=FALSE, results='asis'}
         cat(paste0('
 &nbsp; <details class="inline"><summary style="color: #1a73e8; font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;">view</summary>
-<span style="color:green">snp_counts.tsv file in the [tsv](./tsv) folder</span>
+<span style="color:green">variant_counts.tsv file in the [tsv](./tsv) folder</span>
         '))
-        tempo_read <- read_tsv_with_dummy("tsv/snp_counts.tsv", row_nb = 10)
+        tempo_read <- read_tsv_with_dummy("tsv/variant_counts.tsv", row_nb = 10)
         df <- tempo_read$df
         truncated_log <- tempo_read$truncated
         if(is.data.frame(df) && truncated_log){

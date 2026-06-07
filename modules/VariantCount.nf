@@ -13,8 +13,9 @@ process VariantCount {
     script:
     """
     echo -e "\\n\\n<br /><br />\\n\\n### VAR Counting for ${ref_name}\\n\\n" > var_count_report.txt
+    
     # Count VARs from VCF
-    VAR_COUNT=\$((\$(bcftools view -H ${vcf_file} 2>/dev/null | wc -l) - 1)
+    VAR_COUNT=\$((\$(bcftools view -H ${vcf_file} 2>/dev/null | wc -l) - 1))
     echo "VARs vs ${ref_name}: \$VAR_COUNT" | tee -a var_count_report.txt
     """
 }

@@ -1,5 +1,5 @@
 
-process Print_snp_count {
+process Print_sex_count {
     label 'bash'
     publishDir path: "${out_path}/tsv", mode: 'copy', pattern: "{*.tsv}", overwrite: false
     cache 'true'
@@ -8,12 +8,12 @@ process Print_snp_count {
     path tsv
 
     output:
-    path "snp_counts.tsv", emit: final_tsv_ch
+    path "sex.tsv", emit: final_sex_ch
 
     script:
     """
     #!/bin/bash -ue
     set -o pipefail
-    cp snp_counts.tsv tempo
+    cp sex.tsv tempo
     """
 }
