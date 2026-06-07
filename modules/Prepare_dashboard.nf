@@ -1,7 +1,7 @@
 process Prepare_dashboard {
     label 'bash'
-    publishDir path: "${out_path}", mode: 'copy', pattern: "dashboard", overwrite: true
-    publishDir path: "${out_path}/reports", mode: 'copy', pattern: "dashboard_report.txt", overwrite: true
+    publishDir path: "${params.out_path}", mode: 'copy', pattern: "dashboard", overwrite: true
+    publishDir path: "${params.out_path}/reports", mode: 'copy', pattern: "dashboard_report.txt", overwrite: true
     cache 'true'
 
     input:
@@ -24,6 +24,6 @@ process Prepare_dashboard {
     cat ${insertions_json} >> dashboard/insertions-data.js
     printf ';\\n' >> dashboard/insertions-data.js
 
-    echo "Dashboard prepared in ${out_path}/dashboard" > dashboard_report.txt
+    echo "Dashboard prepared in ${params.out_path}/dashboard" > dashboard_report.txt
     """
 }

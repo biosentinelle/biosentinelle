@@ -1,7 +1,7 @@
 
 process Split_fasta {
     label 'bash'
-    publishDir path: "${out_path}/reports", mode: 'copy', pattern: "{split_fasta.log}", overwrite: false
+    publishDir path: "${params.out_path}/reports", mode: 'copy', pattern: "{split_fasta.log}", overwrite: false
 
     cache 'true'
 
@@ -43,11 +43,11 @@ process Split_fasta {
     # remove carriage returns
     sed 's/\\r\$//' \${FILENAME} > tempo_file
     # end remove carriage returns
-    # remove \\n in the middle of the sequence 
+    # remove \\n in the middle of the sequence
     awk 'BEGIN{ORS=""}{if(\$0~/^>.*/){s=substr(\$0,1,1); rest=substr(\$0,2); gsub(/[^a-zA-Z0-9]/,"_",rest) ; if(NR>1){print "\\n"} ; if (length(rest) > 100){print s substr(rest,1,100)"\\n"}else{print s rest"\\n"}} else {print \$0 ; next}}END{print "\\n"}' tempo_file > \${FILE}.ttt
     # gsub(/[^a-zA-Z0-9]/,"_",rest) replace any weird chars in the first line by a single underscore
     # \${FILE}.ttt is a trick to do not use .fa and modify the initial file due to the link in the nextflow work folder
-    # end remove \\n in the middle of the sequence 
+    # end remove \\n in the middle of the sequence
 
     TEMPO=\$(wc -l \${FILE}.ttt | cut -f1 -d' ')
     if read -n 1 char <"\${FILE}.ttt"; [[ \$char != ">" || \$TEMPO != 2 ]]; then

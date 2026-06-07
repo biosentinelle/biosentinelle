@@ -1,7 +1,7 @@
 
 process Print_snp_count {
     label 'bash'
-    publishDir path: "${out_path}/tsv", mode: 'copy', pattern: "{*.tsv}", overwrite: false
+    publishDir path: "${params.out_path}/tsv", mode: 'copy', pattern: "{*.tsv}", overwrite: false
     cache 'true'
 
     input:

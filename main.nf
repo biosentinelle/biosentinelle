@@ -69,6 +69,22 @@ workflow {
 
     //////// end Options of nextflow run
 
+    //////// Parameters
+
+    def fastq_path = params.fastq_path
+    def ref_path = params.ref_path
+    def features_path = params.features_path
+    def ylab = params.ylab
+    def system_exec = params.system_exec
+    def out_path = params.out_path
+    def slurm_queue = params.slurm_queue
+    def slurm_qos = params.slurm_qos
+    def add_options = params.add_options
+    def template_rmd_path = params.template_rmd_path
+    def cute_path = params.cute_path
+
+    //////// end Parameters
+
 
     //////// Variables
 
@@ -144,7 +160,7 @@ workflow {
         Unzip_fastq( // warning: it is a process defined above
             Channel.fromPath(fastq_path),
             fastq_path
-        ) 
+        )
         fastq = Unzip_fastq.out.unzip_ch.flatten()
         fastq_name = file("${fastq_path}").baseName
     }else if(fastq_path =~ /^SRR.*/){
@@ -184,10 +200,10 @@ workflow {
         Unzip_ref( // warning: it is a process defined above
             Channel.fromPath(ref_path),
             ref_path
-        ) 
+        )
         ref_dir_ch = Unzip_ref.out.unzip_ch.flatten()
     }else{
-        ref_dir_ch = Channel.fromPath("${ref_path}", checkIfExists: false) // in channel because many files 
+        ref_dir_ch = Channel.fromPath("${ref_path}", checkIfExists: false) // in channel because many files
     }
     // is the path a dir or a single file ?
     ref_dir_ch.branch {
@@ -210,7 +226,7 @@ workflow {
     Split_fasta_ref(branched.single)
     ref_ch2 = Split_fasta_ref.out.split_fasta_ch.mix(branched.multiple.flatten()).flatten()
     nb_ref = ref_ch2.count()
-    ref_ch3 = ref_ch2.map{file -> name = file.baseName ; tuple(file, name)}
+    ref_ch3 = ref_ch2.map{ file -> tuple(file, file.baseName) }
     // end fasta ref treatment
 
 
@@ -219,10 +235,10 @@ workflow {
         Unzip_feat( // warning: it is a process defined above
             Channel.fromPath(features_path),
             features_path
-        ) 
+        )
         feat_dir_ch = Unzip_feat.out.unzip_ch.flatten()
     }else{
-        feat_dir_ch = Channel.fromPath("${features_path}", checkIfExists: false) // in channel because many files 
+        feat_dir_ch = Channel.fromPath("${features_path}", checkIfExists: false) // in channel because many files
     }
     // is the path a dir or a single file ?
     feat_dir_ch.branch {
@@ -245,7 +261,7 @@ workflow {
     Split_fasta_feat(branched.single)
     feat_ch2 = Split_fasta_feat.out.split_fasta_ch.mix(branched.multiple.flatten()).flatten()
     nb_feat = feat_ch2.count()
-    feat_ch3 = feat_ch2.map{file -> name = file.baseName ; tuple(file, name)}
+    feat_ch3 = feat_ch2.map{ file -> tuple(file, file.baseName) }
     // end fasta features treatment
 
 
@@ -305,16 +321,16 @@ workflow {
     CountSnps(
         VariantCall.out.vcf_ch
     )
-    
+
     // Determine genotype based on SNP counts (MATA or MATALPHA)
     // Find the reference with the lowest SNP count
     CountSnps.out.snp_count_ch.toSortedList { a, b -> a[1] <=> b[1] }.first().set { best_ref_ch }
-    
+
 DetermineGenotype(
         best_ref_ch
     )
     copyLogFile('genotype_report.log', DetermineGenotype.out.genotype_report_ch, out_path)
-    
+
     // Collect all SNP counts and find best reference
     Print_snp_count(
         CountSnps.out.snp_count_ch
@@ -346,19 +362,19 @@ DetermineGenotype(
     copyLogFile('dashboard_report.log', Prepare_dashboard.out.dashboard_report_ch, out_path)
 
     Print_report(
-        fastq_name, 
+        fastq_name,
         config_file, // from parameter
         template_rmd, // from parameter
         nb_ref, // mandatory
         nb_feat, // mandatory
         Print_snp_count.out.final_tsv_ch, // just so that print_report wait for all tsv
-        coverage_ch, 
+        coverage_ch,
         Prepare_dashboard.out.dashboard_dir_ch,
         Print_warnings.out.final_warning_ch // just so that print_report wait for all warnings // warning_ch.collect().map{it.join('\n\n')}.ifEmpty{'EMPTY'} // concatenate all warnings into a single string // finally, the gathered string is very loong. I prefer to use a file added in /reports/
     )
 
     Backup(
-        config_file, 
+        config_file,
         log_file
     )
 

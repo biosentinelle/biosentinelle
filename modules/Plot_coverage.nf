@@ -1,8 +1,8 @@
 
 process Plot_coverage { // section 24.6 of the labbook 20200707
-    label 'r_ig_clustering' // see the withLabel: bash in the nextflow config file 
-    publishDir "${out_path}/figures", mode: 'copy', pattern: "{*.png}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
-    // publishDir "${out_path}/reports", mode: 'copy', pattern: "{plot_coverage_report.txt}", overwrite: false // 
+    label 'r_ig_clustering' // see the withLabel: bash in the nextflow config file
+    publishDir "${params.out_path}/figures", mode: 'copy', pattern: "{*.png}", overwrite: false // https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    // publishDir "${params.out_path}/reports", mode: 'copy', pattern: "{plot_coverage_report.txt}", overwrite: false //
     cache 'true'
 
     input:

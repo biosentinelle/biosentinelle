@@ -2,7 +2,7 @@
 process Print_warnings {
     label 'bash'
 
-    publishDir path: "${out_path}/reports", mode: 'copy', pattern: "warnings.txt", overwrite: false
+    publishDir path: "${params.out_path}/reports", mode: 'copy', pattern: "warnings.txt", overwrite: false
     cache 'true'
 
     input:

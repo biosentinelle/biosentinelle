@@ -1,7 +1,7 @@
 process Detect_insertions {
     label 'python'
-    publishDir path: "${out_path}/tsv/insertions", mode: 'copy', pattern: "insertions.json", overwrite: true
-    publishDir path: "${out_path}/reports", mode: 'copy', pattern: "detect_insertions_report.txt", overwrite: true
+    publishDir path: "${params.out_path}/tsv/insertions", mode: 'copy', pattern: "insertions.json", overwrite: true
+    publishDir path: "${params.out_path}/reports", mode: 'copy', pattern: "detect_insertions_report.txt", overwrite: true
     cache 'true'
 
     input:

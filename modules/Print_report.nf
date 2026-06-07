@@ -7,9 +7,9 @@
 
 process Print_report{
     label 'r_ig_clustering'
-    publishDir path: "${out_path}/reports", mode: 'copy', pattern: "{nextflow.config.html}", overwrite: false
-    publishDir path: "${out_path}", mode: 'copy', pattern: "{report.html}", overwrite: false
-    publishDir path: "${out_path}/reports", mode: 'copy', pattern: "{print_report.log}", overwrite: false
+    publishDir path: "${params.out_path}/reports", mode: 'copy', pattern: "{nextflow.config.html}", overwrite: false
+    publishDir path: "${params.out_path}", mode: 'copy', pattern: "{report.html}", overwrite: false
+    publishDir path: "${params.out_path}/reports", mode: 'copy', pattern: "{print_report.log}", overwrite: false
     cache 'true'
 
     input:
@@ -34,8 +34,8 @@ process Print_report{
     set -o pipefail
     cp ${config_file} config_file.txt
     cp ${template_rmd} report_file.rmd
-    if [[ -d "${out_path}/tsv" ]]; then
-        cp -r "${out_path}/tsv" .
+    if [[ -d "${params.out_path}/tsv" ]]; then
+        cp -r "${params.out_path}/tsv" .
     else
         mkdir ./tsv
     fi
@@ -46,7 +46,7 @@ process Print_report{
             output_file = "report.html",
             # list of the variables waiting to be replaced in the rmd file:
             params = list(
-                fastq_name = "${fastq_name}", 
+                fastq_name = "${fastq_name}",
                 nb_ref = ${nb_ref},
                 nb_feat = ${nb_feat},
                 warning_collect = warning_collect
