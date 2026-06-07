@@ -33,6 +33,7 @@ include {Coverage} from './modules/Coverage.nf'
 include {Plot_coverage} from './modules/Plot_coverage.nf'
 include {VariantCall} from './modules/VariantCall.nf'
 include {CountSnps} from './modules/CountSnps.nf'
+include {DetermineGenotype} from './modules/DetermineGenotype.nf'
 include {Print_snp_count} from './modules/Print_snp_count.nf'
 include {Print_warnings} from './modules/Print_warnings.nf'
 include {Print_report} from './modules/Print_report.nf'
@@ -296,10 +297,20 @@ workflow {
     )
     copyLogFile('variantCall_report.log', VariantCall.out.variant_call_log_ch, out_path)
 
-    // Count SNPs for each reference
+// Count SNPs for each reference
     CountSnps(
         VariantCall.out.vcf_ch
     )
+    
+    // Determine genotype based on SNP counts (MATA or MATALPHA)
+    // Find the reference with the lowest SNP count
+    CountSnps.out.snp_count_ch.toSortedList { a, b -> a[1] <=> b[1] }.first().set { best_ref_ch }
+    
+DetermineGenotype(
+        best_ref_ch
+    )
+    copyLogFile('genotype_report.log', DetermineGenotype.out.genotype_report_ch, out_path)
+    
     // Collect all SNP counts and find best reference
     Print_snp_count(
         CountSnps.out.snp_count_ch
