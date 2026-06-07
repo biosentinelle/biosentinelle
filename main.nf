@@ -37,6 +37,7 @@ include {Print_snp_count} from './modules/Print_snp_count.nf'
 include {Print_warnings} from './modules/Print_warnings.nf'
 include {Print_report} from './modules/Print_report.nf'
 include {Backup} from './modules/Backup.nf'
+include {GenotypeMarkers} from './modules/GenotypeMarkers.nf'
 
 //include {CopyLogFile as CopyLogFile_Closest_germline} from './modules/CopyLogFile.nf'
 include {Unzip as Unzip_fastq} from './modules/Unzip.nf'
@@ -266,6 +267,14 @@ workflow {
         Bowtie2_ref.out.bowtie2_ch
     )
     copyLogFile('q20_ref_report.log', Q20_ref.out.q20_report_ch, out_path)
+
+    if(params.markers_tsv?.trim()){
+        GenotypeMarkers(
+            Q20_ref.out.q20_ch,
+            file(params.markers_tsv)
+        )
+        copyLogFile('genotype_markers_report.log', GenotypeMarkers.out.genotype_markers_log_ch, out_path)
+    }
 
      Q20_feat(
         Bowtie2_feat.out.bowtie2_ch
