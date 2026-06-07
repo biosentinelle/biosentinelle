@@ -34,6 +34,7 @@ const viewSlider = document.getElementById("viewSlider");
 const viewValue = document.getElementById("viewValue");
 const plotTarget = document.getElementById("chrIVPlot");
 const modCenter = document.getElementById("modCenter");
+const geneReplaced = document.getElementById("geneReplaced");
 
 function formatInt(value) {
   return Math.round(value).toLocaleString("en-US");
@@ -94,12 +95,18 @@ function positionsFor(element) {
     .flatMap((row) => row.junction_positions || []);
 }
 
-function estimateGapCenter() {
-  const kanRows = state.insertions
-    .filter((row) => row.chromosome === CHR_IV && row.element === "Kan_gene")
-    .sort((a, b) => (b.junction_positions?.length || 0) - (a.junction_positions?.length || 0));
+function primaryInsertion(element) {
+  return state.insertions
+    .filter((row) => row.chromosome === CHR_IV && row.element === element)
+    .sort((a, b) => (b.junction_positions?.length || 0) - (a.junction_positions?.length || 0))[0];
+}
 
-  const best = kanRows[0];
+function primaryKanInsertion() {
+  return primaryInsertion("Kan_gene");
+}
+
+function estimateGapCenter() {
+  const best = primaryKanInsertion();
   if (!best) return Math.floor(CHR_IV_LENGTH / 2);
 
   if (best.left_breakpoint && best.right_breakpoint) {
@@ -108,6 +115,37 @@ function estimateGapCenter() {
 
   if (best.insertion_position) return best.insertion_position;
   return Math.floor(CHR_IV_LENGTH / 2);
+}
+
+function geneLabel(gene) {
+  if (!gene) return "aucune annotation";
+
+  const symbol = gene.symbol || "gène non nommé";
+  const locus = gene.locus ? ` (${gene.locus})` : "";
+  const coords = gene.begin && gene.end ? ` - ${formatInt(gene.begin)}-${formatInt(gene.end)} bp` : "";
+  return `${symbol}${locus}${coords}`;
+}
+
+function updateReplacedGene() {
+  if (!geneReplaced) return;
+
+  geneReplaced.replaceChildren();
+
+  const title = document.createElement("div");
+  title.className = "gene-replaced-title";
+  title.textContent = "Gène remplacé :";
+  geneReplaced.append(title);
+
+  for (const element of ["Kan_gene", "Promotor_VCF"]) {
+    const best = primaryInsertion(element);
+    const label = best ? geneLabel(best.candidate_deleted_gene) : "aucune insertion détectée";
+    const line = document.createElement("div");
+
+    line.className = `gene-replaced-line gene-replaced-line--${element}`;
+    line.textContent = `${element} -> ${label}`;
+
+    geneReplaced.append(line);
+  }
 }
 
 function centeredRegion(center, width) {
@@ -152,6 +190,7 @@ function drawChrIVPlot() {
   if (modCenter) {
     modCenter.textContent = `Centre modification: chrIV:${formatInt(gapCenter)} bp`;
   }
+  updateReplacedGene();
   const { start: regionStart, end: regionEnd } = centeredRegion(gapCenter, state.viewWidth);
   const regionLength = regionEnd - regionStart + 1;
   const kan = binPositions(positionsFor("Kan_gene"), binSize, regionStart, regionEnd);

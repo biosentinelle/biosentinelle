@@ -82,6 +82,29 @@ h2 {
   font-size: 24px;
 }
 
+.gene-replaced {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gene-replaced-title {
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.gene-replaced-line {
+  line-height: 1.35;
+}
+
+.gene-replaced-line--Kan_gene {
+  color: var(--kan);
+}
+
+.gene-replaced-line--Promotor_VCF {
+  color: var(--vcf);
+}
+
 .status {
   min-width: 132px;
   padding: 9px 12px;
@@ -280,6 +303,11 @@ output {
   .dialog-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .mod-center {
+    margin-left: 0;
+    white-space: normal;
   }
 
   .summary {
