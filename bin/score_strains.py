@@ -183,6 +183,8 @@ def score_tools(elements, coverage, min_breadth_depth):
             "breadth": round(breadth, 4), "identity": round(identity, 4),
             "mean_depth": round(mean_depth, 2), "score": score,
             "colour": colour, "present": colour != "red",
+            "origin": element.get("origin", "unknown"),
+            "host_kmer_fraction": element.get("host_kmer_fraction", ""),
         })
     tools.sort(key=lambda tool: (-tool["score"], tool["name"]))
     return tools
@@ -243,8 +245,12 @@ def main():
     if args.tools:
         coverage = load_tsv(args.tool_coverage) if args.tool_coverage else []
         tools = score_tools(load_tsv(args.tools), coverage, 1)
+        # Only foreign elements are counted. A native element covered at full
+        # identity says the strain has its own genome, not that it carries a
+        # cassette, so counting it as present would mean every wild-type sample
+        # reports several tool elements present.
         for tool in tools:
-            if tool["scorable"] == "yes":
+            if tool["scorable"] == "yes" and tool["origin"] != "native":
                 tool_summary[tool["colour"]] += 1
 
     # Depth over the sites that were called, used to tell an off-panel strain
@@ -317,6 +323,26 @@ def main():
                 warnings.append(
                     "%s and %s are not cleanly separated by this panel"
                     % (best["strain_id"], runner_up["strain_id"]))
+    if tools:
+        native_hits = [tool["name"] for tool in tools
+                       if tool["origin"] == "native" and tool["colour"] != "red"]
+        foreign_hits = [tool["name"] for tool in tools
+                        if tool["origin"] != "native" and tool["colour"] != "red"
+                        and tool["scorable"] == "yes"]
+        if native_hits:
+            warnings.append(
+                "%d element(s) scored as covered but are native to the host "
+                "genome (%s). An unmodified strain covers these end to end "
+                "because it carries the native locus, so they are not evidence "
+                "of a cassette and are excluded from the counts. Showing one of "
+                "them as present would need reads spanning the junction with an "
+                "insertion site, or a copy number above one"
+                % (len(native_hits), ", ".join(sorted(set(native_hits)))))
+        if not foreign_hits:
+            warnings.append(
+                "no foreign tool element was detected: no marker, tag, reporter "
+                "or resistance cassette in the database is present in this sample")
+
     if best and best.get("detail_truncated"):
         warnings.append(
             "the per-site tables show %d of %d sites per strain. Every mismatch "
