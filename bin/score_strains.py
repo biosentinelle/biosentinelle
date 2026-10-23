@@ -102,15 +102,30 @@ def score_strains(sites, calls, error_rate, max_detail_sites):
                     log_likelihood += weight * log_mismatch
                 weight_total += weight
 
-            if len(detail) < max_detail_sites:
-                detail.append({
-                    "site_id": site["site_id"], "chrom": site["chrom"],
-                    "pos": int(site["pos"]), "ref": site["ref"], "alt": site["alt"],
-                    "expected": expected, "observed": observed,
-                    "depth": int(call["depth"]) if call else 0,
-                    "alt_fraction": float(call["alt_fraction"]) if call else 0.0,
-                    "match": matched, "weight": weight,
-                })
+            detail.append({
+                "site_id": site["site_id"], "chrom": site["chrom"],
+                "pos": int(site["pos"]), "ref": site["ref"], "alt": site["alt"],
+                "expected": expected, "observed": observed,
+                "depth": int(call["depth"]) if call else 0,
+                "alt_fraction": float(call["alt_fraction"]) if call else 0.0,
+                "match": matched, "weight": weight,
+            })
+
+        # A panel of tens of thousands of sites makes the report unwieldy, so
+        # the detail list is capped. Taking the first N in file order would
+        # quietly drop the mismatches, which are the rows anyone opening the
+        # drill-down is looking for. Everything that is not a plain match is
+        # kept first, and matches fill whatever room is left.
+        detail_total = len(detail)
+        if detail_total > max_detail_sites:
+            interesting = [row for row in detail if row["match"] is not True]
+            plain = [row for row in detail if row["match"] is True]
+            detail = interesting[:max_detail_sites]
+            room = max_detail_sites - len(detail)
+            if room > 0:
+                step = max(len(plain) // room, 1)
+                detail = detail + plain[::step][:room]
+            detail.sort(key=lambda row: (row["chrom"], row["pos"]))
 
         concordance = weight_matching / weight_total if weight_total else 0.0
         results.append({
@@ -119,6 +134,8 @@ def score_strains(sites, calls, error_rate, max_detail_sites):
             "sites_called": matching + mismatching,
             "sites_matching": matching, "sites_mismatching": mismatching,
             "sites_uncovered": uncovered, "sites_het": het,
+            "sites_in_detail": len(detail), "sites_total": detail_total,
+            "detail_truncated": detail_total > len(detail),
             "sites": detail,
         })
 
@@ -190,6 +207,12 @@ def main():
                         help="below this, the best strain is reported as unassigned")
     parser.add_argument("--min-called-fraction", type=float, default=0.25,
                         help="minimum fraction of the panel that must be called")
+    parser.add_argument("--min-discriminating-sites", type=int, default=200,
+                        help="if fewer called sites than this separate the top two "
+                             "strains, the report says the two cannot be told apart "
+                             "confidently, whatever the probability says. Closely "
+                             "related strains such as an S288C derivative and S288C "
+                             "itself routinely fall below it.")
     parser.add_argument("--max-uncovered-fraction", type=float, default=0.15,
                         help="above this fraction of uncovered panel sites, at adequate "
                              "depth, the sample is reported as a strain outside the "
@@ -198,8 +221,12 @@ def main():
                         help="median depth over called sites needed before uncovered "
                              "sites are read as off-panel divergence instead of "
                              "shallow coverage")
-    parser.add_argument("--max-detail-sites", type=int, default=20000,
-                        help="per-strain site rows written into the report")
+    parser.add_argument("--max-detail-sites", type=int, default=5000,
+                        help="per-strain site rows written into the report. Every "
+                             "mismatch and uncovered site is kept regardless; this "
+                             "caps the matching sites, which are the bulk and the "
+                             "least interesting. At 5000 a five strain panel gives a "
+                             "report of a few MB instead of tens.")
     args = parser.parse_args()
 
     if not 0.0 < args.error_rate < 0.5:
@@ -258,10 +285,45 @@ def main():
                 "%d sites show both alleles: the sample may be diploid, a cross or a "
                 "mixed culture, and a single-strain answer may not apply"
                 % best["sites_het"])
-        if len(results) > 1 and results[1]["probability"] > 0.01:
-            warnings.append(
-                "%s and %s are not cleanly separated by this panel"
-                % (best["strain_id"], results[1]["strain_id"]))
+        if len(results) > 1:
+            # How many called sites actually tell the top two apart. The
+            # probability is computed over the whole panel, so two strains that
+            # differ at 20 sites out of 36000 still produce a likelihood ratio
+            # large enough to print as 1.000. That number is only as good as
+            # the assumption that site errors are independent, and they are
+            # not: a mis-assembled region, a panel built from one assembly, or
+            # culture drift all produce correlated errors. Reporting the count
+            # lets the reader judge the call instead of trusting the softmax.
+            runner_up = results[1]
+            discriminating = sum(
+                1 for site in sites
+                if site["exp_" + best["strain_id"]] in ("A", "R")
+                and site["exp_" + runner_up["strain_id"]] in ("A", "R")
+                and site["exp_" + best["strain_id"]] != site["exp_" + runner_up["strain_id"]]
+                and calls.get(site["site_id"], {}).get("call") in ("A", "R"))
+            best["discriminating_sites_vs_next"] = discriminating
+            best["runner_up"] = runner_up["strain_id"]
+            if discriminating < args.min_discriminating_sites:
+                warnings.append(
+                    "only %d called sites distinguish %s from %s. The ranking "
+                    "below separates them, but on so few sites the margin rests "
+                    "on the assumption that errors are independent across sites, "
+                    "which correlated error (assembly, panel construction, "
+                    "culture drift) breaks. Treat this as %s or %s, not as a "
+                    "confident call of %s"
+                    % (discriminating, best["strain_id"], runner_up["strain_id"],
+                       best["strain_id"], runner_up["strain_id"], best["strain_id"]))
+            elif runner_up["probability"] > 0.01:
+                warnings.append(
+                    "%s and %s are not cleanly separated by this panel"
+                    % (best["strain_id"], runner_up["strain_id"]))
+    if best and best.get("detail_truncated"):
+        warnings.append(
+            "the per-site tables show %d of %d sites per strain. Every mismatch "
+            "and uncovered site is included; matching sites are thinned. The "
+            "counts above are over the whole panel, and the complete calls are "
+            "in the site_calls TSV"
+            % (best["sites_in_detail"], best["sites_total"]))
     if any(site.get("assumed_ref") == "yes" for site in sites):
         warnings.append(
             "some panel sites assume the reference allele where a strain's assembly "

@@ -24,15 +24,28 @@ process AssemblyVariants {
     # percent divergence at most, which holds even for SK1 against S288C.
     minimap2 -cx asm5 --cs ${reference} ${assembly} > ${strain}.paf 2>> ${strain}_assembly_variants_report.txt
 
+    # paftools.js call needs the alignments sorted by reference name and start.
     sort -k6,6 -k8,8n ${strain}.paf > ${strain}.sorted.paf
-    paftools.js call -f ${reference} -l 1000 -L 10000 ${strain}.sorted.paf > ${strain}.vcf 2>> ${strain}_assembly_variants_report.txt
 
-    # The regions the assembly actually aligned to. Everything outside is a
-    # region where this strain has no call, which is different from a region
-    # where it carries the reference allele. merge_snp_panels.py uses this to
-    # avoid claiming knowledge it does not have.
-    awk -F'\\t' '\$1 ~ /^R/ {print \$2"\\t"\$3"\\t"\$4}' ${strain}.vcf \\
-        | sort -k1,1 -k2,2n > ${strain}.callable.bed || touch ${strain}.callable.bed
+    # Called twice on purpose. With -f the output is VCF, which is what the
+    # panel builder reads. Without -f it is paftools' own format, whose R lines
+    # give the reference intervals the assembly actually covered; the VCF does
+    # not carry those. Those intervals are what separates "this strain carries
+    # the reference allele here" from "this strain has no call here", and
+    # merge_snp_panels.py needs the difference to avoid claiming knowledge it
+    # does not have.
+    paftools.js call -f ${reference} -l 1000 -L 10000 ${strain}.sorted.paf \\
+        > ${strain}.vcf 2>> ${strain}_assembly_variants_report.txt
+
+    paftools.js call -l 1000 -L 10000 ${strain}.sorted.paf 2>> ${strain}_assembly_variants_report.txt \\
+        | awk -F'\\t' '\$1 == "R" {print \$2"\\t"\$3"\\t"\$4}' \\
+        | sort -k1,1 -k2,2n > ${strain}.callable.bed
+
+    if [ ! -s ${strain}.callable.bed ]; then
+        echo "ERROR: no callable interval extracted for ${strain}" >> ${strain}_assembly_variants_report.txt
+        exit 1
+    fi
+    echo "callable intervals: \$(wc -l < ${strain}.callable.bed)" >> ${strain}_assembly_variants_report.txt
 
     echo "variant lines: \$(grep -vc '^#' ${strain}.vcf)" >> ${strain}_assembly_variants_report.txt
     """

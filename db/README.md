@@ -50,6 +50,49 @@ python3 bin/build_tool_db.py \
 nextflow run build_db.nf -c nextflow.config
 ```
 
-The SNP panels are not committed as sequence; they are generated from the
-assemblies listed in `strains/strains.tsv` so that they can be rebuilt and
-versioned against a named reference.
+The yeast panels are committed so the pipeline runs out of the box, and they
+are fully reproducible: `build_db.nf` regenerates them from the assemblies
+listed in `strains/strains.tsv`. Rebuild them whenever the strain list, the
+reference or `panel_kmer_size` changes, since any of the three invalidates
+every panel.
+
+## Choosing k
+
+The binding constraint is read length, not specificity. A read of length L
+yields L - k + 1 k-mers, so a long k on short reads leaves almost nothing, and
+a single sequencing error destroys what is left. Measured on SRR26617475,
+whose reads are 35 bp:
+
+| k | sites called, of 36694 |
+| :--- | :--- |
+| 31 | 14 |
+| 21 | 34003 |
+
+Specificity is not what limits k for a 12 Mb genome, and `build_snp_panel.py`
+checks it empirically anyway by requiring each probe to occur exactly once in
+the reference. Keep k well below the read length.
+
+## Current yeast panel
+
+Built 2026-10-23 at k=21: 36694 informative sites over BY4742, SK1, W303, Y55
+and S288C. Differences from the reference: W303 8611, SK1 68529, Y55 59853,
+BY4742 241. The W303 figure agrees with the published count of roughly 9500,
+which is the main external check that the alignment settings are right.
+
+Sites that separate each pair:
+
+| pair | sites |
+| :--- | :--- |
+| SK1 vs Y55 | 25514 |
+| SK1 vs W303 | 21789 |
+| W303 vs Y55 | 21473 |
+| SK1 vs S288C | 19277 |
+| Y55 vs S288C | 19154 |
+| W303 vs S288C | 5180 |
+| **BY4742 vs S288C** | **42** |
+
+The last row is the honest limit of this panel. BY4742 is an S288C derivative,
+so the two are separated by a few dozen sites and no amount of sequencing depth
+changes that. `score_strains.py` reports the number of discriminating sites
+alongside the ranking and warns below 200, because a probability computed over
+36694 sites will read as certainty even when the decision rests on 40 of them.

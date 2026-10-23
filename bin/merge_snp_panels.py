@@ -174,8 +174,14 @@ def main():
         row = {"site_id": site_id, "chrom": site["chrom"], "pos": site["pos"],
                "ref": site["ref"], "alt": site["alt"],
                "n_callable_strains": total,
+               # The reference strain is excluded: it carries the reference
+               # allele everywhere by definition, not by assumption, so
+               # counting it here would flag every site and make the warning
+               # meaningless.
                "assumed_ref": "yes" if any(
-                   strain not in site["carriers"] and strain not in callable_regions
+                   strain not in site["carriers"]
+                   and strain not in callable_regions
+                   and strain != args.reference_strain
                    for strain in strains) else "no",
                "weight": round(max(balance, 0.1), 4)}
         for strain in strains:

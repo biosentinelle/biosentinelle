@@ -4,5 +4,12 @@ reference_name	S288C_R64-1-1
 reference_strain	S288C
 reference_source	SGD R64-1-1, dataset/genome_references/test/S288C_reference_sequence_R64-1-1_20110203.fsa
 tool_db_source	dataset/features_test, yeast integrated individual feature FASTA package v1
-panel_built	no
-notes	BY4742 is an S288C derivative and is the hardest strain in the panel to separate from the reference. If the panel cannot tell them apart, the report says so rather than picking one.
+tool_elements	31 unique, 26 scorable, 5 under 100 bp
+panel_built	yes, 2026-10-23
+panel_kmer_size	21
+panel_sites	36694
+panel_strains	BY4742, SK1, W303, Y55, S288C
+variants_vs_reference	W303 8611, SK1 68529, Y55 59853, BY4742 241
+notes	The W303 count agrees with the published figure of roughly 9500 differences from S288C, which is the main external check that the alignment and calling settings are right.
+caveat_BY4742	BY4742 is an S288C derivative and only about 40 called sites separate the two. The report warns whenever the top two strains are separated by fewer than 200 sites, because at that margin the probability depends on site errors being independent, which correlated error breaks.
+caveat_read_length	k must stay well below the read length. The SRR26617475 run has 35 bp reads, where k=31 called 14 sites out of 35263 and k=21 called 34003 of 36694.
