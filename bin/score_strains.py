@@ -190,6 +190,22 @@ def score_tools(elements, coverage, min_breadth_depth):
     return tools
 
 
+def marker_warnings(markers):
+    """What the native marker genotype adds to the warnings."""
+    out = []
+    best = (markers.get("documented_genotype_matches") or [None])[0]
+    if best and best["agree"] == best["compared"]:
+        out.append("native marker genotype %s matches the documented genotype of %s at all "
+                   "%d markers called" % (markers["genotype"], best["strain"], best["compared"]))
+    unsure = [m["gene"] for m in markers["markers"]
+              if m["status"] in ("uncertain", "mixed", "no_data")]
+    if unsure:
+        out.append("native marker(s) %s could not be called as active or inactive; see the "
+                   "marker section for why" % ", ".join(unsure))
+    out.extend("native markers: %s" % limit for limit in markers.get("limits", []))
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -197,6 +213,7 @@ def main():
     parser.add_argument("--calls", required=True, help="per-site allele calls TSV")
     parser.add_argument("--tools", help="tool element manifest TSV")
     parser.add_argument("--tool-coverage", help="per-element coverage TSV")
+    parser.add_argument("--markers", help="marker_genotype.json from genotype_markers.py")
     parser.add_argument("--sample", required=True)
     parser.add_argument("--organism", default="Saccharomyces cerevisiae")
     parser.add_argument("--reference", default="")
@@ -355,6 +372,13 @@ def main():
             "some panel sites assume the reference allele where a strain's assembly "
             "gave no call; rebuild the panel with callable regions to remove this")
 
+    markers = {}
+    if args.markers and os.path.getsize(args.markers) > 2:
+        with open(args.markers) as handle:
+            markers = json.load(handle)
+    if markers.get("markers"):
+        warnings.extend(marker_warnings(markers))
+
     report = {
         "sample": args.sample,
         "generated": datetime.datetime.now().replace(microsecond=0).isoformat(),
@@ -371,6 +395,7 @@ def main():
         "tools": tools,
         "tool_summary": tool_summary,
         "warnings": warnings,
+        "markers": markers,
     }
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)

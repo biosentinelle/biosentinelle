@@ -216,6 +216,7 @@ section { margin: 28px 0; }
 h2 { font-size: 1.2rem; border-bottom: 2px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; }
 h3 { font-size: 1.02rem; margin: 18px 0 6px 0; }
 p.note { color: var(--fg-muted); font-size: 0.87rem; margin: 6px 0 12px 0; }
+.muted { color: var(--fg-muted); font-size: 0.85rem; }
 .banner {
   border: 2px solid var(--alert-border);
   background: var(--alert-bg);
@@ -787,6 +788,85 @@ def render_tools(d):
                      options=options, main_tbl=main_tbl, short_tbl=short_tbl)
 
 
+MARKER_STATUS = {
+    # status -> (colour class, glyph, label); never hue alone
+    "active": ("green", "&#9679;", "active"),
+    "inactive": ("red", "&#9632;", "inactive"),
+    "uncertain": ("orange", "&#9650;", "uncertain"),
+    "mixed": ("orange", "&#9650;", "mixed"),
+    "no_data": ("orange", "&#9650;", "no data"),
+}
+
+
+def marker_row(m):
+    colour, glyph, label = MARKER_STATUS.get(m.get("status"), ("orange", "&#9650;", "?"))
+    alleles = m.get("alleles") or []
+    first = alleles[0] if alleles else {}
+    changes = first.get("coding_events") or []
+    change_text = ", ".join(changes[:6]) + (" (+%d more)" % (len(changes) - 6)
+                                            if len(changes) > 6 else "")
+    detail = [first.get("reason") or m.get("explanation") or ""]
+    detail += m.get("structural") or []
+    detail += m.get("notes") or []
+    if m.get("heterozygous_calls"):
+        detail.append("heterozygous: " + ", ".join(m["heterozygous_calls"][:6]))
+    if len(alleles) > 1:
+        detail.append("second allele: %s, %s %s" % (alleles[1].get("activity"),
+                                                   alleles[1].get("effect"),
+                                                   alleles[1].get("protein_change")))
+    return """      <tr><td><strong>{gene}</strong><br><span class="muted">{sid}</span></td>
+        <td><span class="status {c}"><span class="g">{g}</span>{label}</span></td>
+        <td>{effect}<br><span class="muted">{pchange}</span></td>
+        <td><code>{changes}</code></td>
+        <td>{known}</td>
+        <td>{detail}</td></tr>""".format(
+        gene=esc(m.get("gene")), sid=esc(m.get("systematic_id")), c=colour, g=glyph,
+        label=esc(label), effect=esc((first.get("effect") or "").replace("_", " ")),
+        pchange=esc(first.get("protein_change") or ""), changes=esc(change_text or "none"),
+        known=esc(", ".join(first.get("known_as") or []) or
+                  ("%d catalogued strains" % first["carriers"] if first.get("carriers") else "")),
+        detail="<br>".join(esc(x) for x in detail if x))
+
+
+def render_markers(d):
+    mk = d.get("markers") or {}
+    markers = mk.get("markers") or []
+    if not markers:
+        return ""
+    matches = [m for m in (mk.get("documented_genotype_matches") or [])][:4]
+    match_items = "\n".join(
+        "    <li><strong>{s}</strong>: {a} of {c} markers agree{d}</li>".format(
+            s=esc(m["strain"]), a=m["agree"], c=m["compared"],
+            d=esc(" (" + "; ".join(m["differences"]) + ")") if m["differences"] else "")
+        for m in matches)
+    limits = "\n".join("    <li>{}</li>".format(esc(x)) for x in mk.get("limits") or [])
+    return """<section id="markers">
+  <h2>Native marker genes</h2>
+  <p class="note">The strain's own selection markers, judged by the protein each one encodes. A
+  gene can be fully covered and still inactive (a point mutation such as <code>ura3-1</code>), or
+  carry many SNPs and still be active (a natural form). Loss of function is called from the
+  sequence; a missense form is called only when the allele catalogue of {n} assemblies knows it.</p>
+  <p><strong>Genotype:</strong> <code>{genotype}</code></p>
+  <table>
+    <thead><tr><th>gene</th><th>status</th><th>effect</th><th>coding changes</th>
+      <th>known as</th><th>evidence</th></tr></thead>
+    <tbody>
+{rows}
+    </tbody>
+  </table>
+  <h3>Documented genotypes</h3>
+  <ul>
+{matches}
+  </ul>
+  <h3>Limits</h3>
+  <ul>
+{limits}
+  </ul>
+</section>""".format(n=esc(mk.get("catalogue_assemblies")), genotype=esc(mk.get("genotype")),
+                     rows="\n".join(marker_row(m) for m in markers),
+                     matches=match_items or "    <li>none documented</li>", limits=limits)
+
+
 # --------------------------------------------------------------------------- #
 # document
 # --------------------------------------------------------------------------- #
@@ -808,6 +888,7 @@ def render(d, title):
         render_unassigned(d),
         render_warnings(d),
         render_strains(d),
+        render_markers(d),
         render_tools(d),
         '<footer class="page">BioSentinelle report &mdash; rendered {} by '
         "<code>render_report.py</code>. Self-contained: no network access required."

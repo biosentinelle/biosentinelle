@@ -39,6 +39,7 @@ include {Backup} from './modules/Backup.nf'
 include {KmerScan} from './modules/KmerScan.nf'
 include {ToolDepth; ToolScore} from './modules/ToolScan.nf'
 include {StrainScore; StrainReport} from './modules/StrainID.nf'
+include {MarkerAlign; MarkerGenotype} from './modules/MarkerGenotype.nf'
 
 //include {CopyLogFile as CopyLogFile_Closest_germline} from './modules/CopyLogFile.nf'
 include {Unzip as Unzip_fastq} from './modules/Unzip.nf'
@@ -466,12 +467,48 @@ workflow {
             )
             copyLogFile('tool_score_report.log', ToolScore.out.tool_score_log_ch, out_path)
 
+            // Native marker genes. The tool scan cannot see them: a wild-type
+            // URA3 and a ura3-1 point mutant cover the locus identically.
+            marker_loci = file("${db_dir}/markers/marker_loci.tsv", checkIfExists: false)
+            marker_alleles = file("${db_dir}/markers/marker_alleles.tsv", checkIfExists: false)
+            marker_reference = file("${panel_reference}", checkIfExists: false)
+            if( ! marker_loci.exists() || ! marker_alleles.exists() || ! marker_reference.exists()){
+                warn3 = "\n\nWARNING:\nNO NATIVE MARKER DATABASE IN ${db_dir}/markers, OR panel_reference NOT FOUND.\nNATIVE MARKER GENOTYPING IS SKIPPED.\n"
+                print(warn3)
+                warning_ch = warning_ch.mix(Channel.value(warn3))
+                marker_json_ch = Channel.of('{}').collectFile(name: 'no_markers.json')
+            }else{
+                MarkerAlign(
+                    fastq_name,
+                    fastq_ch.collect(),
+                    marker_reference,
+                    file("${db_dir}/markers/marker_loci.bed", checkIfExists: true)
+                )
+                copyLogFile('marker_align_report.log', MarkerAlign.out.marker_align_log_ch, out_path)
+
+                MarkerGenotype(
+                    fastq_name,
+                    MarkerAlign.out.marker_evidence_ch,
+                    marker_loci,
+                    file("${db_dir}/markers/marker_loci.fasta", checkIfExists: true),
+                    marker_alleles,
+                    file("${db_dir}/markers/documented_genotypes.tsv", checkIfExists: true),
+                    file("${db_dir}/markers/marker_repeats.tsv", checkIfExists: true),
+                    tools_fasta,
+                    tools_manifest,
+                    marker_min_depth
+                )
+                copyLogFile('marker_genotype_report.log', MarkerGenotype.out.marker_genotype_log_ch, out_path)
+                marker_json_ch = MarkerGenotype.out.marker_json_ch
+            }
+
             StrainScore(
                 fastq_name,
                 KmerScan.out.site_calls_ch,
                 panel_sites,
                 tools_manifest,
                 ToolScore.out.tool_coverage_ch,
+                marker_json_ch,
                 organism_name,
                 "${organism_dir}",
                 strain_error_rate,

@@ -13,3 +13,4 @@ commit*
 # nextflow run logs written at the repo root
 main_run.log
 build_db*.log
+__pycache__/

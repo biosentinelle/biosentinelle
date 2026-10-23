@@ -11,6 +11,7 @@ process StrainScore {
     path panel_sites
     path tools_manifest
     path tool_coverage
+    path marker_json
     val organism
     val reference_name
     val error_rate
@@ -29,6 +30,7 @@ process StrainScore {
         --calls ${site_calls} \\
         --tools ${tools_manifest} \\
         --tool-coverage ${tool_coverage} \\
+        --markers ${marker_json} \\
         --sample "${sample_name}" \\
         --organism "${organism}" \\
         --reference "${reference_name}" \\
