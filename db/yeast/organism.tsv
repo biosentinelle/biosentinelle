@@ -1,0 +1,8 @@
+key	value
+organism_name	Saccharomyces cerevisiae
+reference_name	S288C_R64-1-1
+reference_strain	S288C
+reference_source	SGD R64-1-1, dataset/genome_references/test/S288C_reference_sequence_R64-1-1_20110203.fsa
+tool_db_source	dataset/features_test, yeast integrated individual feature FASTA package v1
+panel_built	no
+notes	BY4742 is an S288C derivative and is the hardest strain in the panel to separate from the reference. If the panel cannot tell them apart, the report says so rather than picking one.

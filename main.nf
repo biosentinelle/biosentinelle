@@ -28,8 +28,6 @@ include {reportEmptyProcess; copyLogFile} from './modules/Functions.nf'
 include {Unzip} from './modules/Unzip.nf'
 include {WorkflowParam} from './modules/WorkflowParam.nf'
 include {Fastq_dump} from './modules/Fastq_dump.nf'
-include {Coverage} from './modules/Coverage.nf'
-include {Plot_coverage} from './modules/Plot_coverage.nf'
 include {VariantCount} from './modules/VariantCount.nf'
 include {Sex2tsv} from './modules/Sex2tsv.nf'
 include {SexCount} from './modules/SexCount.nf'
@@ -38,6 +36,9 @@ include {Print_sex_count} from './modules/Print_sex_count.nf'
 include {Print_warnings} from './modules/Print_warnings.nf'
 include {Print_report} from './modules/Print_report.nf'
 include {Backup} from './modules/Backup.nf'
+include {KmerScan} from './modules/KmerScan.nf'
+include {ToolDepth; ToolScore} from './modules/ToolScan.nf'
+include {StrainScore; StrainReport} from './modules/StrainID.nf'
 
 //include {CopyLogFile as CopyLogFile_Closest_germline} from './modules/CopyLogFile.nf'
 include {Unzip as Unzip_fastq} from './modules/Unzip.nf'
@@ -50,11 +51,16 @@ include {Split_fasta as Split_fasta_sex} from './modules/Split_fasta.nf'
 include {Bowtie2 as Bowtie2_ref} from './modules/Bowtie2.nf'
 include {Bowtie2 as Bowtie2_feat} from './modules/Bowtie2.nf'
 include {Bowtie2 as Bowtie2_sex} from './modules/Bowtie2.nf'
+include {Bowtie2 as Bowtie2_tools} from './modules/Bowtie2.nf'
 include {Q20 as Q20_ref} from './modules/Q20.nf'
 include {Q20 as Q20_feat} from './modules/Q20.nf'
 include {Q20 as Q20_sex} from './modules/Q20.nf'
 include {VariantCall as VariantCall_ref} from './modules/VariantCall.nf'
 include {VariantCall as VariantCall_sex} from './modules/VariantCall.nf'
+include {Coverage as Coverage_feat} from './modules/Coverage.nf'
+include {Coverage as Coverage_sex} from './modules/Coverage.nf'
+include {Plot_coverage as Plot_coverage_feat} from './modules/Plot_coverage.nf'
+include {Plot_coverage as Plot_coverage_sex} from './modules/Plot_coverage.nf'
 //////// end Modules
 
 
@@ -329,23 +335,43 @@ workflow {
     copyLogFile('q20_sex_report.log', Q20_sex.out.q20_report_ch, out_path)
 
 
-
-     Coverage(
+     Coverage_feat(
         Q20_feat.out.q20_ch
     )
-    copyLogFile('coverage_report.log', Coverage.out.cov_report_ch, out_path)
+    copyLogFile('coverage_feat_report.log', Coverage_feat.out.cov_report_ch, out_path)
 
 
-     Plot_coverage(
-        Coverage.out.cov_ch,
+     Plot_coverage_feat(
+        Coverage_feat.out.cov_ch,
         Q20_feat.out.q20_bef_read_nb_ch,
         Q20_feat.out.q20_after_read_nb_ch,
         ylab,
         cute_file
     )
-    copyLogFile('coverage_report.log', Plot_coverage.out.plot_cov_report_ch, out_path)
-    coverage_ch = Plot_coverage.out.cov_tsv_ch.collectFile(name: "coverage.tsv", skip: 1, keepHeader: true)
-    coverage_ch.subscribe{it -> it.copyTo("${out_path}/tsv")}
+    copyLogFile('coverage_feat_report.log', Plot_coverage_feat.out.plot_cov_report_ch, out_path)
+    coverage_feat_ch = Plot_coverage_feat.out.cov_tsv_ch.collectFile(name: "coverage_feat.tsv", skip: 1, keepHeader: true)
+    coverage_feat_ch.subscribe{it -> it.copyTo("${out_path}/tsv")}
+
+
+     Coverage_sex(
+        Q20_sex.out.q20_ch
+    )
+    copyLogFile('coverage_sex_report.log', Coverage_sex.out.cov_report_ch, out_path)
+
+
+     Plot_coverage_sex(
+        Coverage_sex.out.cov_ch,
+        Q20_sex.out.q20_bef_read_nb_ch,
+        Q20_sex.out.q20_after_read_nb_ch,
+        ylab,
+        cute_file
+    )
+    copyLogFile('coverage_sex_report.log', Plot_coverage_sex.out.plot_cov_report_ch, out_path)
+    coverage_sex_ch = Plot_coverage_sex.out.cov_tsv_ch.collectFile(name: "coverage_sex.tsv", skip: 1, keepHeader: true)
+    coverage_sex_ch.subscribe{it -> it.copyTo("${out_path}/tsv")}
+
+
+
 
     // Call variants for each reference
     VariantCall_ref(
@@ -394,6 +420,71 @@ workflow {
 */
 
 
+    // Strain identity branch. It is independent of the coverage and variant
+    // counting above: the panel carries both allele k-mers, so the sample is
+    // never variant called, and the tool elements are scored against the
+    // database rather than against whatever was put in features_path.
+    if("${strain_id_on}" == "TRUE"){
+        db_dir = "${db_path}/${organism_dir}"
+        panel_sites = file("${db_dir}/panels/panel_sites.tsv", checkIfExists: false)
+        panel_kmers = file("${db_dir}/panels/panel_kmers.tsv", checkIfExists: false)
+        tools_fasta = file("${db_dir}/tools/tools.fasta", checkIfExists: true)
+        tools_manifest = file("${db_dir}/tools/tools.tsv", checkIfExists: true)
+
+        if( ! panel_sites.exists() || ! panel_kmers.exists()){
+            warn2 = "\n\nWARNING:\nNO SNP PANEL IN ${db_dir}/panels.\nSTRAIN RANKING IS SKIPPED. RUN build_db.nf FIRST.\n"
+            print(warn2)
+            warning_ch = warning_ch.mix(Channel.value(warn2))
+        }else{
+            KmerScan(
+                fastq_name,
+                fastq_ch.first(),
+                panel_kmers,
+                kmer_max_reads,
+                kmer_min_depth
+            )
+            copyLogFile('kmer_scan_report.log', KmerScan.out.kmer_scan_log_ch, out_path)
+
+            Bowtie2_tools(
+                fastq_name,
+                fastq_ch.first(),
+                Channel.value(tuple(tools_fasta, "tools"))
+            )
+            copyLogFile('bowtie2_tools_report.log', Bowtie2_tools.out.bowtie2_log_ch, out_path)
+
+            ToolDepth(
+                Bowtie2_tools.out.bowtie2_ch
+            )
+            copyLogFile('tool_depth_report.log', ToolDepth.out.tool_depth_log_ch, out_path)
+
+            ToolScore(
+                ToolDepth.out.tool_depth_ch,
+                tools_manifest
+            )
+            copyLogFile('tool_score_report.log', ToolScore.out.tool_score_log_ch, out_path)
+
+            StrainScore(
+                fastq_name,
+                KmerScan.out.site_calls_ch,
+                panel_sites,
+                tools_manifest,
+                ToolScore.out.tool_coverage_ch,
+                organism_name,
+                "${organism_dir}",
+                strain_error_rate,
+                min_concordance
+            )
+            copyLogFile('strain_score_report.log', StrainScore.out.strain_score_log_ch, out_path)
+
+            StrainReport(
+                fastq_name,
+                StrainScore.out.strain_json_ch
+            )
+        }
+    }
+    // end Strain identity branch
+
+
     Print_warnings(
         warning_ch.ifEmpty{''}.collectFile(name: "warnings_collect.txt")
     )
@@ -405,7 +496,7 @@ workflow {
         nb_ref, // mandatory
         nb_feat, // mandatory
         Print_var_count.out.final_tsv_ch, // just so that print_report wait for all tsv
-        coverage_ch, 
+        coverage_feat_ch, 
         Print_warnings.out.final_warning_ch // just so that print_report wait for all warnings // warning_ch.collect().map{it.join('\n\n')}.ifEmpty{'EMPTY'} // concatenate all warnings into a single string // finally, the gathered string is very loong. I prefer to use a file added in /reports/
     )
 

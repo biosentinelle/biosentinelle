@@ -1,0 +1,5 @@
+strain	assembly	notes
+W303	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/W303.asm01.HP0.nuclear_genome.tidy.fa	close to S288C, expect a small specific set of differences
+SK1	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/SK1.asm01.HP0.nuclear_genome.tidy.fa	distant from S288C, expect many differences
+BY4742	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/BY4742.asm01.HP0.nuclear_genome.tidy.fa	S288C derivative, included to test the hardest case
+Y55	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Y55.asm01.HP0.nuclear_genome.tidy.fa	distant lab strain
