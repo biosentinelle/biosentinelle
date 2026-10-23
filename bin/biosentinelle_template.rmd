@@ -179,9 +179,9 @@ The table below indicates the max and mean coverage, meaning nb of reads coverin
 ```{r, echo=FALSE, results='asis'}
         cat(paste0('
 &nbsp; <details class="inline"><summary style="color: #1a73e8; font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;">view</summary>
-<span style="color:green">coverage.tsv file in the [tsv](./tsv) folder</span>
+<span style="color:green">coverage_feat.tsv file in the [tsv](./tsv) folder</span>
         '))
-        tempo_read <- read_tsv_with_dummy("tsv/coverage.tsv", row_nb = 10)
+        tempo_read <- read_tsv_with_dummy("tsv/coverage_feat.tsv", row_nb = 10)
         df <- tempo_read$df
         if(nrow(df) > 1){
             df <- df[order(df$MEAN, decreasing = TRUE), ]
