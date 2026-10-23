@@ -10,7 +10,7 @@ process KmerScan {
     val sample_name
     path fastq
     path panel_kmers
-    val max_reads
+    val max_bases
     val min_depth
 
     output:
@@ -25,7 +25,7 @@ process KmerScan {
         --kmers ${panel_kmers} \\
         --reads ${fastq} \\
         --out site_calls.tsv \\
-        --max-reads ${max_reads} \\
+        --max-bases ${max_bases} \\
         --min-depth ${min_depth} |& tee -a kmer_scan_report.txt
     """
 }

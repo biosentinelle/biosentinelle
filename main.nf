@@ -436,11 +436,14 @@ workflow {
             print(warn2)
             warning_ch = warning_ch.mix(Channel.value(warn2))
         }else{
+            // Every fastq file, not just the first. The k-mer scan does not use
+            // pairing, so the second mate is free depth: on SRR26617475 one mate
+            // gives about 11x and both give 23x.
             KmerScan(
                 fastq_name,
-                fastq_ch.first(),
+                fastq_ch.collect(),
                 panel_kmers,
-                kmer_max_reads,
+                kmer_max_bases,
                 kmer_min_depth
             )
             copyLogFile('kmer_scan_report.log', KmerScan.out.kmer_scan_log_ch, out_path)

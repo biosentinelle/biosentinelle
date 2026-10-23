@@ -13,10 +13,12 @@ for a subsampled run and for the yeast proof of concept, and too slow for a
 deep whole-genome sample scanned end to end. Two ways out, in order of
 preference:
 
-  * --max-reads  Subsample. Strain identity does not need deep coverage: a few
-    hundred thousand reads already give several-fold coverage of a 12 Mb genome,
-    and the panel is scored on thousands of sites, so sampling error averages
-    out. This is the default behaviour.
+  * --max-bases  Subsample to a number of bases. Coverage, not read count, is
+    what decides whether a site gets called, and read length varies by an order
+    of magnitude between platforms: 400000 reads is 60 Mbp at 150 bp and 14 Mbp
+    at 35 bp, which is 5x and 1.2x on a 12 Mb genome. Capping by reads silently
+    produces an unusable scan on short-read data, so the cap is in bases.
+    --max-reads still exists and still works, but prefer --max-bases.
 
   * --jellyfish  Hand the counting to jellyfish when it is installed. The panel
     k-mers are then queried against its database instead of being counted here.
@@ -51,9 +53,10 @@ def opener(path):
     return gzip.open(path, "rt") if path.endswith(".gz") else open(path)
 
 
-def iter_sequences(paths, max_reads):
-    """Yield read sequences from FASTQ or FASTA inputs, stopping at max_reads."""
+def iter_sequences(paths, max_reads, max_bases=0):
+    """Yield read sequences from FASTQ or FASTA inputs, stopping at either cap."""
     emitted = 0
+    emitted_bases = 0
     for path in paths:
         with opener(path) as handle:
             first = handle.readline()
@@ -73,7 +76,10 @@ def iter_sequences(paths, max_reads):
                         break
                     yield sequence
                     emitted += 1
+                    emitted_bases += len(sequence)
                     if max_reads and emitted >= max_reads:
+                        return
+                    if max_bases and emitted_bases >= max_bases:
                         return
             else:
                 chunks = []
@@ -81,9 +87,13 @@ def iter_sequences(paths, max_reads):
                     line = line.strip()
                     if line.startswith(">"):
                         if chunks:
-                            yield "".join(chunks).upper()
+                            sequence = "".join(chunks).upper()
+                            yield sequence
                             emitted += 1
+                            emitted_bases += len(sequence)
                             if max_reads and emitted >= max_reads:
+                                return
+                            if max_bases and emitted_bases >= max_bases:
                                 return
                         chunks = []
                     elif line:
@@ -92,10 +102,10 @@ def iter_sequences(paths, max_reads):
                     yield "".join(chunks).upper()
 
 
-def count_python(paths, wanted, k, max_reads, progress_every):
+def count_python(paths, wanted, k, max_reads, progress_every, max_bases=0):
     counts = dict.fromkeys(wanted, 0)
     bases = 0
-    for index, sequence in enumerate(iter_sequences(paths, max_reads), start=1):
+    for index, sequence in enumerate(iter_sequences(paths, max_reads, max_bases), start=1):
         bases += len(sequence)
         # Reads with ambiguous bases are split: an N can never be part of a
         # panel k-mer, and skipping the whole read would bias against sites in
@@ -143,8 +153,16 @@ def main():
                         help="total allele count needed to call a site (default 3)")
     parser.add_argument("--min-allele-fraction", type=float, default=0.8,
                         help="fraction of reads needed to call a homozygous allele")
-    parser.add_argument("--max-reads", type=int, default=400000,
-                        help="subsample this many reads, 0 to use all (default 400000)")
+    parser.add_argument("--max-bases", type=int, default=0,
+                        help="stop after this many bases, 0 to use all (the default). "
+                             "Prefer this over --max-reads: it is coverage that "
+                             "decides whether a site is called, and bases are the "
+                             "unit of coverage. For a 12 Mb genome, 300000000 is "
+                             "about 25x, which is ample.")
+    parser.add_argument("--max-reads", type=int, default=0,
+                        help="stop after this many reads, 0 to use all (the default). "
+                             "Kept for convenience, but a read cap means different "
+                             "coverage on different platforms")
     parser.add_argument("--jellyfish", action="store_true",
                         help="count with jellyfish instead of in Python")
     parser.add_argument("--threads", type=int, default=4)
@@ -172,7 +190,7 @@ def main():
                                         args.hash_size, args.workdir)
     else:
         counts, bases = count_python(args.reads, wanted, k, args.max_reads,
-                                     args.progress_every)
+                                     args.progress_every, args.max_bases)
         sys.stderr.write("scanned %.1f Mbp\n" % (bases / 1e6))
 
     rows = []
@@ -209,8 +227,11 @@ def main():
     sys.stderr.write("calls: %s\n" % ", ".join(
         "%s=%d" % (call, tally[call]) for call in sorted(tally)))
     if tally.get("?", 0) > len(rows) * 0.5:
-        sys.stderr.write("warning: over half the panel is below --min-depth; "
-                         "raise --max-reads or lower --min-depth\n")
+        sys.stderr.write(
+            "warning: over half the panel is below --min-depth after %.1f Mbp. "
+            "Either the scan was capped too low (raise --max-bases, 0 scans "
+            "everything), the run is too shallow, or k is too close to the read "
+            "length, which leaves too few k-mers per read\n" % (bases / 1e6))
     return 0
 
 
