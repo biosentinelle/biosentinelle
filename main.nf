@@ -529,6 +529,27 @@ workflow {
         warning_ch.ifEmpty{''}.collectFile(name: "warnings_collect.txt")
     )
 
+    // Database files summarized in report.html. Only those that exist are
+    // staged; without any (strain identity off, or no database built) a
+    // placeholder keeps the input filled and the report says so.
+    db_summary_files = []
+    if("${strain_id_on}" == "TRUE"){
+        db_summary_files = [
+            "organism.tsv",
+            "strains/strains.tsv",
+            "panels/panel_sites.tsv",
+            "markers/marker_loci.tsv",
+            "markers/marker_loci.fasta",
+            "tools/tools.tsv",
+            "tools/tools.fasta"
+        ].collect{ file("${db_path}/${organism_dir}/${it}") }.findAll{ it.exists() }
+    }
+    if(db_summary_files.size() == 0){
+        db_summary_ch = Channel.of('').collectFile(name: 'no_db.txt')
+    }else{
+        db_summary_ch = Channel.value(db_summary_files)
+    }
+
     Print_report(
         fastq_name, 
         config_file, // from parameter
@@ -536,7 +557,8 @@ workflow {
         nb_ref, // mandatory
         nb_feat, // mandatory
         Print_var_count.out.final_tsv_ch, // just so that print_report wait for all tsv
-        coverage_feat_ch, 
+        coverage_feat_ch,
+        db_summary_ch, // strain identity database files summarized in the report
         Print_warnings.out.final_warning_ch // just so that print_report wait for all warnings // warning_ch.collect().map{it.join('\n\n')}.ifEmpty{'EMPTY'} // concatenate all warnings into a single string // finally, the gathered string is very loong. I prefer to use a file added in /reports/
     )
 

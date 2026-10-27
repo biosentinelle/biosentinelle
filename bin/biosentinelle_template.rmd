@@ -199,6 +199,168 @@ The table below indicates the max and mean coverage, meaning nb of reads coverin
         ')
 ```
 
+### Database used
+
+```{r, echo=FALSE}
+        # helpers for the database summary: the tables are written as raw html (```{=html} blocks) so that pandoc leaves the sequences and links untouched
+        db_dir <- "db_summary"
+        db_exists <- function(x){file.exists(file.path(db_dir, x)) && file.info(file.path(db_dir, x))$size > 0}
+        db_read_tsv <- function(x){
+            read.delim(file.path(db_dir, x), header = TRUE, sep = "\t", quote = "", comment.char = "", colClasses = "character", check.names = FALSE)
+        }
+        db_read_fasta <- function(x){
+            lines <- readLines(file.path(db_dir, x), warn = FALSE)
+            head_idx <- grep("^>", lines)
+            ids <- sub("^>(\\S+).*$", "\\1", lines[head_idx])
+            ends <- c(head_idx[-1] - 1, length(lines))
+            seqs <- mapply(function(s, e){if(e > s){paste(lines[(s + 1):e], collapse = "")}else{""}}, head_idx, ends)
+            setNames(gsub("\\s", "", seqs), ids)
+        }
+        db_escape <- function(x){
+            x <- gsub("&", "&amp;", x, fixed = TRUE)
+            x <- gsub("<", "&lt;", x, fixed = TRUE)
+            x <- gsub(">", "&gt;", x, fixed = TRUE)
+            gsub("\"", "&quot;", x, fixed = TRUE)
+        }
+        db_link <- function(url, text){paste0('<a href="', db_escape(url), '" target="_blank">', db_escape(text), '</a>')}
+        # one sequence, 60 bases per line, in a collapsible block
+        db_seq_view <- function(seq, label){
+            if(is.na(seq) || seq == ""){return("<i>not in the fasta file</i>")}
+            starts <- seq(1, nchar(seq), by = 60)
+            wrapped <- paste(substring(seq, starts, pmin(starts + 59, nchar(seq))), collapse = "\n")
+            paste0('<details><summary style="color: #1a73e8; cursor: pointer;">', db_escape(label), '</summary><pre style="white-space: pre; font-size: 0.8em; max-height: 300px; overflow: auto;">', wrapped, '</pre></details>')
+        }
+        # df cells are html already, column names are not
+        db_html_table <- function(df){
+            df[] <- lapply(df, as.character) # otherwise apply() pads the numbers with spaces
+            head <- paste0("<tr>", paste0("<th>", db_escape(names(df)), "</th>", collapse = ""), "</tr>")
+            rows <- apply(df, 1, function(r){paste0("<tr>", paste0("<td>", r, "</td>", collapse = ""), "</tr>")})
+            paste0('<table class="table table-condensed table-striped" style="font-size: 0.9em;"><thead>', head, '</thead><tbody>', paste(rows, collapse = ""), '</tbody></table>')
+        }
+        db_view <- function(file_txt, table_html){
+            cat(paste0('\n\n```{=html}\n&nbsp; <details class="inline"><summary style="color: #1a73e8; font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;">view</summary>\n<span style="color:green">', file_txt, ':</span><br><br>\n', table_html, '\n<br>\n</details>\n```\n\n'))
+        }
+        db_none <- function(what){cat(paste0('<span style="color:grey;font-style:italic;">', what, ' not available in this run (strain identity off, or database not built).</span>\n\n'))}
+        organism <- NULL
+        if(db_exists("organism.tsv")){
+            organism <- db_read_tsv("organism.tsv")
+            organism <- setNames(organism$value, organism$key)
+        }
+```
+
+```{r, echo=FALSE, results='asis'}
+        if( ! is.null(organism)){
+            cat(paste0("Organism: <i>", db_escape(organism["organism_name"]), "</i>. Reference genome: ", db_escape(organism["reference_name"]), ".<br><br>\n\n"))
+        }else{
+            db_none("Database description (organism.tsv)")
+        }
+```
+
+#### Strains
+
+```{r, echo=FALSE, results='asis'}
+        if(db_exists("panel_sites.tsv")){
+            sites <- db_read_tsv("panel_sites.tsv")
+            exp_cols <- grep("^exp_", names(sites), value = TRUE)
+            strain_names <- sub("^exp_", "", exp_cols)
+            calls <- as.matrix(sites[, exp_cols, drop = FALSE]) # R reference allele, A alternative allele, ? not called in that strain
+            all_known <- rowSums(calls == "?") == 0
+            n_alt <- rowSums(calls == "A")
+            n_ref <- rowSums(calls == "R")
+            notes <- setNames(rep("", length(strain_names)), strain_names)
+            if(db_exists("strains.tsv")){
+                strains <- db_read_tsv("strains.tsv")
+                notes[intersect(strains$strain, strain_names)] <- strains$notes[match(intersect(strains$strain, strain_names), strains$strain)]
+            }
+            if( ! is.null(organism) && organism["reference_strain"] %in% strain_names){
+                notes[organism["reference_strain"]] <- paste0("reference genome (", organism["reference_name"], "), carries the reference allele at every site")
+            }
+            # specific: the strain is the only one of the panel to carry its allele, every strain being called at the site
+            df <- data.frame(
+                "Strain" = db_escape(strain_names),
+                "Specific SNPs" = sapply(seq_along(strain_names), function(i){sum(all_known & ((calls[, i] == "A" & n_alt == 1) | (calls[, i] == "R" & n_ref == 1)))}),
+                "Sites with the alternative allele" = colSums(calls == "A"),
+                "Sites not called" = colSums(calls == "?"),
+                "Notes" = db_escape(notes),
+                check.names = FALSE,
+                stringsAsFactors = FALSE
+            )
+            cat(paste0("Number of yeast strains available for identification: <b>", length(strain_names), "</b> (", db_escape(paste(strain_names, collapse = ", ")), "), over <b>", nrow(sites), "</b> informative SNP sites.<br>\n"))
+            cat("A specific SNP is a site where the strain is the only one of the panel to carry its allele, all strains being called there.<br>\n")
+            db_view("panel_sites.tsv and strains.tsv files of the database", db_html_table(df))
+        }else{
+            db_none("SNP panel (panel_sites.tsv)")
+        }
+```
+
+#### Native markers
+
+```{r, echo=FALSE, results='asis'}
+        if(db_exists("marker_loci.tsv")){
+            loci <- db_read_tsv("marker_loci.tsv")
+            seqs <- if(db_exists("marker_loci.fasta")){db_read_fasta("marker_loci.fasta")}else{character(0)}
+            # flanks in lower case, ORF in upper case (orf_start and orf_end are 0-based, end excluded, in the gene orientation)
+            locus_seq <- sapply(seq_len(nrow(loci)), function(i){
+                s <- seqs[loci$locus_id[i]]
+                if(is.na(s)){return(NA)}
+                a <- as.integer(loci$orf_start[i])
+                b <- as.integer(loci$orf_end[i])
+                paste0(tolower(substr(s, 1, a)), toupper(substr(s, a + 1, b)), tolower(substr(s, b + 1, nchar(s))))
+            })
+            sys_id <- loci$systematic_id
+            df <- data.frame(
+                "Gene" = ifelse(loci$ensembl_name == loci$gene, db_escape(loci$gene), paste0(db_escape(loci$gene), " (", db_escape(loci$ensembl_name), ")")),
+                "Systematic ID" = db_escape(sys_id),
+                "Links" = paste(
+                    db_link(paste0("https://www.yeastgenome.org/locus/", sys_id), "SGD"),
+                    db_link(paste0("https://www.ncbi.nlm.nih.gov/gene/?term=", sys_id), "NCBI Gene"),
+                    db_link(paste0("https://www.ensembl.org/Saccharomyces_cerevisiae/Gene/Summary?g=", sys_id), "Ensembl"),
+                    sep = " | "
+                ),
+                "Location" = db_escape(paste0(sub("^ref\\|(.*)\\|$", "\\1", loci$chrom), ":", loci$genome_start, "-", loci$genome_end, " (", loci$strand, ")")),
+                "ORF (bp)" = loci$orf_length,
+                "Protein (aa)" = loci$protein_length,
+                "Loss of function phenotype" = db_escape(loci$loss_of_function_phenotype),
+                "Sequence" = sapply(seq_len(nrow(loci)), function(i){db_seq_view(locus_seq[i], paste0("view (", nchar(locus_seq[i]), " bp)"))}),
+                check.names = FALSE,
+                stringsAsFactors = FALSE
+            )
+            cat(paste0("Number of native markers: <b>", nrow(loci), "</b> (", db_escape(paste(loci$gene, collapse = ", ")), ").<br>\n"))
+            cat("Sequences are the locus in the gene orientation: ORF in upper case, 1 kb flanks in lower case.<br>\n")
+            db_view("marker_loci.tsv and marker_loci.fasta files of the database", db_html_table(df))
+        }else{
+            db_none("Native marker database (marker_loci.tsv)")
+        }
+```
+
+#### Biomolecular tools
+
+```{r, echo=FALSE, results='asis'}
+        if(db_exists("tools.tsv")){
+            tools <- db_read_tsv("tools.tsv")
+            seqs <- if(db_exists("tools.fasta")){db_read_fasta("tools.fasta")}else{character(0)}
+            tool_seq <- unname(seqs[tools$element_id])
+            df <- data.frame(
+                "Element ID" = db_escape(tools$element_id),
+                "Name" = db_escape(tools$name),
+                "Class" = db_escape(tools$element_class),
+                "Origin" = db_escape(tools$origin),
+                "Length (bp)" = tools$length_bp,
+                "Scorable" = db_escape(tools$scorable),
+                "Source plasmid" = ifelse(tools$source_page == "", db_escape(tools$source_plasmid), db_link(tools$source_page, tools$source_plasmid)),
+                "Links" = ifelse(is.na(tool_seq), "", db_link(paste0("https://blast.ncbi.nlm.nih.gov/Blast.cgi?PROGRAM=blastn&PAGE_TYPE=BlastSearch&DATABASE=nt&QUERY=", tool_seq), "NCBI BLAST")),
+                "Sequence" = sapply(tool_seq, function(s){db_seq_view(s, paste0("view (", nchar(s), " bp)"))}),
+                check.names = FALSE,
+                stringsAsFactors = FALSE
+            )
+            cat(paste0("Number of biomolecular tool elements: <b>", nrow(tools), "</b> (", sum(tools$origin == "foreign"), " foreign, ", sum(tools$origin == "native"), " native to the host genome; ", sum(tools$scorable == "yes"), " long enough to be scored).<br>\n"))
+            cat("Native elements are host sequence: a wild-type strain covers them, so they are not evidence of engineering. Tool elements are synthetic constructs without a gene record: each is linked to its source plasmid page and to a NCBI BLAST search of its sequence.<br>\n")
+            db_view("tools.tsv and tools.fasta files of the database", db_html_table(df))
+        }else{
+            db_none("Biomolecular tool database (tools.tsv)")
+        }
+```
+
 ###  Backup
 
 See the [reports](./reports) folder for all the details of the analysis, including:<br><ul><li>**nextflow.config** Parameter settings.<br></li><li>**Run_info.txt** Variables.<br></li><li>**trace.txt** and **timeline.html** Date of execution, CPU% and Memory requirement for each step.<br></ul>
