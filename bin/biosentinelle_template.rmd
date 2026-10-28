@@ -259,37 +259,39 @@ The table below indicates the max and mean coverage, meaning nb of reads coverin
 #### Strains
 
 ```{r, echo=FALSE, results='asis'}
-        if(db_exists("panel_sites.tsv")){
-            sites <- db_read_tsv("panel_sites.tsv")
-            exp_cols <- grep("^exp_", names(sites), value = TRUE)
-            strain_names <- sub("^exp_", "", exp_cols)
-            calls <- as.matrix(sites[, exp_cols, drop = FALSE]) # R reference allele, A alternative allele, ? not called in that strain
-            all_known <- rowSums(calls == "?") == 0
-            n_alt <- rowSums(calls == "A")
-            n_ref <- rowSums(calls == "R")
-            notes <- setNames(rep("", length(strain_names)), strain_names)
-            if(db_exists("strains.tsv")){
-                strains <- db_read_tsv("strains.tsv")
-                notes[intersect(strains$strain, strain_names)] <- strains$notes[match(intersect(strains$strain, strain_names), strains$strain)]
+        if(db_exists("panel_sites.tsv.gz") && db_exists("panel_strains.tsv")){
+            # the site table is stored by exception: a strain not listed at a site carries the reference allele there
+            sites <- read.delim(gzfile(file.path(db_dir, "panel_sites.tsv.gz")), header = TRUE, sep = "	", quote = "", comment.char = "", colClasses = "character")
+            strains <- db_read_tsv("panel_strains.tsv")
+            n_strains <- nrow(strains)
+            strain_counts <- function(column){ # number of sites listing each strain (0-based index) in column
+                idx <- as.integer(unlist(strsplit(column[column != ""], ",", fixed = TRUE)))
+                tabulate(idx + 1, nbins = n_strains)
             }
-            if( ! is.null(organism) && organism["reference_strain"] %in% strain_names){
-                notes[organism["reference_strain"]] <- paste0("reference genome (", organism["reference_name"], "), carries the reference allele at every site")
-            }
-            # specific: the strain is the only one of the panel to carry its allele, every strain being called at the site
+            carriers <- as.integer(sites$n_alt) + as.integer(sites$n_het)
+            # specific: the strain is the only one of the panel to carry the alternative allele
+            private <- carriers == 1
+            owner <- ifelse(sites$alt_strains[private] != "", sites$alt_strains[private], sites$het_strains[private])
+            n_indel <- sum(nchar(sites$ref) != nchar(sites$alt))
             df <- data.frame(
-                "Strain" = db_escape(strain_names),
-                "Specific SNPs" = sapply(seq_along(strain_names), function(i){sum(all_known & ((calls[, i] == "A" & n_alt == 1) | (calls[, i] == "R" & n_ref == 1)))}),
-                "Sites with the alternative allele" = colSums(calls == "A"),
-                "Sites not called" = colSums(calls == "?"),
-                "Notes" = db_escape(notes),
+                "Strain" = db_escape(strains$display_name),
+                "Clade" = db_escape(strains$clade),
+                "Origin" = db_escape(strains$origin),
+                "Source" = db_escape(strains$source_type),
+                "Specific SNPs/indels" = tabulate(as.integer(owner) + 1, nbins = n_strains),
+                "Sites with the alternative allele" = strain_counts(sites$alt_strains) + strain_counts(sites$het_strains),
+                "Sites not called" = strain_counts(sites$unknown_strains),
                 check.names = FALSE,
                 stringsAsFactors = FALSE
             )
-            cat(paste0("Number of yeast strains available for identification: <b>", length(strain_names), "</b> (", db_escape(paste(strain_names, collapse = ", ")), "), over <b>", nrow(sites), "</b> informative SNP sites.<br>\n"))
-            cat("A specific SNP is a site where the strain is the only one of the panel to carry its allele, all strains being called there.<br>\n")
-            db_view("panel_sites.tsv and strains.tsv files of the database", db_html_table(df))
+            source_counts <- table(strains$source_type)
+            cat(paste0("Number of yeast strains available for identification: <b>", n_strains, "</b> (", db_escape(paste(paste(source_counts, names(source_counts)), collapse = ", ")), "), over <b>", nrow(sites), "</b> informative sites (", nrow(sites) - n_indel, " SNPs, ", n_indel, " indels).<br>
+"))
+            cat("A specific site is one where the strain is the only one of the panel to carry the alternative allele. Strains of one clonal family (the S288C family for instance) are separated by these sites only.<br>
+")
+            db_view("panel_sites.tsv.gz and panel_strains.tsv files of the database", paste0('<div style="max-height: 600px; overflow: auto;">', db_html_table(df), '</div>'))
         }else{
-            db_none("SNP panel (panel_sites.tsv)")
+            db_none("Strain panel (panel_sites.tsv.gz, panel_strains.tsv)")
         }
 ```
 

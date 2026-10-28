@@ -834,7 +834,22 @@ MARKER_STATUS = {
 }
 
 
-def marker_row(m):
+def expected_cell(e):
+    """Expected status of one gene in the first strain of the SNP ranking,
+    and whether the sample agrees with it."""
+    if not e or e.get("expected") == "unknown":
+        return '<td class="muted">unknown</td>'
+    colour, glyph, label = MARKER_STATUS.get(e["expected"], ("orange", "&#9650;", e["expected"]))
+    verdict = {True: '<br><span class="status green"><span class="g">&#10003;</span>agrees</span>',
+               False: '<br><span class="status red"><span class="g">&#10007;</span>differs</span>',
+               None: '<br><span class="muted">not compared</span>'}[e.get("agree")]
+    return ('<td><span class="status {c}"><span class="g">{g}</span>{label}</span>'
+            '<br><span class="muted">{allele}</span>{verdict}</td>').format(
+        c=colour, g=glyph, label=esc(label), allele=esc(e.get("expected_allele")),
+        verdict=verdict)
+
+
+def marker_row(m, expected=None):
     colour, glyph, label = MARKER_STATUS.get(m.get("status"), ("orange", "&#9650;", "?"))
     alleles = m.get("alleles") or []
     first = alleles[0] if alleles else {}
@@ -852,11 +867,13 @@ def marker_row(m):
                                                    alleles[1].get("protein_change")))
     return """      <tr><td><strong>{gene}</strong><br><span class="muted">{sid}</span></td>
         <td><span class="status {c}"><span class="g">{g}</span>{label}</span></td>
+        {expected}
         <td>{effect}<br><span class="muted">{pchange}</span></td>
         <td><code>{changes}</code></td>
         <td>{known}</td>
         <td>{detail}</td></tr>""".format(
         gene=esc(m.get("gene")), sid=esc(m.get("systematic_id")), c=colour, g=glyph,
+        expected=expected_cell(expected) if expected is not None else "",
         label=esc(label), effect=esc((first.get("effect") or "").replace("_", " ")),
         pchange=esc(first.get("protein_change") or ""), changes=esc(change_text or "none"),
         known=esc(", ".join(first.get("known_as") or []) or
@@ -876,6 +893,20 @@ def render_markers(d):
             d=esc(" (" + "; ".join(m["differences"]) + ")") if m["differences"] else "")
         for m in matches)
     limits = "\n".join("    <li>{}</li>".format(esc(x)) for x in mk.get("limits") or [])
+    # Expected status per gene in the first strain of the SNP ranking. The two
+    # readings are kept side by side, neither one corrects the other.
+    ex = d.get("markers_expected") or {}
+    expected_by_gene = {g["gene"]: g for g in ex.get("genes") or []}
+    if ex:
+        expected_head = "<th>expected in {}</th>".format(esc(ex.get("strain")))
+        expected_note = """  <p><strong>Expected from the SNP ranking:</strong> the status each marker should have in
+  <strong>{s}</strong>, first strain of the SNP ranking ({src}). {summary}</p>""".format(
+            s=esc(ex.get("strain")), src=esc(ex.get("source")),
+            summary=("The sample agrees at <strong>{a} of {c}</strong> markers compared.".format(
+                a=ex.get("agree"), c=ex.get("compared")) if ex.get("compared")
+                     else "No marker could be compared."))
+    else:
+        expected_head, expected_note = "", ""
     return """<section id="markers">
   <h2>Native marker genes</h2>
   <p class="note">The strain's own selection markers, judged by the protein each one encodes. A
@@ -883,8 +914,9 @@ def render_markers(d):
   carry many SNPs and still be active (a natural form). Loss of function is called from the
   sequence; a missense form is called only when the allele catalogue of {n} assemblies knows it.</p>
   <p><strong>Genotype:</strong> <code>{genotype}</code></p>
+{expected_note}
   <table>
-    <thead><tr><th>gene</th><th>status</th><th>effect</th><th>coding changes</th>
+    <thead><tr><th>gene</th><th>status</th>{expected_head}<th>effect</th><th>coding changes</th>
       <th>known as</th><th>evidence</th></tr></thead>
     <tbody>
 {rows}
@@ -899,7 +931,9 @@ def render_markers(d):
 {limits}
   </ul>
 </section>""".format(n=esc(mk.get("catalogue_assemblies")), genotype=esc(mk.get("genotype")),
-                     rows="\n".join(marker_row(m) for m in markers),
+                     expected_note=expected_note, expected_head=expected_head,
+                     rows="\n".join(marker_row(m, expected_by_gene.get(m.get("gene"), {})
+                                               if ex else None) for m in markers),
                      matches=match_items or "    <li>none documented</li>", limits=limits)
 
 

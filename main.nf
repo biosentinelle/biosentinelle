@@ -513,6 +513,7 @@ workflow {
                 panel_strains,
                 file("${db_dir}/markers/documented_genotypes.tsv", checkIfExists: true),
                 file("${db_dir}/markers/marker_alleles.tsv", checkIfExists: true),
+                file("${db_dir}/strains/aliases.tsv", checkIfExists: true),
                 tools_manifest,
                 ToolScore.out.tool_coverage_ch,
                 marker_json_ch,
@@ -543,7 +544,7 @@ workflow {
     if("${strain_id_on}" == "TRUE"){
         db_summary_files = [
             "organism.tsv",
-            "strains/strains.tsv",
+            "panels/panel_sites.tsv.gz",
             "panels/panel_strains.tsv",
             "markers/marker_loci.tsv",
             "markers/marker_loci.fasta",

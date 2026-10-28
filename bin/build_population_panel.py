@@ -21,6 +21,15 @@ centre. A strain whose window cannot be rebuilt (an indel in it, a no-call,
 more than two heterozygous neighbours) is recorded as unknown at that site,
 never as reference.
 
+Indels are sites too. The reference and alternative haplotypes are written
+out with the allele between flank bases on each side, and each probe is the
+k-mer of its haplotype centred on the allele: the junction for a deletion,
+the inserted bases for an insertion. k stays the same, so short reads still
+carry the probes. An indel that only shifts a tandem repeat leaves the
+reference probe readable in the alternative allele and is dropped. Neighbour
+indels are still not rebuilt into a strain's window: a strain with one there
+is unknown at the site.
+
 The site table is stored by exception. A strain not listed at a site carries
 the reference allele there; the listed ones carry the alternative allele, are
 heterozygous, or are unknown. A column per strain would be a thousand columns
@@ -95,6 +104,27 @@ def low_complexity(kmer, max_homopolymer, min_distinct):
             return True
         previous = base
     return False
+
+
+def centre_variant(ref, alts, max_indel):
+    """True for a record that can be the centre of a site: biallelic, and a
+    SNV or an indel of at most max_indel bases (0 for SNVs only)."""
+    if len(alts) != 1:
+        return False
+    alt = alts[0]
+    if not ref or not alt or ref == alt or set(ref + alt) - set("ACGT"):
+        return False
+    if len(ref) == len(alt):
+        return len(ref) == 1
+    return abs(len(ref) - len(alt)) <= max_indel and max(len(ref), len(alt)) <= SHORT
+
+
+def centred_kmer(haplotype, flank, allele_length, k):
+    """The k-mer of a haplotype centred on its allele, which starts at offset
+    flank. For a SNV it is the whole haplotype; for an indel allele longer
+    than one base it is centred on the allele's middle base."""
+    start = allele_length // 2
+    return haplotype[start:start + k]
 
 
 def parse_gt(gt):
@@ -220,6 +250,9 @@ def main():
                         help="common sites kept, evenly spread")
     parser.add_argument("--max-unknown-fraction", type=float, default=0.10,
                         help="drop sites unknown in more than this fraction of strains")
+    parser.add_argument("--max-indel", type=int, default=20,
+                        help="longest indel, in bases gained or lost, kept as a site; "
+                             "0 for SNVs only")
     parser.add_argument("--max-het-neighbours", type=int, default=2)
     parser.add_argument("--max-homopolymer", type=int, default=6)
     parser.add_argument("--min-distinct-bases", type=int, default=3)
@@ -331,7 +364,8 @@ def main():
         return out
 
     stats = dict.fromkeys(["candidates", "edge", "ref_mismatch", "low_complexity",
-                           "too_unknown", "uninformative", "thinned_common"], 0)
+                           "indel_in_repeat", "ambiguous", "too_unknown",
+                           "uninformative", "thinned_common"], 0)
     sites = []  # kept candidates, before uniqueness and selection
 
     # Common sites are thinned by distance while they are read: keeping
@@ -366,38 +400,52 @@ def main():
                 recs.add((pos, ref, alts, {index: gt}))
             single_records[index] = recs
 
-        # Candidate centres: biallelic SNVs from the matrix, plus single-strain
-        # SNVs at positions the matrix does not list.
+        # Candidate centres: biallelic SNVs and short indels from the matrix,
+        # plus single-strain ones at positions the matrix does not list.
         centres = {}
         for index, record in enumerate(records.short):
-            pos, ref, alts, _ = record
-            if len(ref) == 1 and len(alts) == 1 and len(alts[0]) == 1 and alts[0] in "ACGT":
-                centres.setdefault(pos, []).append(("m", index, record))
+            if centre_variant(record[1], record[2], args.max_indel):
+                centres.setdefault(record[0], []).append(("m", index, record))
         for strain, recs in single_records.items():
             for record in recs.short:
-                pos, ref, alts, _ = record
-                if len(ref) == 1 and len(alts) == 1 and len(alts[0]) == 1 and alts[0] in "ACGT":
-                    centres.setdefault(pos, []).append(("s", strain, record))
+                if centre_variant(record[1], record[2], args.max_indel):
+                    centres.setdefault(record[0], []).append(("s", strain, record))
 
         for pos in sorted(centres):
             entries = centres[pos]
-            ref = entries[0][2][1]
-            alts = {entry[2][2][0] for entry in entries}
+            alleles_here = {(entry[2][1], entry[2][2][0]) for entry in entries}
             stats["candidates"] += 1
-            if len(alts) != 1:
-                continue  # two different alternative bases: not a biallelic site
-            alt = alts.pop()
-            start, end = pos - 1 - flank, pos + flank
+            if len(alleles_here) != 1:
+                continue  # two different alternative alleles: not a biallelic site
+            ref, alt = alleles_here.pop()
+            indel = len(ref) != len(alt)
+            # The reference segment: the centre allele and flank bases on each
+            # side. For a SNV it is the k-mer window itself; for an indel it is
+            # longer, and the probes are cut from it once the allele is in.
+            last = pos + len(ref) - 1
+            start, end = pos - 1 - flank, last + flank
             if start < 0 or end > len(sequence):
                 stats["edge"] += 1
                 continue
             window = sequence[start:end]
-            if window[flank] != ref:
+            if window[flank:flank + len(ref)] != ref:
                 stats["ref_mismatch"] += 1
                 continue
-            if "N" in window or low_complexity(window, args.max_homopolymer,
-                                               args.min_distinct_bases):
+            ref_probe = centred_kmer(window, flank, len(ref), args.k)
+            alt_haplotype = window[:flank] + alt + window[flank + len(ref):]
+            alt_probe = centred_kmer(alt_haplotype, flank, len(alt), args.k)
+            if "N" in window or any(low_complexity(probe, args.max_homopolymer,
+                                                   args.min_distinct_bases)
+                                    for probe in (ref_probe, alt_probe)):
                 stats["low_complexity"] += 1
+                continue
+            # An indel in a tandem repeat shifts the repeat rather than
+            # changing its sequence: the reference probe can then still be
+            # read in the alternative allele, and the site cannot tell them
+            # apart. The alternative probe is checked against the whole
+            # reference later, which covers the other direction.
+            if indel and (ref_probe in alt_haplotype or revcomp(ref_probe) in alt_haplotype):
+                stats["indel_in_repeat"] += 1
                 continue
 
             # Centre states from the centre records.
@@ -425,18 +473,18 @@ def main():
             for strain, (variants, callable_regions) in singles.items():
                 if strain in state:
                     continue
-                if not covered(callable_regions, contig, pos - flank, pos + flank):
+                if not covered(callable_regions, contig, pos - flank, last + flank):
                     state[strain] = "U"
 
             # Neighbours: every record meeting the window other than the
-            # centre SNV itself, from the matrix and from each single strain.
+            # centre variant itself, from the matrix and from each single strain.
             neighbours = []
-            for index, record in records.overlapping(pos - flank, pos + flank):
+            for index, record in records.overlapping(pos - flank, last + flank):
                 if record[0] == pos and record[1] == ref and record[2] == [alt]:
                     continue
                 neighbours.append((record, genotypes(contig, index, record)))
             for strain, recs in single_records.items():
-                for _, record in recs.overlapping(pos - flank, pos + flank):
+                for _, record in recs.overlapping(pos - flank, last + flank):
                     if record[0] == pos and record[1] == ref and record[2] == [alt]:
                         continue
                     neighbours.append((record, record[3]))
@@ -464,7 +512,7 @@ def main():
                         seqs.append(allele)
                     offset = rpos - (pos - flank)
                     span = range(offset, offset + len(rref))
-                    if seqs is None or flank in span:
+                    if seqs is None or any(flank + i in span for i in range(len(ref))):
                         state[strain] = "U"
                         continue
                     het = 0 in alleles or len(nonref) > 1
@@ -478,8 +526,8 @@ def main():
 
             # k-mers: the generic pair, then one per strain haplotype that
             # differs from it.
-            kmers = {canonical(window): "R",
-                     canonical(window[:flank] + alt + window[flank + 1:]): "A"}
+            kmers = {canonical(ref_probe): "R", canonical(alt_probe): "A"}
+            ambiguous = False
             for strain, items in subs.items():
                 if state.get(strain) == "U":
                     continue
@@ -494,8 +542,17 @@ def main():
                             if 0 <= offset + i < len(seq):
                                 seq[offset + i] = base
                     for centre in centre_alleles:
-                        seq[flank] = centre
-                        kmers[canonical("".join(seq))] = "R" if centre == ref else "A"
+                        haplotype = "".join(seq[:flank]) + centre + "".join(seq[flank + len(ref):])
+                        kmer = canonical(centred_kmer(haplotype, flank, len(centre), args.k))
+                        label = "R" if centre == ref else "A"
+                        if kmers.get(kmer, label) != label:
+                            ambiguous = True
+                        kmers[kmer] = label
+            if ambiguous:
+                # one strain's haplotype k-mer is another's of the other
+                # allele: the site cannot be read
+                stats["ambiguous"] += 1
+                continue
 
             alt_strains = sorted(s for s, v in state.items() if v == "A")
             het_strains = sorted(s for s, v in state.items() if v == "H")
@@ -509,6 +566,7 @@ def main():
             sites.append({"chrom": contig, "pos": pos, "ref": ref, "alt": alt,
                           "alt_strains": alt_strains, "het_strains": het_strains,
                           "unknown_strains": unknown_strains, "kmers": kmers,
+                          "ref_kmer": canonical(ref_probe), "indel": indel,
                           "rare": rare, "carriers": len(alt_strains) + len(het_strains)})
         parsed_cache.clear()
         sys.stderr.write("%s: %d candidate sites so far\n" % (contig, len(sites)))
@@ -536,8 +594,7 @@ def main():
     survivors = []
     dropped_repeat = 0
     for index, site in enumerate(sites):
-        window = reference[site["chrom"]][site["pos"] - 1 - flank:site["pos"] + flank]
-        ref_kmer = canonical(window)
+        ref_kmer = site["ref_kmer"]
         if wanted.get(ref_kmer, 0) != 1 or any(
                 wanted.get(kmer, 0) for kmer in site["kmers"] if kmer != ref_kmer):
             dropped_repeat += 1
@@ -624,9 +681,11 @@ def main():
 
     n_kmers = sum(len(sites[i]["kmers"]) for i in kept)
     print("strains: %d" % n_strains)
-    print("sites kept: %d (rare %d, common %d), k-mers: %d, k=%d" % (
+    print("sites kept: %d (rare %d, common %d; SNV %d, indel %d), k-mers: %d, k=%d" % (
         len(kept), sum(1 for i in kept if sites[i]["rare"]),
-        sum(1 for i in kept if not sites[i]["rare"]), n_kmers, args.k))
+        sum(1 for i in kept if not sites[i]["rare"]),
+        sum(1 for i in kept if not sites[i]["indel"]),
+        sum(1 for i in kept if sites[i]["indel"]), n_kmers, args.k))
     for key in sorted(stats):
         print("  %-16s %d" % (key, stats[key]))
     print("  %-16s %d" % ("repeat", dropped_repeat))

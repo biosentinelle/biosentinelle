@@ -13,6 +13,7 @@ process StrainScore {
     path panel_strains
     path documented
     path marker_catalogue
+    path aliases // catalogue names of strains the panel names otherwise
     path tools_manifest
     path tool_coverage
     path marker_json
@@ -36,6 +37,7 @@ process StrainScore {
         --mating ${mating_counts} \\
         --documented ${documented} \\
         --marker-catalogue ${marker_catalogue} \\
+        --aliases ${aliases} \\
         --out-ranking strain_ranking.tsv \\
         --calls ${site_calls} \\
         --tools ${tools_manifest} \\

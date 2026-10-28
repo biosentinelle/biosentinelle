@@ -353,6 +353,83 @@ def load_catalogue_activity(path):
     return out
 
 
+def documented_markers(path, genes):
+    """strain -> {gene: allele} from documented_genotypes.tsv, read as
+    genotype_markers.py reads it: the wild-type name for a gene not mentioned,
+    None for a diploid heterozygous at it."""
+    out = {}
+    for row in load_tsv(path):
+        tokens = row["documented_genotype"].split()
+        alleles = {}
+        for gene in genes:
+            mutant = [t for t in tokens if t.lower().startswith(gene.lower())
+                      and not t.startswith(gene.upper())]
+            if mutant and gene.upper() in mutant[0].split("/"):
+                alleles[gene] = None
+            else:
+                alleles[gene] = mutant[0].split("/")[0] if mutant else gene.upper()
+        out[row["strain"]] = alleles
+    return out
+
+
+def expected_markers(strain, strain_rows, markers, documented_path, catalogue_path,
+                     aliases_path):
+    """What the native markers of one panel strain should be, gene by gene,
+    next to what the sample shows. Kept apart from the SNP ranking: it says
+    whether the two kinds of evidence agree, it does not change the ranking.
+
+    The documented genotype is used when the strain has one. Otherwise the
+    marker alleles of its own assembly, found in the catalogue under the
+    strain name, an alias, its 1011 matrix code, or as a spore of that
+    isolate (AGA_1a for AGA)."""
+    genes = [m["gene"] for m in markers.get("markers", [])]
+    if not genes:
+        return {}
+    out = {"strain": strain, "source": "", "genes": [], "agree": 0, "compared": 0}
+    documented = documented_markers(documented_path, genes) if documented_path else {}
+    if strain in documented:
+        out["source"] = "documented genotype"
+        expected = {gene: ("heterozygous" if allele is None else
+                           ("active" if allele == gene.upper() else "inactive"), allele or "")
+                    for gene, allele in documented[strain].items()}
+    else:
+        expected = {}
+        if catalogue_path:
+            row = next((r for r in strain_rows if r["strain"] == strain), {})
+            aliases = ({r["alias"]: r["strain"] for r in load_tsv(aliases_path)}
+                       if aliases_path else {})
+            names = {strain, row.get("source", "")}
+            names.update(alias for alias, name in aliases.items() if name == strain)
+            by_name = {}
+            for r in load_tsv(catalogue_path):
+                by_name.setdefault(r["strain"], []).append(r)
+            assembly = next((n for n in sorted(names) if n in by_name), None)
+            if assembly is None:
+                assembly = next((n for n in sorted(by_name)
+                                 if n.split("_")[0] in names and "_" in n), None)
+            if assembly is not None:
+                out["source"] = "assembly %s in the marker catalogue" % assembly
+                # A missense form is "uncertain" in the catalogue when no
+                # documented strain settles it; it is shown, not compared.
+                for r in by_name[assembly]:
+                    expected[r["gene"]] = (r["activity"] or None,
+                                           r.get("documented_allele") or
+                                           r["effect"].replace("_", " "))
+    if not expected:
+        out["source"] = "none: no documented genotype and no assembly in the marker catalogue"
+    for m in markers["markers"]:
+        status, allele = expected.get(m["gene"], (None, ""))
+        observed = m.get("status")
+        comparable = status in ("active", "inactive") and observed in ("active", "inactive")
+        out["genes"].append({"gene": m["gene"], "expected": status or "unknown",
+                             "expected_allele": allele or "", "observed": observed,
+                             "agree": (status == observed) if comparable else None})
+        if comparable:
+            out["compared"] += 1
+            out["agree"] += status == observed
+    return out
+
+
 def resolve(panel, obs, results, markers, mating, mating_doc, catalogue, tie_log_ratio,
             min_separating):
     """Settle the strains the SNP panel cannot separate.
@@ -523,6 +600,10 @@ def main():
                         help="marker_alleles.tsv: the marker alleles of each assembly, "
                              "compared with the sample for tied strains without a "
                              "documented genotype")
+    parser.add_argument("--aliases",
+                        help="aliases.tsv: catalogue names of strains the panel names "
+                             "otherwise, used to find the expected marker status of the "
+                             "best strain")
     parser.add_argument("--tie-log-ratio", type=float, default=math.log(1000),
                         help="strains whose log likelihood is within this of the best "
                              "are tied and settled by mating type and markers (default "
@@ -698,6 +779,22 @@ def main():
                          args.tie_log_ratio, args.min_discriminating_sites)
     warnings.extend(resolution["explanation"])
 
+    # The markers expected from the first strain of the SNP ranking: a second,
+    # independent reading of the sample, set beside the first.
+    markers_expected = expected_markers(results[0]["strain_id"], panel.strains, markers,
+                                        args.documented, args.marker_catalogue,
+                                        args.aliases) if markers.get("markers") else {}
+    if markers_expected.get("compared") and \
+            markers_expected["agree"] < markers_expected["compared"]:
+        warnings.append(
+            "native markers differ from those expected of %s, first in the SNP ranking "
+            "(%s), at %d of %d genes: %s" % (
+                markers_expected["strain"], markers_expected["source"],
+                markers_expected["compared"] - markers_expected["agree"],
+                markers_expected["compared"],
+                ", ".join("%s %s, expected %s" % (g["gene"], g["observed"], g["expected"])
+                          for g in markers_expected["genes"] if g["agree"] is False)))
+
     report = {
         "sample": args.sample,
         "generated": datetime.datetime.now().replace(microsecond=0).isoformat(),
@@ -717,6 +814,7 @@ def main():
         "tool_summary": tool_summary,
         "warnings": warnings,
         "markers": markers,
+        "markers_expected": markers_expected,
     }
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
