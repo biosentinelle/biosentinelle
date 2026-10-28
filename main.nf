@@ -427,12 +427,14 @@ workflow {
     // database rather than against whatever was put in features_path.
     if("${strain_id_on}" == "TRUE"){
         db_dir = "${db_path}/${organism_dir}"
-        panel_sites = file("${db_dir}/panels/panel_sites.tsv", checkIfExists: false)
-        panel_kmers = file("${db_dir}/panels/panel_kmers.tsv", checkIfExists: false)
+        panel_sites = file("${db_dir}/panels/panel_sites.tsv.gz", checkIfExists: false)
+        panel_kmers = file("${db_dir}/panels/panel_kmers.tsv.gz", checkIfExists: false)
+        panel_strains = file("${db_dir}/panels/panel_strains.tsv", checkIfExists: false)
+        mating_kmers = file("${db_dir}/mating/mating_kmers.tsv", checkIfExists: true)
         tools_fasta = file("${db_dir}/tools/tools.fasta", checkIfExists: true)
         tools_manifest = file("${db_dir}/tools/tools.tsv", checkIfExists: true)
 
-        if( ! panel_sites.exists() || ! panel_kmers.exists()){
+        if( ! panel_sites.exists() || ! panel_kmers.exists() || ! panel_strains.exists()){
             warn2 = "\n\nWARNING:\nNO SNP PANEL IN ${db_dir}/panels.\nSTRAIN RANKING IS SKIPPED. RUN build_db.nf FIRST.\n"
             print(warn2)
             warning_ch = warning_ch.mix(Channel.value(warn2))
@@ -444,6 +446,7 @@ workflow {
                 fastq_name,
                 fastq_ch.collect(),
                 panel_kmers,
+                mating_kmers,
                 kmer_max_bases,
                 kmer_min_depth
             )
@@ -505,7 +508,11 @@ workflow {
             StrainScore(
                 fastq_name,
                 KmerScan.out.site_calls_ch,
+                KmerScan.out.mating_counts_ch,
                 panel_sites,
+                panel_strains,
+                file("${db_dir}/markers/documented_genotypes.tsv", checkIfExists: true),
+                file("${db_dir}/markers/marker_alleles.tsv", checkIfExists: true),
                 tools_manifest,
                 ToolScore.out.tool_coverage_ch,
                 marker_json_ch,
@@ -537,7 +544,7 @@ workflow {
         db_summary_files = [
             "organism.tsv",
             "strains/strains.tsv",
-            "panels/panel_sites.tsv",
+            "panels/panel_strains.tsv",
             "markers/marker_loci.tsv",
             "markers/marker_loci.fasta",
             "tools/tools.tsv",

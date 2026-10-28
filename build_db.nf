@@ -12,20 +12,19 @@ nextflow.enable.dsl=2
 #########################################################################
 */
 
-include {AssemblyVariants; BuildSnpPanel; MergePanels} from './modules/BuildPanel.nf'
+include {AssemblyVariants; ReadsIndex; ReadsAlign; ReadsCall; StrainConsensus; PopulationPanel} from './modules/BuildPanel.nf'
 
 /*
-Input: a two-column TSV, strain name and assembly path.
+Input: the strain catalogue written by bin/build_strain_catalog.py, one row per
+strain, with the source its variants come from:
 
-    strain   assembly
-    S288C    /path/to/S288C.fa
-    W303     /path/to/W303.fa
-    SK1      /path/to/SK1.fa
+    source_type   source
+    matrix        sample name in population_matrix (1011 Yeast Genomes)
+    assembly      path of a whole-genome assembly
+    reads         comma separated run accessions, read from reads_dir
 
-The reference genome is the coordinate system of the whole database. Every
-panel is built against it, so changing it invalidates every panel. The
-reference strain itself can be left out of the list: it is the implicit
-"carries the reference allele everywhere" member of the panel.
+The reference genome is the coordinate system of the whole database: changing
+it invalidates every panel.
 */
 
 workflow {
@@ -36,53 +35,61 @@ workflow {
     print("K-MER SIZE: ${panel_kmer_size}\n\n")
 
     reference = file("${panel_reference}", checkIfExists: true)
+    matrix = file("${population_matrix}", checkIfExists: true)
+    catalogue = file("${strain_table}", checkIfExists: true)
 
-    // strain name and assembly file, one row per strain
-    assemblies_ch = Channel
-        .fromPath("${strain_table}", checkIfExists: true)
-        .splitCsv(header: true, sep: '\t')
-        .map{ row -> tuple(row.strain, file(row.assembly, checkIfExists: true)) }
+    rows_ch = Channel.fromPath(catalogue).splitCsv(header: true, sep: '\t')
 
-    AssemblyVariants(
-        assemblies_ch,
-        reference
-    )
+    // assemblies
+    assemblies_ch = rows_ch
+        .filter{ row -> row.source_type == 'assembly' }
+        .map{ row -> tuple(row.strain, file(row.source, checkIfExists: true)) }
+    AssemblyVariants(assemblies_ch, reference)
+    assembly_strains_ch = AssemblyVariants.out.assembly_vcf_ch.join(AssemblyVariants.out.callable_ch)
 
-    BuildSnpPanel(
-        AssemblyVariants.out.assembly_vcf_ch,
+    // reads: one alignment and one call per run, then one consensus per strain
+    runs_ch = rows_ch
+        .filter{ row -> row.source_type == 'reads' }
+        .flatMap{ row -> row.source.tokenize(',').collect{ run ->
+            def paired = file("${reads_dir}/${run}_1.fastq.gz")
+            def fastq = paired.exists() ?
+                [paired, file("${reads_dir}/${run}_2.fastq.gz", checkIfExists: true)] :
+                [file("${reads_dir}/${run}.fastq.gz", checkIfExists: true)]
+            tuple(row.strain, run, fastq)
+        } }
+    ploidy_ch = rows_ch
+        .filter{ row -> row.source_type == 'reads' }
+        .map{ row -> tuple(row.strain, row.ploidy ?: '1') }
+    ReadsIndex(reference)
+    ReadsAlign(runs_ch, ReadsIndex.out.index_ch, reads_min_depth)
+    ReadsCall(ReadsAlign.out.bam_ch, reference)
+    per_strain_ch = ReadsCall.out.run_vcf_ch
+        .join(ReadsAlign.out.callable_ch, by: [0, 1])
+        .groupTuple(by: 0)
+        .join(ploidy_ch)
+        .map{ strain, runs, vcfs, beds, ploidy -> tuple(strain, ploidy, runs, vcfs, beds) }
+    StrainConsensus(per_strain_ch)
+
+    // every single-strain source, then the panel
+    singles_ch = assembly_strains_ch
+        .mix(StrainConsensus.out.strain_ch)
+        .toSortedList{ a, b -> a[0] <=> b[0] }
+    single_args_ch = singles_ch.map{ list ->
+        list.collect{ "--single ${it[0]}=${it[1].name}=${it[2].name}" }.join(' ')
+    }
+    single_files_ch = singles_ch.map{ list -> list.collect{ [it[1], it[2]] }.flatten() }
+
+    PopulationPanel(
+        catalogue,
         reference,
+        matrix,
+        single_args_ch,
+        single_files_ch,
         panel_kmer_size,
-        panel_max_sites
+        panel_options
     )
 
-    // merge_snp_panels.py takes STRAIN=FILE pairs, so the channel is collapsed
-    // into the argument string and the matching list of staged files.
-    panels_ch = BuildSnpPanel.out.strain_panel_ch.toSortedList{ a, b -> a[0] <=> b[0] }
-    callables_ch = AssemblyVariants.out.callable_ch.toSortedList{ a, b -> a[0] <=> b[0] }
-    positions_ch = BuildSnpPanel.out.strain_positions_ch.toSortedList{ a, b -> a[0] <=> b[0] }
-
-    panel_args_ch = panels_ch.map{ list ->
-        list.collect{ "--panel ${it[0]}=${it[1].name}" }.join(' ')
-    }
-    callable_args_ch = callables_ch.map{ list ->
-        list.collect{ "--callable ${it[0]}=${it[1].name}" }.join(' ')
-    }
-    position_args_ch = positions_ch.map{ list ->
-        list.collect{ "--positions ${it[0]}=${it[1].name}" }.join(' ')
-    }
-
-    MergePanels(
-        panel_args_ch,
-        callable_args_ch,
-        position_args_ch,
-        reference_strain,
-        panel_kmer_size,
-        panels_ch.map{ list -> list.collect{ it[1] } },
-        callables_ch.map{ list -> list.collect{ it[1] } },
-        positions_ch.map{ list -> list.collect{ it[1] } }
-    )
-
-    MergePanels.out.panel_sites_ch.subscribe{ path ->
+    PopulationPanel.out.panel_sites_ch.subscribe{ path ->
         print("\n\nPANEL WRITTEN: ${db_path}/${organism_dir}/panels/${path.name}\n\n")
     }
 }

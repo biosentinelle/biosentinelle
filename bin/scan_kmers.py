@@ -163,6 +163,10 @@ def main():
                         help="stop after this many reads, 0 to use all (the default). "
                              "Kept for convenience, but a read cap means different "
                              "coverage on different platforms")
+    parser.add_argument("--extra-kmers",
+                        help="TSV kmer, class: further k-mers counted in the same pass, "
+                             "reported per class (the mating-type k-mers)")
+    parser.add_argument("--extra-out", help="output TSV of the --extra-kmers counts")
     parser.add_argument("--jellyfish", action="store_true",
                         help="count with jellyfish instead of in Python")
     parser.add_argument("--threads", type=int, default=4)
@@ -171,15 +175,24 @@ def main():
     parser.add_argument("--progress-every", type=int, default=100000)
     args = parser.parse_args()
 
+    # A site carries one k-mer per haplotype seen in the panel strains, each
+    # labelled with the allele at its centre, so an allele is counted as the
+    # sum over its k-mers.
     sites = {}
     wanted = set()
-    with open(args.kmers, newline="") as handle:
+    with opener(args.kmers) as handle:
         for row in csv.DictReader(handle, delimiter="\t"):
             kmer = row["kmer"]
             wanted.add(kmer)
-            sites.setdefault(row["site_id"], {})[row["allele"]] = kmer
+            sites.setdefault(row["site_id"], {}).setdefault(row["allele"], []).append(kmer)
     if not wanted:
         sys.exit("empty k-mer panel: %s" % args.kmers)
+    extra = {}
+    if args.extra_kmers:
+        with opener(args.extra_kmers) as handle:
+            for row in csv.DictReader(handle, delimiter="\t"):
+                extra.setdefault(row["class"], []).append(row["kmer"])
+                wanted.add(row["kmer"])
     k = len(next(iter(wanted)))
     if any(len(kmer) != k for kmer in wanted):
         sys.exit("panel mixes k-mer lengths, rebuild it with one k")
@@ -195,8 +208,8 @@ def main():
 
     rows = []
     for site_id, alleles in sites.items():
-        ref_count = counts.get(alleles.get("R", ""), 0)
-        alt_count = counts.get(alleles.get("A", ""), 0)
+        ref_count = sum(counts.get(kmer, 0) for kmer in alleles.get("R", ()))
+        alt_count = sum(counts.get(kmer, 0) for kmer in alleles.get("A", ()))
         depth = ref_count + alt_count
         if depth < args.min_depth:
             call, fraction = "?", 0.0
@@ -220,6 +233,15 @@ def main():
                                 "alt_fraction", "call"], delimiter="\t")
         writer.writeheader()
         writer.writerows(sorted(rows, key=lambda row: row["site_id"]))
+
+    if extra and args.extra_out:
+        with open(args.extra_out, "w", newline="") as handle:
+            writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
+            writer.writerow(["class", "n_kmers", "kmers_seen", "total_count", "median_count"])
+            for name in sorted(extra):
+                values = sorted(counts.get(kmer, 0) for kmer in extra[name])
+                writer.writerow([name, len(values), sum(1 for v in values if v),
+                                 sum(values), values[len(values) // 2]])
 
     tally = {}
     for row in rows:

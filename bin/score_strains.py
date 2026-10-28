@@ -56,102 +56,256 @@ a mixed culture, and none of those is a single-strain question.
 import argparse
 import csv
 import datetime
+import gzip
 import json
 import math
 import os
 import sys
 
 
+def opener(path):
+    return gzip.open(path, "rt") if path.endswith(".gz") else open(path)
+
+
 def load_tsv(path):
-    with open(path, newline="") as handle:
+    with opener(path) as handle:
         return list(csv.DictReader(handle, delimiter="\t"))
 
 
-def score_strains(sites, calls, error_rate, max_detail_sites):
-    """Return one result block per strain, ranked, with per-site detail."""
-    strains = [column[4:] for column in sites[0] if column.startswith("exp_")] if sites else []
+if hasattr(int, "bit_count"):
+    def popcount(value):
+        return value.bit_count()
+else:
+    def popcount(value):
+        return bin(value).count("1")
+
+
+def bitset(indices, size):
+    """Python int with the given bit positions set."""
+    buffer = bytearray((size + 7) // 8)
+    for index in indices:
+        buffer[index >> 3] |= 1 << (index & 7)
+    return int.from_bytes(bytes(buffer), "little")
+
+
+def site_lists(site, key):
+    value = site.get(key, "")
+    return [int(x) for x in value.split(",")] if value else []
+
+
+class Panel:
+    """The site table as one bit set per strain and expected state.
+
+    A thousand strains times hundreds of thousands of sites does not fit a
+    per-site loop in Python. Each strain becomes three bit sets over the
+    sites (alternative, heterozygous, unknown; reference is the rest), the
+    sample three more (observed A, R, H), and every count below is a popcount
+    of their intersections.
+    """
+
+    def __init__(self, sites, strains):
+        self.sites, self.strains = sites, strains
+        self.size = len(sites)
+        self.full = (1 << self.size) - 1
+        per = {"alt_strains": {}, "het_strains": {}, "unknown_strains": {}}
+        for index, site in enumerate(sites):
+            for key, table in per.items():
+                for strain in site_lists(site, key):
+                    table.setdefault(strain, []).append(index)
+        self.alt, self.het, self.unknown = [], [], []
+        for strain in range(len(strains)):
+            self.alt.append(bitset(per["alt_strains"].get(strain, ()), self.size))
+            self.het.append(bitset(per["het_strains"].get(strain, ()), self.size))
+            self.unknown.append(bitset(per["unknown_strains"].get(strain, ()), self.size))
+
+    def ref(self, strain):
+        return self.full ^ (self.alt[strain] | self.het[strain] | self.unknown[strain])
+
+    def expected(self, strain, index):
+        bit = 1 << index
+        if self.unknown[strain] & bit:
+            return "?"
+        if self.alt[strain] & bit:
+            return "A"
+        if self.het[strain] & bit:
+            return "H"
+        return "R"
+
+
+def observed_sets(panel, calls):
+    position = {site["site_id"]: i for i, site in enumerate(panel.sites)}
+    found = {"A": [], "R": [], "H": []}
+    for site_id, call in calls.items():
+        index = position.get(site_id)
+        if index is not None and call["call"] in found:
+            found[call["call"]].append(index)
+    return {key: bitset(value, panel.size) for key, value in found.items()}
+
+
+def discriminating(panel, obs, a, b):
+    """Sites called A or R where strains a and b expect different alleles."""
+    known = (panel.full ^ panel.unknown[a]) & (panel.full ^ panel.unknown[b])
+    differ = (panel.alt[a] ^ panel.alt[b]) | (panel.het[a] ^ panel.het[b])
+    return popcount(differ & known & (obs["A"] | obs["R"]))
+
+
+def score_strains(panel, calls, error_rate, max_detail_sites, detail_top):
+    """Return one result block per strain, ranked; the top ones with site detail."""
     log_match = math.log(1.0 - error_rate)
     log_mismatch = math.log(error_rate)
+    # A homozygous call where the strain is heterozygous is not the same
+    # error as the wrong homozygote: a spore, or a stock that lost
+    # heterozygosity, gives exactly that. It costs a quarter, not error_rate.
+    log_partial = math.log(0.25)
+    obs = observed_sets(panel, calls)
+    called = obs["A"] | obs["R"] | obs["H"]
+
+    # A site where a strain is unknown cannot be left out of its score:
+    # a strain with a gappy assembly would then have fewer chances to
+    # mismatch than any other, and win against everything. It is scored
+    # instead with the probability a strain drawn from the panel would
+    # give the observed call there.
+    n_strains = len(panel.strains)
+    log_unknown = {}
+    for index, site in enumerate(panel.sites):
+        known = n_strains - int(site.get("n_unknown") or 0)
+        if known <= 0:
+            continue
+        p_alt = int(site.get("n_alt") or 0) / float(known)
+        p_het = int(site.get("n_het") or 0) / float(known)
+        log_unknown[index] = {
+            "A": math.log(max(p_alt, error_rate)),
+            "H": math.log(max(p_het, error_rate)),
+            "R": math.log(max(1.0 - p_alt - p_het, error_rate))}
+    call_of = {}
+    for state in ("A", "R", "H"):
+        bits = obs[state]
+        while bits:
+            low = bits & -bits
+            call_of[low.bit_length() - 1] = state
+            bits ^= low
 
     results = []
-    for strain in strains:
-        log_likelihood = 0.0
-        matching = mismatching = uncovered = het = 0
-        weight_matching = weight_total = 0.0
+    for strain, info in enumerate(panel.strains):
+        alt, het, unknown = panel.alt[strain], panel.het[strain], panel.unknown[strain]
+        ref = panel.ref(strain)
+        matching = (popcount(obs["A"] & alt) + popcount(obs["R"] & ref)
+                    + popcount(obs["H"] & het))
+        partial = popcount((obs["A"] | obs["R"]) & het)
+        mismatching = (popcount(obs["A"] & ref) + popcount(obs["R"] & alt)
+                       + popcount(obs["H"] & (alt | ref)))
+        unknown_term = 0.0
+        bits = unknown & called
+        while bits:
+            low = bits & -bits
+            index = low.bit_length() - 1
+            unknown_term += log_unknown.get(index, {}).get(call_of[index], 0.0)
+            bits ^= low
+        mismatching += partial
+        sites_called = matching + mismatching
+        results.append({
+            "strain_index": strain, "strain_id": info["strain"],
+            "display_name": info.get("display_name", info["strain"]),
+            "clade": info.get("clade", ""), "source_type": info.get("source_type", ""),
+            "log_likelihood": (matching * log_match + (mismatching - partial) * log_mismatch
+                               + partial * log_partial + unknown_term),
+            "concordance": round(matching / float(sites_called), 4) if sites_called else 0.0,
+            "sites_called": sites_called,
+            "sites_matching": matching, "sites_mismatching": mismatching,
+            "sites_uncovered": panel.size - popcount(called & (panel.full ^ unknown)),
+            "sites_het": popcount(obs["H"]),
+        })
+
+    # Softmax over log likelihoods with a uniform prior, shifted by the
+    # maximum so exp() stays in range.
+    best = max(result["log_likelihood"] for result in results)
+    weights = [math.exp(result["log_likelihood"] - best) for result in results]
+    total = sum(weights)
+    for result, weight in zip(results, weights):
+        result["probability"] = round(weight / total, 6) if total else 0.0
+    results.sort(key=lambda result: (-result["log_likelihood"], -result["concordance"]))
+    for rank, result in enumerate(results, start=1):
+        result["rank"] = rank
+
+    # Site detail for the top strains only: with a thousand strains the full
+    # detail would be a report of gigabytes. Mismatches are kept first,
+    # everything else fills whatever room is left.
+    for result in results[:detail_top]:
+        strain = result["strain_index"]
         detail = []
-        for site in sites:
-            expected = site["exp_" + strain]
+        for index, site in enumerate(panel.sites):
+            expected = panel.expected(strain, index)
             call = calls.get(site["site_id"])
             observed = call["call"] if call else "?"
-            weight = float(site.get("weight", 1.0))
-
-            if expected == "?" or observed == "?":
-                uncovered += 1
-                matched = None
-            elif observed == "H":
-                het += 1
-                matched = None
-            else:
-                matched = (observed == expected)
-                if matched:
-                    matching += 1
-                    weight_matching += weight
-                    log_likelihood += weight * log_match
-                else:
-                    mismatching += 1
-                    log_likelihood += weight * log_mismatch
-                weight_total += weight
-
+            matched = None if expected == "?" or observed == "?" else observed == expected
             detail.append({
                 "site_id": site["site_id"], "chrom": site["chrom"],
                 "pos": int(site["pos"]), "ref": site["ref"], "alt": site["alt"],
                 "expected": expected, "observed": observed,
                 "depth": int(call["depth"]) if call else 0,
                 "alt_fraction": float(call["alt_fraction"]) if call else 0.0,
-                "match": matched, "weight": weight,
+                "match": matched, "weight": 1.0,
             })
-
-        # A panel of tens of thousands of sites makes the report unwieldy, so
-        # the detail list is capped. Taking the first N in file order would
-        # quietly drop the mismatches, which are the rows anyone opening the
-        # drill-down is looking for. Everything that is not a plain match is
-        # kept first, and matches fill whatever room is left.
         detail_total = len(detail)
         if detail_total > max_detail_sites:
-            interesting = [row for row in detail if row["match"] is not True]
-            plain = [row for row in detail if row["match"] is True]
+            interesting = [row for row in detail if row["match"] is False]
+            plain = [row for row in detail if row["match"] is not False]
             detail = interesting[:max_detail_sites]
             room = max_detail_sites - len(detail)
             if room > 0:
                 step = max(len(plain) // room, 1)
                 detail = detail + plain[::step][:room]
             detail.sort(key=lambda row: (row["chrom"], row["pos"]))
+        result.update({"sites": detail, "sites_in_detail": len(detail),
+                       "sites_total": detail_total,
+                       "detail_truncated": detail_total > len(detail)})
+    return results, obs
 
-        concordance = weight_matching / weight_total if weight_total else 0.0
-        results.append({
-            "strain_id": strain, "log_likelihood": log_likelihood,
-            "concordance": round(concordance, 4),
-            "sites_called": matching + mismatching,
-            "sites_matching": matching, "sites_mismatching": mismatching,
-            "sites_uncovered": uncovered, "sites_het": het,
-            "sites_in_detail": len(detail), "sites_total": detail_total,
-            "detail_truncated": detail_total > len(detail),
-            "sites": detail,
-        })
 
-    # Softmax over log likelihoods with a uniform prior. Shifting by the maximum
-    # keeps exp() in range when the likelihoods are far apart, which they are as
-    # soon as the panel has a few thousand sites.
-    if results:
-        best = max(result["log_likelihood"] for result in results)
-        weights = [math.exp(result["log_likelihood"] - best) for result in results]
-        total = sum(weights)
-        for result, weight in zip(results, weights):
-            result["probability"] = round(weight / total, 6) if total else 0.0
-    results.sort(key=lambda result: (-result["probability"], -result["concordance"]))
-    for rank, result in enumerate(results, start=1):
-        result["rank"] = rank
-    return results
+def mating_type(path, min_kmers_seen):
+    """Mating type from the Ya and Yalpha k-mer counts.
+
+    Per k-mer mean count, a / (a + alpha): about 2/3 for MATa, 1/3 for
+    MATalpha and 1/2 for a MATa/MATalpha diploid, because the silent HMR
+    and HML copies add one a and one alpha cassette to every genome.
+    """
+    rows = {row["class"]: row for row in load_tsv(path)}
+    a, alpha = rows.get("MATa"), rows.get("MATalpha")
+    if not a or not alpha:
+        return {"call": "unknown", "reason": "no mating-type k-mer counts"}
+    seen = min(int(a["kmers_seen"]), int(alpha["kmers_seen"]))
+    mean_a = int(a["total_count"]) / float(a["n_kmers"])
+    mean_alpha = int(alpha["total_count"]) / float(alpha["n_kmers"])
+    out = {"mean_count_a": round(mean_a, 2), "mean_count_alpha": round(mean_alpha, 2)}
+    if seen < min_kmers_seen or mean_a + mean_alpha == 0:
+        out.update({"call": "unknown", "reason": "too few mating-type k-mers seen"})
+        return out
+    ratio = mean_a / (mean_a + mean_alpha)
+    out["a_fraction"] = round(ratio, 3)
+    if ratio >= 0.58:
+        out["call"] = "MATa"
+    elif ratio <= 0.42:
+        out["call"] = "MATalpha"
+    else:
+        out["call"] = "MATa/alpha"
+    return out
+
+
+def documented_mating(path):
+    """strain -> MATa, MATalpha or MATa/alpha, from documented_genotypes.tsv."""
+    out = {}
+    for row in load_tsv(path):
+        token = next((t for t in row["documented_genotype"].split()
+                      if t.upper().startswith("MAT")), "")
+        if not token:
+            continue
+        if "/" in token:
+            out[row["strain"]] = "MATa/alpha"
+        elif token.lower() in ("matalpha", "matα"):
+            out[row["strain"]] = "MATalpha"
+        elif token.lower() == "mata":
+            out[row["strain"]] = "MATa"
+    return out
 
 
 def score_tools(elements, coverage, min_breadth_depth):
@@ -190,6 +344,158 @@ def score_tools(elements, coverage, min_breadth_depth):
     return tools
 
 
+def load_catalogue_activity(path):
+    """strain -> {gene: active | inactive} from the marker allele catalogue."""
+    out = {}
+    for row in load_tsv(path):
+        if row.get("activity") in ("active", "inactive"):
+            out.setdefault(row["strain"], {})[row["gene"].upper()] = row["activity"]
+    return out
+
+
+def resolve(panel, obs, results, markers, mating, mating_doc, catalogue, tie_log_ratio,
+            min_separating):
+    """Settle the strains the SNP panel cannot separate.
+
+    Close relatives (S288C, FY4, BY4741, BY4742, ...) differ at a few dozen
+    sites or none, and two stocks of one strain differ by as much: the two
+    S288C runs of the panel disagree at over a thousand positions. So a lead
+    of a few dozen sites names a stock as readily as a strain. A strain is
+    tied with the best one when fewer than min_separating called sites
+    separate them, or when its likelihood is within tie_log_ratio of the
+    best (about two net mismatches at ln 1000). The mating type and the
+    native marker genotype, which
+    are what laboratory derivatives were made to differ by, then choose among
+    them. A strain is compared with its documented genotype when it has one,
+    and otherwise with the marker alleles of its own assembly in the
+    catalogue; it is kept when nothing measured contradicts either. A strain
+    with neither is kept too, and the report says so.
+    """
+    best = results[0]
+    tied = [(best, 0)]
+    for result in results[1:60]:
+        separating = discriminating(panel, obs, best["strain_index"], result["strain_index"])
+        if (separating < min_separating
+                or best["log_likelihood"] - result["log_likelihood"] <= tie_log_ratio):
+            tied.append((result, separating))
+    marker_match = {m["strain"]: m for m in markers.get("documented_genotype_matches", [])}
+    measured = {m["gene"].upper(): m["status"] for m in markers.get("markers", [])
+                if m.get("status") in ("active", "inactive")}
+    for strain, alleles in catalogue.items():
+        if strain in marker_match or not measured:
+            continue
+        compared = [gene for gene in measured if gene in alleles]
+        differ = ["%s %s, %s in its assembly" % (gene, measured[gene], alleles[gene])
+                  for gene in compared if measured[gene] != alleles[gene]]
+        if compared:
+            marker_match[strain] = {"agree": len(compared) - len(differ),
+                                    "compared": len(compared), "differences": differ,
+                                    "from_assembly": True}
+    rows = []
+    for result, separating in tied:
+        strain = result["strain_id"]
+        evidence, hard, documented = [], False, False
+        # Laboratory strains are made from one another in two ways the
+        # measurements can see: more genes knocked out (a marker inactive in
+        # the sample, active in the strain), and haploids of both mating
+        # types crossed into an a/alpha diploid (X2180 from X2180-1A and -1B,
+        # BY4743 from BY4741 and BY4742). A strain differing from the sample
+        # only in those ways stands as its parent; any other difference rules
+        # it out.
+        extra, diploid, support = [], False, 0
+        doc_mat = mating_doc.get(strain)
+        if doc_mat and mating.get("call") not in (None, "unknown"):
+            documented = True
+            if doc_mat == mating["call"]:
+                support += 2
+                evidence.append("mating type %s as documented" % doc_mat)
+            elif mating["call"] == "MATa/alpha" and doc_mat in ("MATa", "MATalpha"):
+                diploid, support = True, support + 1
+                evidence.append("a/alpha diploid, documented %s: a diploid of its "
+                                "background" % doc_mat)
+            else:
+                hard = True
+                evidence.append("mating type %s, documented %s" % (mating["call"], doc_mat))
+        match = marker_match.get(strain)
+        if match:
+            documented = True
+            source = " (from its assembly)" if match.get("from_assembly") else ""
+            if match["agree"] == match["compared"]:
+                support += 1 if match.get("from_assembly") else 2
+                evidence.append("native markers agree at %d of %d%s"
+                                % (match["agree"], match["compared"], source))
+            else:
+                evidence.append("native markers differ%s: %s"
+                                % (source, "; ".join(match["differences"])))
+                for difference in match["differences"]:
+                    gene, _, rest = difference.partition(" ")
+                    if (rest == "inactive, documented %s" % gene.upper()
+                            or rest == "inactive, active in its assembly"):
+                        extra.append(gene.lower())
+                    else:
+                        hard = True
+                if not hard:
+                    support += 1
+        if not documented:
+            evidence.append("no documented genotype to compare with")
+        rows.append({"strain": strain, "rank": result["rank"],
+                     "separating_sites": separating, "documented": documented,
+                     "contradicted": hard or bool(extra) or diploid,
+                     "evidence": evidence, "support": support,
+                     "parent": not hard and (bool(extra) or diploid),
+                     "further_inactivated": extra, "diploid": diploid})
+
+    # Candidates: strains nothing contradicts, and parents. The one whose
+    # genotype was checked most fully and agrees comes first, then the one
+    # needing the fewest further changes, then the SNP ranking. SY14, built
+    # from BY4742, ties with it on SNPs and markers, but only BY4742's mating
+    # type and markers are documented; a prototroph such as FY4 fits as the
+    # parent of almost anything, one knockout at a time, so the parent with
+    # the fewest knockouts wins.
+    consistent = [row for row in rows if not row["contradicted"]]
+    candidates = sorted((row for row in rows if not row["contradicted"] or row["parent"]),
+                        key=lambda row: (-row["support"], len(row["further_inactivated"]),
+                                         row["diploid"], row["rank"]))
+    explanation, call = [], best["strain_id"]
+    names = ", ".join(row["strain"] for row in rows)
+
+    def describe(row):
+        if not row["parent"]:
+            return row["strain"]
+        changes = []
+        if row["further_inactivated"]:
+            changes.append("%s inactivated as well" % ", ".join(row["further_inactivated"]))
+        if row["diploid"]:
+            changes.append("as an a/alpha diploid")
+        return "%s-derived (%s)" % (row["strain"], "; ".join(changes))
+
+    if len(rows) > 1 or candidates and candidates[0]["parent"]:
+        if candidates:
+            top = candidates[0]
+            call = describe(top)
+            others = [describe(row) for row in candidates[1:6]]
+            if len(candidates) > 6:
+                others.append("%d more, in the resolution table" % (len(candidates) - 6))
+            explanation.append(
+                "the SNP panel alone does not separate %s. Mating type and native markers "
+                "point to %s: %s%s"
+                % (names, call, "; ".join(top["evidence"]),
+                   ". Also not excluded, in order of how much of their genotype was "
+                   "checked: " + ", ".join(others) if others else ""))
+        else:
+            explanation.append(
+                "the SNP panel does not separate %s, and every one of them contradicts "
+                "the measured mating type or native markers. The sample may be a "
+                "derivative of %s with another mating type or other markers (W303-1B "
+                "against W303-1A, for instance)" % (names, best["strain_id"]))
+    elif rows[0]["contradicted"]:
+        explanation.append(
+            "%s is the closest strain, but %s. The sample may be a derivative of it"
+            % (best["strain_id"], "; ".join(rows[0]["evidence"])))
+    return {"tied": rows, "consistent": [row["strain"] for row in consistent],
+            "call": call, "explanation": explanation}
+
+
 def marker_warnings(markers):
     """What the native marker genotype adds to the warnings."""
     out = []
@@ -209,7 +515,18 @@ def marker_warnings(markers):
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--sites", required=True, help="panel site matrix TSV")
+    parser.add_argument("--sites", required=True, help="panel site table TSV (.gz)")
+    parser.add_argument("--strains", required=True, help="panel strain table TSV")
+    parser.add_argument("--mating", help="mating-type k-mer counts from scan_kmers.py")
+    parser.add_argument("--documented", help="documented_genotypes.tsv")
+    parser.add_argument("--marker-catalogue",
+                        help="marker_alleles.tsv: the marker alleles of each assembly, "
+                             "compared with the sample for tied strains without a "
+                             "documented genotype")
+    parser.add_argument("--tie-log-ratio", type=float, default=math.log(1000),
+                        help="strains whose log likelihood is within this of the best "
+                             "are tied and settled by mating type and markers (default "
+                             "ln 1000, about two net mismatching sites)")
     parser.add_argument("--calls", required=True, help="per-site allele calls TSV")
     parser.add_argument("--tools", help="tool element manifest TSV")
     parser.add_argument("--tool-coverage", help="per-element coverage TSV")
@@ -246,6 +563,14 @@ def main():
                              "caps the matching sites, which are the bulk and the "
                              "least interesting. At 5000 a five strain panel gives a "
                              "report of a few MB instead of tens.")
+    parser.add_argument("--detail-top", type=int, default=5,
+                        help="strains whose per-site detail goes into the report")
+    parser.add_argument("--report-top", type=int, default=25,
+                        help="strains listed in the report; the full ranking is in "
+                             "--out-ranking")
+    parser.add_argument("--out-ranking", help="TSV ranking of every panel strain")
+    parser.add_argument("--min-mating-kmers", type=int, default=100,
+                        help="k-mers of each mating type that must be seen to call it")
     args = parser.parse_args()
 
     if not 0.0 < args.error_rate < 0.5:
@@ -255,8 +580,10 @@ def main():
     calls = {row["site_id"]: row for row in load_tsv(args.calls)}
     if not sites:
         sys.exit("empty site matrix: %s" % args.sites)
+    panel = Panel(sites, load_tsv(args.strains))
 
-    results = score_strains(sites, calls, args.error_rate, args.max_detail_sites)
+    results, obs = score_strains(panel, calls, args.error_rate, args.max_detail_sites,
+                                 args.detail_top)
 
     tools, tool_summary = [], {"green": 0, "orange": 0, "red": 0}
     if args.tools:
@@ -318,25 +645,13 @@ def main():
             # culture drift all produce correlated errors. Reporting the count
             # lets the reader judge the call instead of trusting the softmax.
             runner_up = results[1]
-            discriminating = sum(
-                1 for site in sites
-                if site["exp_" + best["strain_id"]] in ("A", "R")
-                and site["exp_" + runner_up["strain_id"]] in ("A", "R")
-                and site["exp_" + best["strain_id"]] != site["exp_" + runner_up["strain_id"]]
-                and calls.get(site["site_id"], {}).get("call") in ("A", "R"))
-            best["discriminating_sites_vs_next"] = discriminating
+            separating = discriminating(panel, obs, best["strain_index"],
+                                        runner_up["strain_index"])
+            best["discriminating_sites_vs_next"] = separating
             best["runner_up"] = runner_up["strain_id"]
-            if discriminating < args.min_discriminating_sites:
-                warnings.append(
-                    "only %d called sites distinguish %s from %s. The ranking "
-                    "below separates them, but on so few sites the margin rests "
-                    "on the assumption that errors are independent across sites, "
-                    "which correlated error (assembly, panel construction, "
-                    "culture drift) breaks. Treat this as %s or %s, not as a "
-                    "confident call of %s"
-                    % (discriminating, best["strain_id"], runner_up["strain_id"],
-                       best["strain_id"], runner_up["strain_id"], best["strain_id"]))
-            elif runner_up["probability"] > 0.01:
+            # Fewer separating sites than the threshold is handled by
+            # resolve(), which names the tied strains and what settles them.
+            if separating >= args.min_discriminating_sites and runner_up["probability"] > 0.01:
                 warnings.append(
                     "%s and %s are not cleanly separated by this panel"
                     % (best["strain_id"], runner_up["strain_id"]))
@@ -367,11 +682,6 @@ def main():
             "counts above are over the whole panel, and the complete calls are "
             "in the site_calls TSV"
             % (best["sites_in_detail"], best["sites_total"]))
-    if any(site.get("assumed_ref") == "yes" for site in sites):
-        warnings.append(
-            "some panel sites assume the reference allele where a strain's assembly "
-            "gave no call; rebuild the panel with callable regions to remove this")
-
     markers = {}
     if args.markers and os.path.getsize(args.markers) > 2:
         with open(args.markers) as handle:
@@ -379,19 +689,30 @@ def main():
     if markers.get("markers"):
         warnings.extend(marker_warnings(markers))
 
+    mating = (mating_type(args.mating, args.min_mating_kmers) if args.mating
+              else {"call": "unknown", "reason": "not measured"})
+    resolution = resolve(panel, obs, results, markers, mating,
+                         documented_mating(args.documented) if args.documented else {},
+                         load_catalogue_activity(args.marker_catalogue)
+                         if args.marker_catalogue else {},
+                         args.tie_log_ratio, args.min_discriminating_sites)
+    warnings.extend(resolution["explanation"])
+
     report = {
         "sample": args.sample,
         "generated": datetime.datetime.now().replace(microsecond=0).isoformat(),
         "organism": args.organism,
         "reference": args.reference,
-        "panel": {"k": len(next(iter(calls.values()), {}).get("site_id", "")) or None,
-                  "n_sites": len(sites),
-                  "strains": [result["strain_id"] for result in results]},
+        "panel": {"n_sites": len(sites), "n_strains": len(panel.strains),
+                  "strains": [result["strain_id"] for result in results[:args.report_top]]},
+        "call": resolution["call"],
+        "resolution": resolution,
+        "mating_type": mating,
         "unassigned": unassigned,
         "unassigned_reason": reason,
         "coverage": {"median_depth_called": median_depth,
                      "uncovered_fraction": round(uncovered_fraction, 4)},
-        "strains": results,
+        "strains": results[:args.report_top],
         "tools": tools,
         "tool_summary": tool_summary,
         "warnings": warnings,
@@ -401,12 +722,23 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     with open(args.out, "w") as handle:
         json.dump(report, handle, indent=1)
+    if args.out_ranking:
+        with open(args.out_ranking, "w", newline="") as handle:
+            writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
+            columns = ["rank", "strain_id", "display_name", "clade", "source_type",
+                       "probability", "concordance", "sites_called", "sites_matching",
+                       "sites_mismatching", "sites_uncovered"]
+            writer.writerow(columns)
+            for result in results:
+                writer.writerow([result[column] for column in columns])
 
     if best:
-        verdict = "UNASSIGNED" if unassigned else best["strain_id"]
-        print("%s: %s (p=%.3f, concordance=%.1f%%, %d/%d sites called)" %
-              (args.sample, verdict, best["probability"],
-               100 * best["concordance"], best["sites_called"], len(sites)))
+        verdict = "UNASSIGNED" if unassigned else resolution["call"]
+        print("%s: %s (SNP panel best %s, p=%.3f, concordance=%.1f%%, %d/%d sites called; "
+              "mating type %s)" %
+              (args.sample, verdict, best["strain_id"], best["probability"],
+               100 * best["concordance"], best["sites_called"], len(sites),
+               mating.get("call", "unknown")))
     for warning in warnings:
         print("warning: %s" % warning)
     return 0

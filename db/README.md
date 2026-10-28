@@ -12,10 +12,18 @@ db/
       tools.fasta             # one record per biomolecular tool element
       tools.tsv               # id, name, class, length, source, provenance
     strains/
-      strains.tsv             # strain id, name, assembly used, notes
+      strains.tsv             # strain catalogue: one row per strain and the source of its SNPs (generated)
+      aliases.tsv             # strain names that normalisation cannot match (curated)
+      reads/                  # per-strain consensus VCF and callable BED of the read strains (generated)
+    sources/
+      read_runs.tsv           # SRA runs of the S288C family, built from or held out (curated)
     panels/
-      <strain>.snp.tsv        # discriminant SNPs + flanking k-mers (generated)
-      panel_index.tsv         # which panels exist, k, number of sites, checksum
+      panel_sites.tsv.gz      # sites, with the strains carrying alt, het or unknown (generated)
+      panel_kmers.tsv.gz      # every k-mer of every site, with the allele at its centre (generated)
+      panel_strains.tsv       # strain index used by panel_sites, and sites carried (generated)
+      panel_report.txt        # what the build kept and dropped, and the strains it cannot separate
+    mating/
+      mating_kmers.tsv        # MATa- and MATalpha-specific k-mers (generated)
     markers/
       marker_genes.tsv        # the native marker genes, by systematic name (curated)
       marker_loci.tsv|fasta|bed  # ORF +- 1 kb, coordinates from Ensembl (generated)
@@ -32,7 +40,8 @@ db/
 | **Tool elements** (`tools/`) | Which markers, tags, resistance cassettes, reporters are present in the submitted sample | Read alignment to each element, scored by breadth of coverage and identity |
 | **Element origin** (`tools/tools.tsv`, `origin` column) | Whether a hit is evidence of engineering at all | Fraction of the element's k-mers found in the host reference genome |
 | **Native marker genes** (`markers/`) | Whether the strain's own URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15 and CAN1 are active, inactivated in place, deleted or interrupted, and which known allele each one is | Reads aligned to the reference genome; pileup, depth and junction reads over each locus, judged by the protein the allele encodes |
-| **Strain SNP panels** (`panels/`) | Which laboratory background the sample most resembles | Exact k-mer matching of the reference and alternative allele k-mers in the raw reads |
+| **Strain SNP panel** (`panels/`) | Which strain, among about 1,200 laboratory strains and isolates, the sample is | Exact matching, in the raw reads, of each strain's own k-mers around each site |
+| **Mating type** (`mating/`) | MATa, MATalpha or a/alpha | Ratio of Ya- to Yalpha-specific k-mer counts |
 
 ## Native elements are not evidence
 
@@ -180,8 +189,38 @@ python3 bin/flag_native_elements.py \
     --manifest  db/yeast/tools/tools.tsv \
     --reference dataset/genome_references/test/S288C_reference_sequence_R64-1-1_20110203.fsa
 
-# strain SNP panels, from whole-genome assemblies aligned to the reference
+# sources of the strain panel (downloaded once, into dataset/, not committed)
+#   dataset/1011genomes/1011Matrix.gvcf.gz   http://1002genomes.u-strasbg.fr/files/ (md5 in md5.txt)
+#   dataset/1011genomes/supp/table_s1.tsv    Table S1 of Peter et al. 2018, from Europe PMC PMC6784862
+#   dataset/sgd_strains/                      SGD strain assemblies, s3 sgd-archive.yeastgenome.org sequence/strains/
+#   dataset/sra_lab/<run>_[12].fastq.gz       ENA, runs listed in db/yeast/sources/read_runs.tsv
+# the population matrix as a sparse table: per record, the samples not hom-ref
+tabix -p vcf 1011Matrix.gvcf.gz
+for c in $(tabix -l 1011Matrix.gvcf.gz); do
+    bcftools query -r $c -i 'GT!="RR"' -f '%CHROM\t%POS\t%REF\t%ALT\t[%SAMPLE:%GT:%AD,]\n' \
+        1011Matrix.gvcf.gz | gzip -1
+done > dataset/1011genomes/sparse_gt.tsv.gz
+bcftools query -l 1011Matrix.gvcf.gz > dataset/1011genomes/samples.txt
+
+# strain catalogue: every strain once, with its best source
+python3 bin/build_strain_catalog.py \
+    --matrix-table dataset/1011genomes/supp/table_s1.tsv \
+    --matrix-samples dataset/1011genomes/samples.txt \
+    --reads db/yeast/sources/read_runs.tsv --reads-dir dataset/sra_lab \
+    --scrapdb-dir dataset/genome_references/ScRAPdb_20240610_nuclear_genome \
+    --sgd-dir dataset/sgd_strains \
+    --exclude "<the 33 other-species assemblies of marker_alleles_report.txt>,scrapdb:BY,scrapdb:S288C,scrapdb:SGDref,scrapdb:CENPK1137D" \
+    --aliases db/yeast/strains/aliases.tsv \
+    --path-map "dataset=/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset" \
+    --out db/yeast/strains/strains.tsv
+
+# strain panel: assemblies aligned, read runs called, then every strain at once
 nextflow run build_db.nf -c nextflow.config
+
+# mating-type k-mers, with the cassette coordinates fetched from Ensembl
+python3 bin/build_mating_kmers.py \
+    --reference dataset/genome_references/test/S288C_reference_sequence_R64-1-1_20110203.fsa \
+    --out db/yeast/mating/mating_kmers.tsv
 
 # native marker loci, with coordinates fetched from Ensembl and checked against
 # the reference: each ORF must start with ATG and end with its only stop
@@ -205,11 +244,117 @@ python3 bin/build_marker_alleles.py \
 Rebuild the marker catalogue after the loci, and after any change to the tool
 elements, since inserted sequence is named against them.
 
-The yeast panels are committed so the pipeline runs out of the box, and they
-are fully reproducible: `build_db.nf` regenerates them from the assemblies
-listed in `strains/strains.tsv`. Rebuild them whenever the strain list, the
-reference or `panel_kmer_size` changes, since any of the three invalidates
-every panel.
+The yeast panel is committed so the pipeline runs out of the box, and it is
+fully reproducible: `build_db.nf` regenerates it from the sources listed in
+`strains/strains.tsv`. Rebuild it whenever the strain list, the reference or
+`panel_kmer_size` changes, since any of the three invalidates it.
+
+## The strain panel
+
+### Where each strain's SNPs come from
+
+A strain does not need an assembly, only its alleles against the reference
+and where they are known. Three sources give that, and the catalogue
+(`bin/build_strain_catalog.py`) takes each strain once, from the best of them:
+
+| source | strains | why this one |
+| :--- | :--- | :--- |
+| reads | the S288C family: S288C, FY4, FY1679, BY4741, BY4742, X2180-1A, YPH499 | they differ from each other by tens of SNPs, as many as the base errors of a short-read assembly |
+| matrix | the 1,011 isolates of the 1011 Yeast Genomes project (Peter et al. 2018), W303 and SK1 among them | one caller, one reference, explicit no-calls |
+| assembly | everything else in ScRAPdb (long reads) and SGD: CEN.PK, Sigma1278b, D273-10B, FL100, JK9-3d, SEY6210, 74D694, industrial and wild isolates | the only source there is |
+
+Names are normalised before comparison (`RM11-1a`, `RM11-1A` and the matrix
+isolate `RM11-1a` are one strain), and `aliases.tsv` holds the matches
+normalisation cannot make. Two matrix samples sharing a name are both kept:
+the 1011 set holds some isolates twice, as the original and as a spore of it.
+Left out: the 33 ScRAPdb assemblies of other species, the ScRAPdb `BY`,
+`S288C` and `SGDref` assemblies (the read strains replace them) and ScRAPdb
+`CENPK1137D`, which carries `leu2-3,112` although CEN.PK113-7D is a
+prototroph (SGD's Delft assembly stands for it).
+
+**Read strains.** Each run is aligned end to end with bowtie2, called with
+bcftools, and made callable where at least 10 reads of mapping quality 20 cover
+a position and depth stays under 2.5 times the median. Where a strain has
+runs from independent stocks, `bin/consensus_strain_calls.py` keeps a variant
+only when every run calls it identically and every run can see it; anywhere
+else the strain is unknown, never reference. A heterozygous call in a haploid
+strain is a paralog collapsed onto one copy, and the position is made unknown
+too. The runs and the stocks they come from are in `sources/read_runs.tsv`;
+the runs marked `heldout` are never used to build, only to test.
+
+**Matrix strains.** The matrix lists every position variable in the
+population, with each isolate's genotype and read counts there. It writes many
+no-calls over reads that all carry the reference base (`./.:14,0`); a no-call
+with at least two reference reads and no other is read as reference. A
+position the matrix does not list is taken as reference in every isolate.
+
+### Each strain's own k-mers
+
+A probe k-mer is valid for a strain only if the k-1 bases around the SNP are
+the ones that strain carries. With a thousand strains, carrying together a
+variant every few bases, almost every site has another strain's variant in
+its window, so a single reference/alternative pair per site would leave
+almost nothing. `bin/build_population_panel.py` rebuilds the window of every
+strain from that strain's own alleles and keeps one k-mer per distinct
+haplotype, labelled with the allele at its centre; `scan_kmers.py` sums them
+per allele. A strain whose window cannot be rebuilt (an indel in it, a
+no-call, more than two heterozygous neighbours) is unknown at that site.
+Every k-mer must be absent from the reference genome except the reference
+window itself, which must occur once.
+
+### Which sites are kept
+
+Two clonal relatives differ only at variants rare in the population, often
+private to one of them, so for every strain its rarest sites are kept first,
+up to `--per-strain-sites`. Common sites, which place a sample in its clade,
+are added evenly along the genome. The site table lists, per site, the strains
+carrying the alternative allele, the heterozygous ones and the unknown ones;
+every other strain carries the reference allele.
+
+The scorer holds each strain as bit sets over the sites, so ranking a sample
+against every strain is a few popcounts per strain, not a loop over sites.
+
+### Telling the S288C family apart
+
+The SNP panel places a sample in the S288C family, and inside it the strains
+differ by few SNPs or none. Two more measurements decide, and they are the
+ones the laboratory derivatives were built to differ by:
+
+* **mating type**, from `mating/mating_kmers.tsv`. Every genome carries a
+  silent a cassette (HMR) and a silent alpha cassette (HML), so the presence of
+  either says nothing; the ratio does. Per k-mer, a / (a + alpha) is about 2/3
+  in a MATa haploid, 1/3 in a MATalpha one and 1/2 in an a/alpha diploid. The
+  k-mers are those of the a1, a2, alpha1 and alpha2 genes found in no other
+  cassette. On SRR26617475 (BY4741, MATa) the ratio is 0.76.
+* **native marker genotype**, as described above: BY4741 `his3D1 leu2D0
+  met15D0 ura3D0`, FY1679 `ura3-52` and heterozygous `trp1D63 leu2D1 his3D200`,
+  YPH499 `ura3-52 lys2-801 ade2-101 trp1-D63 his3-D200 leu2-D1`, FY4 and
+  X2180-1A prototrophs.
+
+`score_strains.py` collects every strain separated from the best one by fewer
+than `--min-discriminating-sites` called sites, drops those whose documented
+mating type or markers the sample contradicts, and names what is left. A strain
+with no documented genotype is compared with the marker alleles of its own
+assembly in `markers/marker_alleles.tsv` instead. FY4 (MATa) and S288C
+(MATalpha) differ at no marker, so mating type alone parts them; S288C and a
+MATalpha prototroph derivative such as FY5 cannot be parted, and the report
+says so.
+
+Two more rules decide the call:
+
+* Among the strains nothing contradicts, the one whose genotype was checked
+  most fully comes first: a documented mating type and documented markers
+  above markers read from an assembly, above nothing. SY14, built from BY4742,
+  ties with it on SNPs and markers, but only BY4742's are documented.
+* A strain also stands as the parent of the sample when the only differences
+  are the two ways laboratory strains are made from one another: more genes
+  knocked out (a marker inactive in the sample, active in the strain), and an
+  a/alpha diploid of a haploid strain's background (X2180 from X2180-1A and
+  -1B, BY4743 from BY4741 and BY4742). The call is then "BY4741-derived (trp1,
+  lys2, ade2, can1 inactivated as well)" or "X2180-1A-derived (as an a/alpha
+  diploid)". Parents are ranked with the fitting strains by how much of their
+  genotype agrees, then by how few changes they need, since a prototroph would
+  otherwise fit as the parent of anything.
 
 ## Choosing k
 
@@ -229,25 +374,84 @@ the reference. Keep k well below the read length.
 
 ## Current yeast panel
 
-Built 2026-10-23 at k=21: 36694 informative sites over BY4742, SK1, W303, Y55
-and S288C. Differences from the reference: W303 8611, SK1 68529, Y55 59853,
-BY4742 241. The W303 figure agrees with the published count of roughly 9500,
-which is the main external check that the alignment settings are right.
+Built 2026-10-27 at k=21: **1,172 strains, 261,469 sites, 1,468,139 k-mers**
+(231,469 rare sites, kept per strain, and 30,000 common ones). 1,011 strains
+come from the 1011 matrix, 154 from assemblies (ScRAPdb and SGD), 7 from reads
+(the S288C family). One pair of strains has identical expected alleles at every
+kept site, IMDO050523 and LW2591Y, two ScRAPdb assemblies.
 
-Sites that separate each pair:
+What the build dropped, of 1,739,311 candidate SNVs: 208,406 common sites
+thinned by distance, 105,813 unknown in more than a tenth of the strains,
+41,870 low complexity, 20,090 whose k-mers are repeated in the reference,
+14,721 uninformative, 360 with a k-mer shared with another site.
 
-| pair | sites |
-| :--- | :--- |
-| SK1 vs Y55 | 25514 |
-| SK1 vs W303 | 21789 |
-| W303 vs Y55 | 21473 |
-| SK1 vs S288C | 19277 |
-| Y55 vs S288C | 19154 |
-| W303 vs S288C | 5180 |
-| **BY4742 vs S288C** | **42** |
+Read strains, after the agreement between runs (`strains/reads/`):
 
-The last row is the honest limit of this panel. BY4742 is an S288C derivative,
-so the two are separated by a few dozen sites and no amount of sequencing depth
-changes that. `score_strains.py` reports the number of discriminating sites
-alongside the ranking and warns below 200, because a probability computed over
-36694 sites will read as certainty even when the decision rests on 40 of them.
+| strain | runs | variants kept | dropped, runs disagree | panel sites carried |
+| :--- | :--- | :--- | :--- | :--- |
+| S288C | 2 | 155 | 1,198 | 13 |
+| FY4 | 2 | 135 | 146 | 9 |
+| BY4741 | 2 | 146 | 284 | 5 |
+| BY4742 | 2 | 46 | 721 | 4 |
+| X2180-1A | 1 | 198 | - | 18 |
+| FY1679 | 1 | 423 | - | 15 |
+| YPH499 | 2 | 4,686 | 897 | 668 |
+
+### Checked against genomes it was not built from
+
+`test/validate_panel.py` simulates 100 bp reads at 20x from a long-read
+ScRAPdb assembly of a strain the panel takes from another source (the 1011
+matrix, or the reads), and scores them on SNPs alone, without markers. Of 22
+strains, 15 rank first and 21 are first or among the strains the report says
+it cannot separate from the first:
+
+| expected | ranked first | tied with it |
+| :--- | :--- | :--- |
+| W303, RM11-1a, YPH499, L1528 and 11 isolates | itself | - |
+| SK1 | S799 | SK1 |
+| YPS128 | YPS606, a YPS128 derivative | YPS128 and 12 more oak isolates |
+| UWOPS03-433.3 | BMC_2a | it and 5 more Malaysian isolates |
+| NC_02_b | AGY731 | it and 5 more |
+| BY4742 | SY14, built from BY4742 | BY4742 and 16 more of the S288C family |
+| S288C | BY4741 | S288C and 16 more of the S288C family |
+| DBVPG6044 | Y5 | not DBVPG6044 |
+
+The last row is a disagreement between sources, not a pipeline error. The
+ScRAPdb DBVPG6044 assembly matches the West African isolates (Y5, YJM1248,
+CBS403) at 99.96 per cent, where DBVPG6044 is classically placed; the 1011
+sample labelled DBVPG6044 (AKI, "Mosaic region 3" in Table S1) differs from
+that assembly at 3,623 sites. One of the two stocks is not the classic
+DBVPG6044. The panel keeps the matrix sample, as for every isolate in the
+matrix, and this note is the record of the conflict.
+
+### The honest limit: stocks drift
+
+Two stocks of one strain differ by tens of mutations: the two S288C runs
+disagree at 1,198 positions. Inside the S288C family, and between a strain and
+a derivative built from it (YPS606 from YPS128, SY14 from BY4742), that is as
+many differences as separate two strains. So the SNP panel names the family,
+and the strain inside it is named by mating type and markers. The report lists
+every strain separated from the best one by fewer than
+`--min-discriminating-sites` (200) called sites, drops those whose documented
+genotype, or whose own assembly's marker alleles, the sample contradicts, and
+says which are left.
+
+### Held-out runs
+
+Five real runs never used to build the panel (`sources/read_runs.tsv`, role
+`heldout`, and SRR26617475), through the whole pipeline. In each, the SNP panel
+ties 18 strains of the S288C family; mating type and markers make the call.
+
+| run, as labelled | mating type (a fraction) | markers | call |
+| :--- | :--- | :--- | :--- |
+| SRR26617475, BY4741 | MATa (0.76) | ura3D0 his3D1 leu2D0 met15D0 | BY4741 |
+| SRR3279672, BY4741 (a ctf18D replication study) | MATa (0.83) | BY4741's, plus trp1 lys2 ade2 can1 | BY4741-derived (trp1, lys2, ade2, can1 inactivated as well) |
+| SRR5431143, BY4742 | MATalpha (0.38) | ura3D0 his3D1 leu2D0 lys2D0 | BY4742 |
+| SRR5312396, FY4 | MATa | all eight active | FY4; S288C, the same markers in MATalpha, is excluded |
+| DRR505219, X2180 | a/alpha (0.49) | all eight active | X2180-1A-derived (as an a/alpha diploid), which is what X2180 is |
+
+The strains each report still lists as not excluded are those nothing measured
+contradicts but whose genotype is less documented: CBS7765, a 1011 isolate only
+100 SNPs from the reference and almost certainly an S288C-derived laboratory
+strain deposited in a collection, with no marker genotype; and, for the
+prototrophs, X2180-1A and the DGY lines of ScRAPdb.

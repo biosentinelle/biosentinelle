@@ -6,12 +6,16 @@ build-and-score path can be exercised on any machine.
 
     python test/smoke_test_strain_id.py
 
-Two controls, and the second one matters more than the first:
+Three controls; the last one matters most:
 
   positive   Reads simulated from a strain that is in the panel must be ranked
              first, with high concordance and no uncovered sites.
 
-  negative   Reads simulated from a strain that is NOT in the panel must come
+  relative   Reads from a strain that differs from a panel strain at four sites
+             only must be ranked first: the panel must keep a strain's rare
+             variants, which are all that separate clonal relatives.
+
+  negative  Reads simulated from a strain that is NOT in the panel must come
              back unassigned. This is the case that a concordance threshold
              alone does not catch: an unknown strain whose variants miss the
              panel's sites looks exactly like the reference strain, and will be
@@ -97,36 +101,57 @@ def main():
     reference = "".join(rng.choice("ACGT") for _ in range(GENOME_LEN))
     write_fasta(path("ref.fa"), reference)
 
-    # Two panel strains sharing some differences, as related lab strains do.
+    # Two panel strains sharing some differences, as related lab strains do,
+    # and a close relative of StrainX that differs from it at four sites only,
+    # as BY4741 differs from S288C. StrainY also carries variants 5 bp from
+    # some of StrainX's, so those sites need per-strain k-mers to be read.
     shared = make_variants(reference, 150, 3)
     strains = {}
-    for name, seed in (("StrainX", 1), ("StrainY", 2)):
-        strains[name] = sorted(set(make_variants(reference, 900, seed)) | set(shared))
-        write_vcf(path("%s.vcf" % name), strains[name])
-        run("build_snp_panel.py", [
-            "--vcf", path("%s.vcf" % name), "--reference", path("ref.fa"),
-            "--strain", name, "--out", path("%s.snp.tsv" % name),
-            "--out-positions", path("%s.positions.tsv" % name), "-k", "31"], work)
+    strains["StrainX"] = sorted(set(make_variants(reference, 900, 1)) | set(shared))
+    near = []
+    for pos, _, _ in strains["StrainX"][::20]:
+        base = reference[pos + 4]
+        near.append((pos + 5, base, "A" if base != "A" else "C"))
+    strains["StrainY"] = sorted(set(make_variants(reference, 900, 2)) | set(shared) | set(near))
+    taken = {pos for pos, _, _ in strains["StrainX"]}
+    private = [v for v in make_variants(reference, 40, 5) if v[0] not in taken][:4]
+    strains["StrainX2"] = sorted(set(strains["StrainX"]) | set(private))
+    strains["RefStrain"] = []
+    with open(path("strains.tsv"), "w") as handle:
+        handle.write("strain\tdisplay_name\tsource_type\tsource\tclade\tploidy\t"
+                     "zygosity\torigin\tnotes\n")
+        for name in strains:
+            handle.write("%s\t%s\tassembly\t%s.vcf\t\t1\t\t\t\n" % (name, name, name))
+    with open(path("all.bed"), "w") as handle:
+        handle.write("%s\t0\t%d\n" % (CONTIG, GENOME_LEN))
+    singles = []
+    for name, variants in strains.items():
+        write_vcf(path("%s.vcf" % name), variants)
+        singles += ["--single", "%s=%s=%s" % (name, path("%s.vcf" % name), path("all.bed"))]
 
-    print(run("merge_snp_panels.py", [
-        "--panel", "StrainX=" + path("StrainX.snp.tsv"),
-        "--panel", "StrainY=" + path("StrainY.snp.tsv"),
-        "--positions", "StrainX=" + path("StrainX.positions.tsv"),
-        "--positions", "StrainY=" + path("StrainY.positions.tsv"),
-        "--reference-strain", "RefStrain", "-k", "31",
-        "--out-sites", path("panel_sites.tsv"),
-        "--out-kmers", path("panel_kmers.tsv")], work))
+    print(run("build_population_panel.py", [
+        "--strains", path("strains.tsv"), "--reference", path("ref.fa"), "-k", "31",
+        "--rare-max-carriers", "1", "--per-strain-sites", "5000",
+        "--common-sites", "5000"] + singles + [
+        "--out-sites", path("panel_sites.tsv"), "--out-kmers", path("panel_kmers.tsv"),
+        "--out-strains", path("panel_strains.tsv")], work))
 
     failures = []
 
+    def score(reads, label, out_json):
+        run("scan_kmers.py", ["--kmers", path("panel_kmers.tsv"), "--reads", path(reads),
+                              "--out", path(out_json + ".calls"), "--max-reads", "0",
+                              "--progress-every", "0"], work)
+        run("score_strains.py", ["--sites", path("panel_sites.tsv"),
+                                 "--strains", path("panel_strains.tsv"),
+                                 "--calls", path(out_json + ".calls"),
+                                 "--min-discriminating-sites", "3",
+                                 "--sample", label, "--out", path(out_json)], work)
+        return json.load(open(path(out_json)))
+
     # --- positive control ---------------------------------------------------
     simulate_reads(path("reads_x.fq"), apply_variants(reference, strains["StrainX"]), 25, 99)
-    run("scan_kmers.py", ["--kmers", path("panel_kmers.tsv"), "--reads", path("reads_x.fq"),
-                          "--out", path("calls_x.tsv"), "--max-reads", "0",
-                          "--progress-every", "0"], work)
-    run("score_strains.py", ["--sites", path("panel_sites.tsv"), "--calls", path("calls_x.tsv"),
-                             "--sample", "POSITIVE", "--out", path("x.json")], work)
-    result = json.load(open(path("x.json")))
+    result = score("reads_x.fq", "POSITIVE", "x.json")
     best = result["strains"][0]
     print("positive control: %s p=%.3f concordance=%.3f uncovered=%.1f%% unassigned=%s" % (
         best["strain_id"], best["probability"], best["concordance"],
@@ -138,15 +163,23 @@ def main():
     if best["concordance"] < 0.95:
         failures.append("positive control concordance %.3f below 0.95" % best["concordance"])
 
+    # --- close relative -----------------------------------------------------
+    # Four private sites are all that separate StrainX2 from StrainX. They are
+    # rare by construction, so the panel must keep them, and the reads must
+    # put StrainX2 first.
+    simulate_reads(path("reads_x2.fq"), apply_variants(reference, strains["StrainX2"]), 25, 31)
+    result = score("reads_x2.fq", "RELATIVE", "x2.json")
+    best = result["strains"][0]
+    print("close relative:   %s p=%.3f concordance=%.3f, %d sites from %s" % (
+        best["strain_id"], best["probability"], best["concordance"],
+        best.get("discriminating_sites_vs_next", -1), best.get("runner_up")))
+    if best["strain_id"] != "StrainX2":
+        failures.append("close relative ranked %s first, expected StrainX2" % best["strain_id"])
+
     # --- negative control ---------------------------------------------------
     off_panel = make_variants(reference, 1200, 4242)
     simulate_reads(path("reads_z.fq"), apply_variants(reference, off_panel), 25, 7)
-    run("scan_kmers.py", ["--kmers", path("panel_kmers.tsv"), "--reads", path("reads_z.fq"),
-                          "--out", path("calls_z.tsv"), "--max-reads", "0",
-                          "--progress-every", "0"], work)
-    run("score_strains.py", ["--sites", path("panel_sites.tsv"), "--calls", path("calls_z.tsv"),
-                             "--sample", "NEGATIVE", "--out", path("z.json")], work)
-    result = json.load(open(path("z.json")))
+    result = score("reads_z.fq", "NEGATIVE", "z.json")
     best = result["strains"][0]
     print("negative control: %s p=%.3f concordance=%.3f uncovered=%.1f%% unassigned=%s" % (
         best["strain_id"], best["probability"], best["concordance"],
@@ -168,7 +201,7 @@ def main():
         for failure in failures:
             print("FAIL: %s" % failure)
         return 1
-    print("PASS: both controls behaved correctly")
+    print("PASS: all three controls behaved correctly")
     return 0
 
 

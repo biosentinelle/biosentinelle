@@ -1,4 +1,0 @@
-strains: BY4742, SK1, W303, Y55, S288C
-informative sites: 36694  (k-mers: 73388)
-dropped 1487 sites whose k-mer window carries another strain's variant
-dropped 38 sites whose k-mers collided with another site

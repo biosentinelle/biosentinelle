@@ -538,7 +538,13 @@ def main():
             for gene in genes:
                 mutant = [t for t in tokens if t.lower().startswith(gene.lower())
                           and not t.startswith(gene.upper())]
-                alleles[gene] = mutant[0] if mutant else gene.upper()
+                # A diploid heterozygous for a marker (trp1D63/TRP1 in FY1679)
+                # carries one working copy, and no active/inactive call
+                # compares with it.
+                if mutant and gene.upper() in mutant[0].split("/"):
+                    alleles[gene] = None
+                else:
+                    alleles[gene] = mutant[0].split("/")[0] if mutant else gene.upper()
             documented[row["strain"]] = alleles
 
     tools = {}
@@ -767,6 +773,8 @@ def main():
             if r["status"] not in ("active", "inactive"):
                 continue
             allele = alleles.get(r["gene"], r["gene"].upper())
+            if allele is None:
+                continue
             expected = "active" if allele == r["gene"].upper() else "inactive"
             compared += 1
             if expected == r["status"]:

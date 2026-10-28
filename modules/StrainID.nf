@@ -2,13 +2,17 @@
 // identity result, then render the interactive HTML report.
 process StrainScore {
     label 'python' // see the withLabel: python in the nextflow config file
-    publishDir "${out_path}/tsv", mode: 'copy', pattern: "strain_id.json", overwrite: false
+    publishDir "${out_path}/tsv", mode: 'copy', pattern: "{strain_id.json,strain_ranking.tsv}", overwrite: false
     cache 'true'
 
     input:
     val sample_name
     path site_calls
+    path mating_counts
     path panel_sites
+    path panel_strains
+    path documented
+    path marker_catalogue
     path tools_manifest
     path tool_coverage
     path marker_json
@@ -19,6 +23,7 @@ process StrainScore {
 
     output:
     path "strain_id.json", emit: strain_json_ch
+    path "strain_ranking.tsv", emit: strain_ranking_ch
     path "strain_score_report.txt", emit: strain_score_log_ch
 
     script:
@@ -27,6 +32,11 @@ process StrainScore {
 
     score_strains.py \\
         --sites ${panel_sites} \\
+        --strains ${panel_strains} \\
+        --mating ${mating_counts} \\
+        --documented ${documented} \\
+        --marker-catalogue ${marker_catalogue} \\
+        --out-ranking strain_ranking.tsv \\
         --calls ${site_calls} \\
         --tools ${tools_manifest} \\
         --tool-coverage ${tool_coverage} \\

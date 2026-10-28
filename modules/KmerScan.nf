@@ -10,11 +10,13 @@ process KmerScan {
     val sample_name
     path fastq
     path panel_kmers
+    path mating_kmers
     val max_bases
     val min_depth
 
     output:
     path "site_calls.tsv", emit: site_calls_ch
+    path "mating_counts.tsv", emit: mating_counts_ch
     path "kmer_scan_report.txt", emit: kmer_scan_log_ch
 
     script:
@@ -25,6 +27,8 @@ process KmerScan {
         --kmers ${panel_kmers} \\
         --reads ${fastq} \\
         --out site_calls.tsv \\
+        --extra-kmers ${mating_kmers} \\
+        --extra-out mating_counts.tsv \\
         --max-bases ${max_bases} \\
         --min-depth ${min_depth} |& tee -a kmer_scan_report.txt
     """

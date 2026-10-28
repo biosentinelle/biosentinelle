@@ -519,8 +519,8 @@ def render_header(d, title):
         ("Reference", d.get("reference")),
         ("Generated", d.get("generated")),
         ("Panel sites", num(panel.get("n_sites"))),
-        ("k-mer size (k)", num(panel.get("k"))),
-        ("Panel strains", ", ".join(str(s) for s in (panel.get("strains") or [])) or "n/a"),
+        ("Panel strains", num(panel.get("n_strains"))),
+        ("Mating type", (d.get("mating_type") or {}).get("call")),
     ]
     items = "\n".join(
         "      <div><dt>{}</dt><dd>{}</dd></div>".format(esc(k), esc(v) if v not in (None, "") else "n/a")
@@ -535,6 +535,42 @@ def render_header(d, title):
     </dl>
   </div>
 </header>""".format(title=esc(title), sample=esc(d.get("sample") or "unknown"), items=items)
+
+
+def render_call(d):
+    """The answer, and how the strains the SNP panel ties were told apart."""
+    if d.get("unassigned") or not d.get("call"):
+        return ""
+    res = d.get("resolution") or {}
+    mating = d.get("mating_type") or {}
+    rows = "\n".join(
+        "      <tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+            esc(r.get("strain")), esc(r.get("separating_sites")),
+            "fits as a parent" if r.get("parent") else
+            "excluded" if r.get("contradicted") else
+            ("fits" if r.get("documented") else "not documented"),
+            esc("; ".join(r.get("evidence") or [])))
+        for r in res.get("tied") or [])
+    mating_line = ""
+    if mating.get("call") and mating.get("call") != "unknown":
+        mating_line = ("<p>Mating type <strong>{}</strong>: mean count {} per MATa k-mer, {} per "
+                       "MAT&alpha; k-mer (a fraction {}; about 0.67 for MATa, 0.33 for "
+                       "MAT&alpha;, 0.5 for a/&alpha;).</p>").format(
+            esc(mating["call"]), esc(mating.get("mean_count_a")),
+            esc(mating.get("mean_count_alpha")), esc(mating.get("a_fraction")))
+    table = ""
+    if len(res.get("tied") or []) > 1:
+        table = """<table>
+    <thead><tr><th>Strain</th><th>Separating sites</th><th>Documented genotype</th><th>Evidence</th></tr></thead>
+    <tbody>
+{rows}
+    </tbody>
+  </table>""".format(rows=rows)
+    return """<section id="call">
+  <h2>Call: {call}</h2>
+  {mating}
+  {table}
+</section>""".format(call=esc(d.get("call")), mating=mating_line, table=table)
 
 
 def render_unassigned(d):
@@ -886,6 +922,7 @@ def render(d, title):
         render_header(d, title),
         '<div class="wrap">',
         render_unassigned(d),
+        render_call(d),
         render_warnings(d),
         render_strains(d),
         render_markers(d),

@@ -1,0 +1,1 @@
+S288C: 2 run(s), 155 variants kept, 1198 dropped for disagreement between runs, 13221 positions made unknown, 10.89 Mb callable
