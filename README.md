@@ -14,6 +14,7 @@
    - [AIM](#aim)
    - [WARNING](#warning)
    - [CONTENT](#content)
+   - [HOW IT WORKS](#how-it-works)
    - [INPUT](#input)
    - [HOW TO RUN](#how-to-run)
    - [OUTPUT](#output)
@@ -48,20 +49,48 @@
 
 
 <br><br>
+## HOW IT WORKS
+
+No assembly is made. The sample sequences are compared with a strain identity database (`db/<organism>`, built once by *build_db.nf* from a reference genome and the sequences of 1,172 *S. cerevisiae* strains), through three independent kinds of evidence:
+
+| Evidence | How | Reference genome used at run time? |
+| :--- | :--- | :--- |
+| **Strain SNP and indel panel** | Alignment-free. For each panel site, the database holds the k-mers of each allele. The sample sequences are streamed once and the k-mers of each allele are counted, giving one allele per site where the depth is at least `kmer_min_depth`. The same is done for the mating type (MATa / MATalpha) k-mers. | No |
+| **Native marker genes** (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1) | The reads are aligned with bowtie2 against the whole reference genome (`panel_reference`), so that reads from paralogs and repeats get a low mapping quality. The allele of each marker is read from the alignment and compared with the alleles catalogued in the database, judged by the protein it encodes. | Yes |
+| **Lab tool elements** (plasmids, cassettes, drug resistance markers, ...) | The reads are aligned with bowtie2 against the tool sequences of the database. Each element is scored by breadth of coverage and identity. | No, only the tool sequences |
+
+The panel strains are then ranked by likelihood. If the best strain matches less than `min_concordance` of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain, which is what flags a strain absent from the database. The result is the *strain_identity_report.html* file.
+
+In addition, the historical part of the pipeline aligns the reads against the genomes of `ref_path`, the features of `features_path` and the mating type sequences of `sex_path`, for coverage plots, Q20 read counts and variant counts (bcftools), summarized in *report.html*.
+
+<br>
+
 ## INPUT
 
-| Required files |
-| :--- |
-| A single file (zipped or not) containing multiple nucleotide fasta sequences. Allowed extensions for this file are: fasta, fa, fas, fna, txt, seq or faa.<br>It can also be a folder (zipped or not) containing nucleotide fasta files, each containing a single sequence. Allowed extensions are the same.<br>Use table2fasta.R ([https://github.com/gael-millot/table2fasta](https://github.com/gael-millot/table2fasta)) if sequences are in a .table file.<br>In fasta files, the sequence can be split into several lines (\n and or \r separated). In addition, spaces and tabs can be present in the header (they will be replaced by an underscore).<br>Sequences do not have to be Immunonoglobulin, BCR or TCR sequences: filtering is performed by the pipeline. |
-| A metadata file (optional) for adding informations in the results. |
+| Parameter | Description |
+| :--- | :--- |
+| `fastq_path` | The sample sequences, despite the parameter name not only FASTQ. Either a run accession of SRA (SRR...), ENA (ERR...) or DDBJ (DRR...), downloaded with fastq-dump, or a file, or a folder of files. All the files of a folder are analyzed together as a single sample. |
+| `seq_kind` | `"reads"` (default) for sequencing reads, short or long, or `"assembly"` for contigs, scaffolds or a complete genome sequence. |
+| `seq_molecule` | `"DNA"` (default) or `"RNA"` (RNA-seq or direct RNA reads). The analysis is the same, but the report warns that depths then follow gene expression, and that a strain site or a marker gene that is not expressed is reported as not covered. |
+| `cram_reference` | Only for a CRAM sample: the FASTA reference it was compressed against. If "NULL", samtools finds the reference from its checksum, which needs network access. |
 
-<br>
+Accepted sample formats (recognized from the file content, except BAM, SAM and CRAM, recognized from the extension):
 
-The dataset used in the *nextflow.config* file, as an example, is available at https://zenodo.org/records/18631337/files/human_IGH.zip.
+| Format | Extensions | Note |
+| :--- | :--- | :--- |
+| FASTQ | .fastq, .fq | Paired files are recognized by their _1/_2 or _R1/_R2 suffix (example: sample_R1.fastq.gz and sample_R2.fastq.gz). |
+| FASTA | .fasta, .fa, .fna, .fas, .seq, .txt | Reads or assembly contigs. A uniform base quality of 40 is given. |
+| GenBank | .gb, .gbk, .gbff | The sequence of the ORIGIN section is used. |
+| EMBL | .embl, .dat | The sequence of the SQ section is used. |
+| BAM, SAM, CRAM | .bam, .sam, .cram | Converted back to reads with samtools (pairs kept). The original alignment is not reused. |
 
-<br>
+Each of these files can be compressed (.gz, .bz2) or put into a .zip archive (except BAM, SAM and CRAM). U is read as T (RNA) and IUPAC ambiguity letters as N.
 
-The metadata file used in the *nextflow.config* file, as an example, is available at https://zenodo.org/records/18294088/files/human_IGH_metadata.tsv.
+Long reads (Oxford Nanopore, PacBio) and assemblies: the k-mer scan reads each sequence whole. For the bowtie2 alignments, which are designed for short reads, the sequences longer than `shred_max_length` (1000 bp by default) are cut into pieces of `shred_length` bases (250 by default), without overlap for reads (the depth stays the sequencing depth), and with half overlapping pieces for an assembly. With `seq_kind = "assembly"`, the depth thresholds `kmer_min_depth` and `marker_min_depth` are set to 1, since an assembly has a single copy of each sequence, and the coverage plots no longer measure copy number. The *tsv/prepare_reads.tsv* output file describes what was done with each input file.
+
+Not accepted: raw Nanopore signal (FAST5, POD5), which must be basecalled first (with dorado, for instance), and Illumina BCL run folders, which must be demultiplexed first (with bcl-convert, for instance).
+
+The reference, feature and mating type sequences (`ref_path`, `features_path`, `sex_path`) can be FASTA, GenBank or EMBL files, compressed with gzip or not, or a .zip archive of them.
 
 <br>
 

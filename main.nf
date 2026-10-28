@@ -42,7 +42,10 @@ include {StrainScore; StrainReport} from './modules/StrainID.nf'
 include {MarkerAlign; MarkerGenotype} from './modules/MarkerGenotype.nf'
 
 //include {CopyLogFile as CopyLogFile_Closest_germline} from './modules/CopyLogFile.nf'
-include {Unzip as Unzip_fastq} from './modules/Unzip.nf'
+include {AlignmentToFastq; PrepareReads} from './modules/PrepareReads.nf'
+include {ToFasta as ToFasta_ref} from './modules/PrepareReads.nf'
+include {ToFasta as ToFasta_feat} from './modules/PrepareReads.nf'
+include {ToFasta as ToFasta_sex} from './modules/PrepareReads.nf'
 include {Unzip as Unzip_ref} from './modules/Unzip.nf'
 include {Unzip as Unzip_feat} from './modules/Unzip.nf'
 include {Unzip as Unzip_sex} from './modules/Unzip.nf'
@@ -148,44 +151,75 @@ workflow {
 
     file("${out_path}/tsv").mkdirs()
 
-    // fastq treatment
-    if(fastq_path =~ /.*\.zip$/){
-        Unzip_fastq( // warning: it is a process defined above
-            Channel.fromPath(fastq_path),
-            fastq_path
-        ) 
-        fastq = Unzip_fastq.out.unzip_ch.flatten()
-        fastq_name = file("${fastq_path}").baseName
-    }else if(fastq_path =~ /^SRR.*/){
+    // sample sequence treatment
+    // Any nucleotide format: FASTQ, FASTA, GenBank, EMBL, plain, .gz, .bz2 or
+    // .zip, and BAM, SAM, CRAM. Everything ends up as FASTQ through PrepareReads.
+    if(fastq_path =~ /^(SRR|ERR|DRR)[0-9]+$/){
         Fastq_dump(
             fastq_path
         )
         fastq = Fastq_dump.out.fastq_dump_ch.flatten()
-        fastq_name = file("${fastq_path}").baseName  // Use SRA accession as the base name
         copyLogFile('fastq_dump_report.log', Fastq_dump.out.fastq_dump_log_ch, out_path)
     }else{
         fastq = Channel.fromPath("${fastq_path}", checkIfExists: false) // in channel because many files
-        fastq_name = file("${fastq_path}").baseName
     }
+    fastq_name = file("${fastq_path}").baseName.replaceAll(/\.(fastq|fq|fasta|fa|fna|fas|gb|gbk|gbff|embl|bam|sam|cram)$/, '')
     // is the path a dir or a single file ?
     fastq.branch {
             dir: it.isDirectory()
             file: true
         }.set { branched }
-    // Handle directories: list contents
-    fastq_ch_from_dir = branched.dir.flatMap { it.listFiles() } // is it is a dir, then recover all the files
-    // Handle files: pass through
-    fastq_ch_from_file = branched.file
-    // Merge back
-    fastq_ch = fastq_ch_from_dir.mix(fastq_ch_from_file)
+    // Handle directories: list contents, hidden files excluded
+    seq_ch = branched.dir.flatMap { it.listFiles().findAll{ f -> ! f.name.startsWith('.') } }.mix(branched.file)
     // end is the path a dir or a single file ?
-    fastq_ch.toList().branch {
-            single: it.size() == 1
-                return it[0]
-            multiple: true
-                return it
+    seq_ch.branch {
+            aln: it.name =~ /(?i)\.(bam|sam|cram)$/
+            other: true
         }.set { branched }
-    // end fastq treatment
+    if("${cram_reference}" == "NULL"){
+        cram_ref = Channel.of('').collectFile(name: 'NO_CRAM_REF')
+    }else{
+        cram_ref = Channel.value(file("${cram_reference}", checkIfExists: true))
+    }
+    AlignmentToFastq(
+        branched.aln,
+        cram_ref.first()
+    )
+    copyLogFile('aln_to_fastq_report.log', AlignmentToFastq.out.aln_to_fastq_log_ch, out_path)
+    PrepareReads(
+        fastq_name,
+        branched.other.mix(AlignmentToFastq.out.aln_fastq_ch.flatten()).collect(),
+        seq_kind,
+        shred_max_length,
+        shred_length
+    )
+    copyLogFile('prepare_reads_report.log', PrepareReads.out.prepare_log_ch, out_path)
+    // For the alignments: every file, mates and pieces of long sequences included.
+    align_ch = PrepareReads.out.align_ch.collect()
+    // For the k-mer scan: every sequence whole, never the pieces.
+    scan_ch = PrepareReads.out.align_ch.flatten().filter{ ! it.name.startsWith('S__') }
+        .mix(PrepareReads.out.scan_only_ch.flatten())
+        .collect()
+    // An assembly has a depth of 1 (2 in the overlapping pieces): a read depth
+    // threshold would reject every site.
+    if("${seq_kind}" == "assembly"){
+        kmer_min_depth_used = "1"
+        marker_min_depth_used = "1"
+    }else{
+        kmer_min_depth_used = kmer_min_depth
+        marker_min_depth_used = marker_min_depth
+    }
+    if("${seq_kind}" == "assembly"){
+        warn_kind = "\n\nWARNING:\nseq_kind IS \"assembly\": THE COVERAGE PLOTS, READ COUNTS AND VARIANT COUNTS ARE COMPUTED ON PIECES OF THE CONTIGS, NOT ON SEQUENCING READS. THEY DO NOT MEASURE COPY NUMBER.\n"
+        print(warn_kind)
+        warning_ch = warning_ch.mix(Channel.value(warn_kind))
+    }
+    if("${seq_molecule}" == "RNA"){
+        warn_rna = "\n\nWARNING:\nseq_molecule IS \"RNA\": THE DEPTH OF A GENE FOLLOWS ITS EXPRESSION, NOT ITS COPY NUMBER, IN THE COVERAGE PLOTS AND THE TOOL ELEMENT SCORES. A STRAIN SITE OR A MARKER GENE THAT IS NOT EXPRESSED IS REPORTED AS NOT COVERED.\n"
+        print(warn_rna)
+        warning_ch = warning_ch.mix(Channel.value(warn_rna))
+    }
+    // end sample sequence treatment
 
 
     // fasta ref treatment
@@ -210,7 +244,9 @@ workflow {
     // Merge back
     ref_ch = ref_ch_from_dir.mix(ref_ch_from_file)
     // end is the path a dir or a single file ?
-    ref_ch.toList().branch {
+    // GenBank and EMBL to FASTA
+    ToFasta_ref(ref_ch.collect())
+    ToFasta_ref.out.fasta_ch.flatten().toList().branch {
             single: it.size() == 1
                 return it[0]
             multiple: true
@@ -245,7 +281,9 @@ workflow {
     // Merge back
     feat_ch = feat_ch_from_dir.mix(feat_ch_from_file)
     // end is the path a dir or a single file ?
-    feat_ch.toList().branch {
+    // GenBank and EMBL to FASTA
+    ToFasta_feat(feat_ch.collect())
+    ToFasta_feat.out.fasta_ch.flatten().toList().branch {
             single: it.size() == 1
                 return it[0]
             multiple: true
@@ -280,7 +318,9 @@ workflow {
     // Merge back
     sex_ch = sex_ch_from_dir.mix(sex_ch_from_file)
     // end is the path a dir or a single file ?
-    sex_ch.toList().branch {
+    // GenBank and EMBL to FASTA
+    ToFasta_sex(sex_ch.collect())
+    ToFasta_sex.out.fasta_ch.flatten().toList().branch {
             single: it.size() == 1
                 return it[0]
             multiple: true
@@ -297,7 +337,7 @@ workflow {
    // Align fastq against each reference (parallelization)
     Bowtie2_ref(
         fastq_name,
-        fastq_ch.first(),
+        align_ch,
         ref_ch3
     )
     copyLogFile('bowtie2_ref__report.log', Bowtie2_ref.out.bowtie2_log_ch, out_path)
@@ -305,7 +345,7 @@ workflow {
    // Align fastq against each reference (parallelization)
     Bowtie2_feat(
         fastq_name,
-        fastq_ch.first(),
+        align_ch,
         feat_ch3
     )
     copyLogFile('bowtie2_feat_report.log', Bowtie2_feat.out.bowtie2_log_ch, out_path)
@@ -313,7 +353,7 @@ workflow {
    // Align fastq against each reference (parallelization)
     Bowtie2_sex(
         fastq_name,
-        fastq_ch.first(),
+        align_ch,
         sex_ch3
     )
     copyLogFile('bowtie2_sex_report.log', Bowtie2_sex.out.bowtie2_log_ch, out_path)
@@ -444,17 +484,17 @@ workflow {
             // gives about 11x and both give 23x.
             KmerScan(
                 fastq_name,
-                fastq_ch.collect(),
+                scan_ch,
                 panel_kmers,
                 mating_kmers,
                 kmer_max_bases,
-                kmer_min_depth
+                kmer_min_depth_used
             )
             copyLogFile('kmer_scan_report.log', KmerScan.out.kmer_scan_log_ch, out_path)
 
             Bowtie2_tools(
                 fastq_name,
-                fastq_ch.first(),
+                align_ch,
                 Channel.value(tuple(tools_fasta, "tools"))
             )
             copyLogFile('bowtie2_tools_report.log', Bowtie2_tools.out.bowtie2_log_ch, out_path)
@@ -483,7 +523,7 @@ workflow {
             }else{
                 MarkerAlign(
                     fastq_name,
-                    fastq_ch.collect(),
+                    align_ch,
                     marker_reference,
                     file("${db_dir}/markers/marker_loci.bed", checkIfExists: true)
                 )
@@ -499,7 +539,7 @@ workflow {
                     file("${db_dir}/markers/marker_repeats.tsv", checkIfExists: true),
                     tools_fasta,
                     tools_manifest,
-                    marker_min_depth
+                    marker_min_depth_used
                 )
                 copyLogFile('marker_genotype_report.log', MarkerGenotype.out.marker_genotype_log_ch, out_path)
                 marker_json_ch = MarkerGenotype.out.marker_json_ch

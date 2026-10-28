@@ -31,20 +31,20 @@ process Unzip {
             # Check if the file is a regular file and not a directory
             if [ -f "\$file" ] ; then
                 # Check if the file does not match the extensions .fasta or .fa
-                if [[ ! "\$file" =~ \\.(fasta|fa|fas|fna|txt|seq|faa)\$ ]] ; then
-                    echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nALL THE UNZIPPED FILE EXTENSIONS MUST BE fasta, fa, fas, fna, txt, seq OR faa.\\nHERE A FILE IS:\\n\$file.\\n\\n========\\n\\n"
+                if [[ ! "\$file" =~ \\.(fasta|fa|fas|fna|txt|seq|faa|gb|gbk|gbff|embl|gz)\$ ]] ; then
+                    echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nALL THE UNZIPPED FILE EXTENSIONS MUST BE fasta, fa, fas, fna, txt, seq, faa, gb, gbk, gbff, embl (gz compressed or not).\\nHERE A FILE IS:\\n\$file.\\n\\n========\\n\\n"
                     exit 1
                 fi
             else
-                echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nALL THE UNZIPPED FILE EXTENSIONS MUST BE fasta, fa, fas, fna, txt, seq OR faa.\\nHERE A FILE IS:\\n\$file.\\n\\n========\\n\\n"
+                echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nALL THE UNZIPPED FILE EXTENSIONS MUST BE fasta, fa, fas, fna, txt, seq, faa, gb, gbk, gbff, embl (gz compressed or not).\\nHERE A FILE IS:\\n\$file.\\n\\n========\\n\\n"
                 exit 1
             fi
         done
         cp "\$FILENAME"/*.* .
         rm -r \$FILENAME
     else
-        if [[ ! "\${SINGLE_FILE_NAME}" =~ \\.(fasta|fa|fas|fna|txt|seq|faa)\$ ]] ; then
-            echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nALL THE UNZIPPED FILE EXTENSIONS MUST BE fasta, fa, fas, fna, txt, seq OR faa.\\nHERE A FILE IS:\\n\${SINGLE_FILE_NAME}.\\n\\n========\\n\\n"
+        if [[ ! "\${SINGLE_FILE_NAME}" =~ \\.(fasta|fa|fas|fna|txt|seq|faa|gb|gbk|gbff|embl|gz)\$ ]] ; then
+            echo -e "\\n\\n========\\n\\nERROR IN NEXTFLOW EXECUTION\\n\\nALL THE UNZIPPED FILE EXTENSIONS MUST BE fasta, fa, fas, fna, txt, seq, faa, gb, gbk, gbff, embl (gz compressed or not).\\nHERE A FILE IS:\\n\${SINGLE_FILE_NAME}.\\n\\n========\\n\\n"
             exit 1
         fi
     fi
