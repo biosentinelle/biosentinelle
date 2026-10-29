@@ -322,7 +322,7 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
         <td>
             Main result. HTML report of the strain identity of the sample, made from the <i>tsv/strain_id.json</i> file:
             <ul>
-                <li><b>Call</b>: the strain called, the mating type and the coverage, or an <b>UNASSIGNED</b> banner when no strain of the panel matches the sample well enough (with the reason). When several strains cannot be separated by the panel sites (close relatives, a parent and its derivatives), the mating type and the native markers are used to choose between them, and the strains left tied are listed.</li>
+                <li><b>Call</b>: the strain called, the mating type and the coverage, or an <b>UNASSIGNED</b> banner when no strain of the panel matches the sample well enough (with the reason). The strain is called from the SNP panel alone: the first strain of the ranking, however few sites separate it from close relatives (BY4741 and BY4742, a parent and its derivatives), which are then listed with the size of the lead. The mating type and the native markers are measured independently and never change the call: each is reported as agreeing or disagreeing with the documented genotype of the strain called.</li>
                 <li><b>Warnings</b>: every point that limits the call (low coverage, many heterozygous sites, native markers differing from those documented for the best strain, tool elements native to the host genome, ...).</li>
                 <li><b>Strain ranking</b>: the top strains of the ranking (see <i>strain_ranking.tsv</i> below), with, for each, the detail of the panel sites (every mismatching and uncovered site, the matching sites being thinned).</li>
                 <li><b>Tool elements</b>: score of each element of the tool database (see <i>tool_coverage.tsv</i> below), as green (score ≥ 99, present), orange (90 ≤ score &lt; 99, present but partial or diverged) or red (score &lt; 90, absent), with score = 100 x breadth x identity. Short elements are shown for information only. Elements that are native to the host genome (a yeast promoter, terminator or gene used in a cassette) are not counted as evidence of a construct.</li>
@@ -416,7 +416,7 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
             All the results of the strain identity branch, from which <i>strain_identity_report.html</i> is made. Main keys:
             <ul>
                 <li>sample, generated (date), organism, reference (database folder), panel (number of sites and strains).</li>
-                <li>call: strain called. resolution: how ties between strains not separated by the panel were resolved (tied strains, evidence from mating type and native markers).</li>
+                <li>call: strain called, the first of the SNP ranking. resolution: the strains close to the call (separating sites, mismatches, log-likelihood gap, documented mating type). mating_check: the measured mating type against the one documented for the strain called (agree, disagree or not compared).</li>
                 <li>unassigned (true / false) and unassigned_reason.</li>
                 <li>mating_type: mean count of the MATa and MATalpha k-mers, a_fraction (MATa / (MATa + MATalpha)) and call: MATa (a_fraction ≥ 0.58), MATalpha (a_fraction ≤ 0.42), MATa/alpha (in between) or unknown (too few k-mers seen).</li>
                 <li>coverage: median depth of the called sites and fraction of uncovered sites.</li>

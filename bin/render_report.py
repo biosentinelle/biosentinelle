@@ -162,8 +162,8 @@ HELP = {
                    "It is <b>not</b> the probability that the sample <i>is</i> this strain, nor a "
                    "measure of fit: one extra mismatch divides the odds by about 100, so a strain "
                    "differing by a few sites only already falls to ~0 %. How well the sample fits "
-                   "is the concordance. Strains the SNPs cannot separate are discussed in the "
-                   "<i>Call</i> section.",
+                   "is the concordance. Strains only a few sites away from the call are listed in "
+                   "the <i>Call</i> section.",
     "concordance": "<b>Concordance = matching / called.</b> Fraction of the called sites where the "
                    "sample carries the allele expected for this strain. A sample that really is "
                    "this strain gives close to 100 % (only sequencing errors disagree). If the "
@@ -832,42 +832,59 @@ def render_header(d, title):
 
 
 def render_call(d):
-    """The answer, and how the strains the SNP panel ties were told apart."""
+    """The SNP call, then the mating type and the native markers, each measured
+    apart and only said to agree or not with the strain called."""
     if d.get("unassigned") or not d.get("call"):
         return ""
     res = d.get("resolution") or {}
     mating = d.get("mating_type") or {}
-    rows = "\n".join(
-        "      <tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
-            esc(r.get("strain")), esc(r.get("separating_sites")),
-            "fits as a parent" if r.get("parent") else
-            "excluded" if r.get("contradicted") else
-            ("fits" if r.get("documented") else "not documented"),
-            esc("; ".join(r.get("evidence") or [])))
-        for r in res.get("tied") or [])
-    mating_line = ""
-    if mating.get("call") and mating.get("call") != "unknown":
-        mating_line = ("<p>Mating type <strong>{}</strong>: mean count {} per MATa k-mer, {} per "
-                       "MAT&alpha; k-mer (a fraction {}; about 0.67 for MATa, 0.33 for "
-                       "MAT&alpha;, 0.5 for a/&alpha;).</p>").format(
-            esc(mating["call"]), esc(mating.get("mean_count_a")),
-            esc(mating.get("mean_count_alpha")), esc(mating.get("a_fraction")))
-    elif mating.get("reason"):
-        mating_line = "<p>Mating type <strong>unknown</strong>: {}.</p>".format(
-            esc(mating["reason"]))
-    table = ""
-    if len(res.get("tied") or []) > 1:
-        table = """<table>
-    <thead><tr><th>Strain</th><th>Separating sites</th><th>Documented genotype</th><th>Evidence</th></tr></thead>
+    check = d.get("mating_check") or {}
+    ex = d.get("markers_expected") or {}
+    close = res.get("close") or []
+    lead = ""
+    if close:
+        rows = "\n".join(
+            "      <tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+                esc(r.get("strain")), esc(r.get("separating_sites")), esc(r.get("mismatching")),
+                esc(r.get("log_likelihood_gap")), esc(r.get("documented_mating") or "n/a"))
+            for r in close)
+        lead = """<p>Narrow lead: these strains come close to the call, which rests on the few sites
+  that separate them.</p>
+  <table>
+    <thead><tr><th>Strain</th><th>Sites separating it from {call}</th><th>Mismatching sites</th><th>Log-likelihood below {call}</th><th>Documented mating type</th></tr></thead>
     <tbody>
 {rows}
     </tbody>
-  </table>""".format(rows=rows)
+  </table>""".format(call=esc(d.get("call")), rows=rows)
+    if mating.get("call") and mating.get("call") != "unknown":
+        measured = ("<strong>{}</strong> (mean count {} per MATa k-mer, {} per MAT&alpha; k-mer, "
+                    "a fraction {})").format(
+            esc(mating["call"]), esc(mating.get("mean_count_a")),
+            esc(mating.get("mean_count_alpha")), esc(mating.get("a_fraction")))
+    else:
+        measured = "<strong>unknown</strong>{}".format(
+            ": " + esc(mating["reason"]) if mating.get("reason") else "")
+    mating_line = ("<p><strong>Mating type: {agree}.</strong> Measured {measured}; documented "
+                   "for {strain}: {doc}.{why}</p>").format(
+        agree=esc(check.get("agreement", "not compared")), measured=measured,
+        strain=esc(check.get("strain") or d.get("call")),
+        doc=esc(check.get("documented", "not documented")),
+        why=" " + esc(check["reason"]) + "." if check.get("reason") else "")
+    marker_line = ""
+    if ex.get("compared"):
+        marker_line = ("<p><strong>Native markers: {agree}.</strong> {a} of {c} agree with "
+                       "those expected of {strain} ({src}); see the marker section.</p>").format(
+            agree="agree" if ex["agree"] == ex["compared"] else "disagree",
+            a=esc(ex["agree"]), c=esc(ex["compared"]), strain=esc(ex.get("strain")),
+            src=esc(ex.get("source")))
     return """<section id="call">
-  <h2>Call: {call}</h2>
+  <h2>Call from the SNP panel: {call}</h2>
+  {lead}
+  <p class="note">Mating type and native markers are measured independently of the SNPs. They
+  do not change the call; each one says whether it agrees with the strain called.</p>
   {mating}
-  {table}
-</section>""".format(call=esc(d.get("call")), mating=mating_line, table=table)
+  {markers}
+</section>""".format(call=esc(d.get("call")), lead=lead, mating=mating_line, markers=marker_line)
 
 
 def render_unassigned(d):

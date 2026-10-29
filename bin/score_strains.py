@@ -391,15 +391,6 @@ def score_tools(elements, coverage, min_breadth_depth):
     return tools
 
 
-def load_catalogue_activity(path):
-    """strain -> {gene: active | inactive} from the marker allele catalogue."""
-    out = {}
-    for row in load_tsv(path):
-        if row.get("activity") in ("active", "inactive"):
-            out.setdefault(row["strain"], {})[row["gene"].upper()] = row["activity"]
-    return out
-
-
 def documented_markers(path, genes):
     """strain -> {gene: allele} from documented_genotypes.tsv, read as
     genotype_markers.py reads it: the wild-type name for a gene not mentioned,
@@ -477,149 +468,70 @@ def expected_markers(strain, strain_rows, markers, documented_path, catalogue_pa
     return out
 
 
-def resolve(panel, obs, results, markers, mating, mating_doc, catalogue, tie_log_ratio,
-            min_separating):
-    """Settle the strains the SNP panel cannot separate.
+def resolve(panel, obs, results, mating_doc, tie_log_ratio, min_separating):
+    """The strain call, from the SNP panel alone.
 
-    Close relatives (S288C, FY4, BY4741, BY4742, ...) differ at a few dozen
-    sites or none, and two stocks of one strain differ by as much: the two
-    S288C runs of the panel disagree at over a thousand positions. So a lead
-    of a few dozen sites names a stock as readily as a strain. A strain is
-    tied with the best one when fewer than min_separating called sites
-    separate them, or when its likelihood is within tie_log_ratio of the
-    best (about two net mismatches at ln 1000). The mating type and the
-    native marker genotype, which
-    are what laboratory derivatives were made to differ by, then choose among
-    them. A strain is compared with its documented genotype when it has one,
-    and otherwise with the marker alleles of its own assembly in the
-    catalogue; it is kept when nothing measured contradicts either. A strain
-    with neither is kept too, and the report says so.
+    The call is the first strain of the SNP ranking, however small its lead:
+    close relatives (S288C, FY4, BY4741, BY4742, ...) differ at a few dozen
+    sites or fewer, and those few sites are what separates them. The strains
+    within reach of the best one, fewer than min_separating called sites
+    apart or within tie_log_ratio of its likelihood (about two net
+    mismatches at ln 1000), are listed with the size of the lead, so that a
+    narrow call is seen as such. The mating type and the native markers are
+    never used here: they are measured apart and only said to agree or not
+    with the strain called (check_mating, expected_markers).
     """
     best = results[0]
-    tied = [(best, 0)]
+    close = []
     for result in results[1:60]:
         separating = discriminating(panel, obs, best["strain_index"], result["strain_index"])
-        if (separating < min_separating
-                or best["log_likelihood"] - result["log_likelihood"] <= tie_log_ratio):
-            tied.append((result, separating))
-    marker_match = {m["strain"]: m for m in markers.get("documented_genotype_matches", [])}
-    measured = {m["gene"].upper(): m["status"] for m in markers.get("markers", [])
-                if m.get("status") in ("active", "inactive")}
-    for strain, alleles in catalogue.items():
-        if strain in marker_match or not measured:
-            continue
-        compared = [gene for gene in measured if gene in alleles]
-        differ = ["%s %s, %s in its assembly" % (gene, measured[gene], alleles[gene])
-                  for gene in compared if measured[gene] != alleles[gene]]
-        if compared:
-            marker_match[strain] = {"agree": len(compared) - len(differ),
-                                    "compared": len(compared), "differences": differ,
-                                    "from_assembly": True}
-    rows = []
-    for result, separating in tied:
-        strain = result["strain_id"]
-        evidence, hard, documented = [], False, False
-        # Laboratory strains are made from one another in two ways the
-        # measurements can see: more genes knocked out (a marker inactive in
-        # the sample, active in the strain), and haploids of both mating
-        # types crossed into an a/alpha diploid (X2180 from X2180-1A and -1B,
-        # BY4743 from BY4741 and BY4742). A strain differing from the sample
-        # only in those ways stands as its parent; any other difference rules
-        # it out.
-        extra, diploid, support = [], False, 0
-        doc_mat = mating_doc.get(strain)
-        if doc_mat and mating.get("call") not in (None, "unknown"):
-            documented = True
-            if doc_mat == mating["call"]:
-                support += 2
-                evidence.append("mating type %s as documented" % doc_mat)
-            elif mating["call"] == "MATa/alpha" and doc_mat in ("MATa", "MATalpha"):
-                diploid, support = True, support + 1
-                evidence.append("sample measured MATa/alpha, %s documented %s (haploid): the "
-                                "sample may be a diploid made from %s, crossed with a strain "
-                                "of the opposite mating type (as BY4743 from BY4741 x BY4742), "
-                                "or a mix of both mating types" % (strain, doc_mat, strain))
-            else:
-                hard = True
-                evidence.append("mating type %s, documented %s" % (mating["call"], doc_mat))
-        match = marker_match.get(strain)
-        if match:
-            documented = True
-            source = " (from its assembly)" if match.get("from_assembly") else ""
-            if match["agree"] == match["compared"]:
-                support += 1 if match.get("from_assembly") else 2
-                evidence.append("native markers agree at %d of %d%s"
-                                % (match["agree"], match["compared"], source))
-            else:
-                evidence.append("native markers differ%s: %s"
-                                % (source, "; ".join(match["differences"])))
-                for difference in match["differences"]:
-                    gene, _, rest = difference.partition(" ")
-                    if (rest == "inactive, documented %s" % gene.upper()
-                            or rest == "inactive, active in its assembly"):
-                        extra.append(gene.lower())
-                    else:
-                        hard = True
-                if not hard:
-                    support += 1
-        if not documented:
-            evidence.append("no documented genotype to compare with")
-        rows.append({"strain": strain, "rank": result["rank"],
-                     "separating_sites": separating, "documented": documented,
-                     "contradicted": hard or bool(extra) or diploid,
-                     "evidence": evidence, "support": support,
-                     "parent": not hard and (bool(extra) or diploid),
-                     "further_inactivated": extra, "diploid": diploid})
-
-    # Candidates: strains nothing contradicts, and parents. The one whose
-    # genotype was checked most fully and agrees comes first, then the one
-    # needing the fewest further changes, then the SNP ranking. SY14, built
-    # from BY4742, ties with it on SNPs and markers, but only BY4742's mating
-    # type and markers are documented; a prototroph such as FY4 fits as the
-    # parent of almost anything, one knockout at a time, so the parent with
-    # the fewest knockouts wins.
-    consistent = [row for row in rows if not row["contradicted"]]
-    candidates = sorted((row for row in rows if not row["contradicted"] or row["parent"]),
-                        key=lambda row: (-row["support"], len(row["further_inactivated"]),
-                                         row["diploid"], row["rank"]))
-    explanation, call = [], best["strain_id"]
-    names = ", ".join(row["strain"] for row in rows)
-
-    def describe(row):
-        if not row["parent"]:
-            return row["strain"]
-        changes = []
-        if row["further_inactivated"]:
-            changes.append("%s inactivated as well" % ", ".join(row["further_inactivated"]))
-        if row["diploid"]:
-            changes.append("as a MATa/alpha diploid")
-        return "%s-derived (%s)" % (row["strain"], "; ".join(changes))
-
-    if len(rows) > 1 or candidates and candidates[0]["parent"]:
-        if candidates:
-            top = candidates[0]
-            call = describe(top)
-            others = [describe(row) for row in candidates[1:6]]
-            if len(candidates) > 6:
-                others.append("%d more, in the resolution table" % (len(candidates) - 6))
-            explanation.append(
-                "the SNP panel alone does not separate %s. Mating type and native markers "
-                "point to %s: %s%s"
-                % (names, call, "; ".join(top["evidence"]),
-                   ". Also not excluded, in order of how much of their genotype was "
-                   "checked: " + ", ".join(others) if others else ""))
-        else:
-            explanation.append(
-                "the SNP panel does not separate %s, and every one of them contradicts "
-                "the measured mating type or native markers. The sample may be a "
-                "derivative of %s with another mating type or other markers (W303-1B "
-                "against W303-1A, for instance)" % (names, best["strain_id"]))
-    elif rows[0]["contradicted"]:
+        gap = best["log_likelihood"] - result["log_likelihood"]
+        if separating < min_separating or gap <= tie_log_ratio:
+            close.append({"strain": result["strain_id"], "rank": result["rank"],
+                          "separating_sites": separating,
+                          "mismatching": result["sites_mismatching"],
+                          "log_likelihood_gap": round(gap, 2),
+                          "documented_mating": mating_doc.get(result["strain_id"], "")})
+    explanation = []
+    if close:
+        nearest = close[0]
+        # With no separating site, the lead comes from sites where the
+        # second strain is known to differ from the sample and the first one
+        # is unknown, scored by its clade: evidence against the second
+        # strain rather than for the first.
+        indirect = ("" if nearest["separating_sites"] else
+                    ": no site where both genotypes are known separates them, the lead comes "
+                    "from sites where %s is known to carry another allele than the sample and "
+                    "the genotype of %s is unknown" % (nearest["strain"], best["strain_id"]))
         explanation.append(
-            "%s is the closest strain, but %s. The sample may be a derivative of it"
-            % (best["strain_id"], "; ".join(rows[0]["evidence"])))
-    return {"tied": rows, "consistent": [row["strain"] for row in consistent],
-            "call": call, "explanation": explanation}
+            "%s is called from the SNP panel alone. Its lead is narrow: %s, second, is "
+            "%d called site(s) apart (%d mismatch(es) against %d for %s, log-likelihood "
+            "%.1f lower)%s. %d strain(s) are that close, listed in the call section"
+            % (best["strain_id"], nearest["strain"], nearest["separating_sites"],
+               nearest["mismatching"], best["sites_mismatching"], best["strain_id"],
+               nearest["log_likelihood_gap"], indirect, len(close)))
+    return {"call": best["strain_id"], "close": close, "explanation": explanation}
+
+
+def check_mating(mating, mating_doc, strain):
+    """Measured mating type against the one documented for the strain called
+    by the SNPs: agree, disagree, or not compared (one of them unknown)."""
+    documented = mating_doc.get(strain, "")
+    measured = mating.get("call", "unknown")
+    out = {"strain": strain, "documented": documented or "not documented",
+           "measured": measured}
+    if not documented or measured in (None, "unknown"):
+        out["agreement"] = "not compared"
+        out["reason"] = ("no documented mating type for %s" % strain if not documented
+                         else "mating type of the sample unknown")
+    elif documented == measured:
+        out["agreement"] = "agree"
+    else:
+        out["agreement"] = "disagree"
+        if measured == "MATa/alpha":
+            out["reason"] = ("the sample reads as a/alpha: a diploid (as BY4743 from BY4741 x "
+                             "BY4742), a mix of both mating types, or another strain")
+    return out
 
 
 def marker_warnings(markers):
@@ -647,16 +559,16 @@ def main():
     parser.add_argument("--documented", help="documented_genotypes.tsv")
     parser.add_argument("--marker-catalogue",
                         help="marker_alleles.tsv: the marker alleles of each assembly, "
-                             "compared with the sample for tied strains without a "
-                             "documented genotype")
+                             "expected in the strain called when it has no documented "
+                             "genotype")
     parser.add_argument("--aliases",
                         help="aliases.tsv: catalogue names of strains the panel names "
                              "otherwise, used to find the expected marker status of the "
                              "best strain")
     parser.add_argument("--tie-log-ratio", type=float, default=math.log(1000),
                         help="strains whose log likelihood is within this of the best "
-                             "are tied and settled by mating type and markers (default "
-                             "ln 1000, about two net mismatching sites)")
+                             "are listed as close to the call, which stays the best "
+                             "strain (default ln 1000, about two net mismatching sites)")
     parser.add_argument("--calls", required=True, help="per-site allele calls TSV")
     parser.add_argument("--tools", help="tool element manifest TSV")
     parser.add_argument("--tool-coverage", help="per-element coverage TSV")
@@ -782,7 +694,7 @@ def main():
             best["discriminating_sites_vs_next"] = separating
             best["runner_up"] = runner_up["strain_id"]
             # Fewer separating sites than the threshold is handled by
-            # resolve(), which names the tied strains and what settles them.
+            # resolve(), which lists the strains close to the call.
             if separating >= args.min_discriminating_sites and runner_up["probability"] > 0.01:
                 warnings.append(
                     "%s and %s are not cleanly separated by this panel"
@@ -823,12 +735,20 @@ def main():
 
     mating = (mating_type(args.mating, args.min_mating_kmers, args.seq_kind) if args.mating
               else {"call": "unknown", "reason": "not measured"})
-    resolution = resolve(panel, obs, results, markers, mating,
-                         documented_mating(args.documented) if args.documented else {},
-                         load_catalogue_activity(args.marker_catalogue)
-                         if args.marker_catalogue else {},
+    mating_doc = documented_mating(args.documented) if args.documented else {}
+    resolution = resolve(panel, obs, results, mating_doc,
                          args.tie_log_ratio, args.min_discriminating_sites)
     warnings.extend(resolution["explanation"])
+
+    # The mating type, measured apart from the SNPs, set beside the one
+    # documented for the strain they call. It never changes the call.
+    mating_check = check_mating(mating, mating_doc, resolution["call"])
+    if mating_check["agreement"] == "disagree":
+        warnings.append("mating type disagrees with %s, called from the SNP panel: measured %s, "
+                        "documented %s%s" % (
+                            mating_check["strain"], mating_check["measured"],
+                            mating_check["documented"],
+                            ". " + mating_check["reason"] if mating_check.get("reason") else ""))
 
     # The markers expected from the first strain of the SNP ranking: a second,
     # independent reading of the sample, set beside the first.
@@ -856,6 +776,7 @@ def main():
         "call": resolution["call"],
         "resolution": resolution,
         "mating_type": mating,
+        "mating_check": mating_check,
         "unassigned": unassigned,
         "unassigned_reason": reason,
         "coverage": {"median_depth_called": median_depth,
@@ -883,11 +804,12 @@ def main():
 
     if best:
         verdict = "UNASSIGNED" if unassigned else resolution["call"]
-        print("%s: %s (SNP panel best %s, p=%.3f, concordance=%.1f%%, %d/%d sites called; "
-              "mating type %s)" %
-              (args.sample, verdict, best["strain_id"], best["probability"],
+        print("%s: %s (SNP panel, p=%.3f, concordance=%.1f%%, %d/%d sites called; "
+              "mating type %s, %s with %s)" %
+              (args.sample, verdict, best["probability"],
                100 * best["concordance"], best["sites_called"], len(sites),
-               mating.get("call", "unknown")))
+               mating.get("call", "unknown"), mating_check["agreement"],
+               mating_check["documented"]))
     for warning in warnings:
         print("warning: %s" % warning)
     return 0
