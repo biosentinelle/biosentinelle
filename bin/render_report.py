@@ -137,7 +137,6 @@ def embed_json(obj):
 # Text of the '?' popups, keyed by data-help. Authored here, never derived
 # from the data, so the JS may insert it as markup.
 HELP = {
-    "sample": "Name of the sequencing run analysed, taken from its FASTQ file name.",
     "organism": "Species of the strain database the sample is compared with.",
     "reference": "Reference genome the panel positions (CHROM, POS) and the REF alleles refer "
                  "to. For yeast: S288C, assembly R64-1-1.",
@@ -147,7 +146,7 @@ HELP = {
                    "short k-mers that carry the REF allele and those that carry the ALT allele.",
     "panel_strains": "Number of known strains (laboratory and wild, from public assemblies and "
                      "read runs) whose genotype at the panel sites is known. The sample is "
-                     "compared with every one of them; the 25 best are listed below.",
+                     "compared with every one of them; the 10 best are listed below.",
     "mating": "Measured on the sample reads, not taken from the strain: mean count of the k-mers "
               "specific to the MATa cassette against those specific to MAT&alpha;. Every genome "
               "carries one silent a (HMR) and one silent &alpha; (HML) copy, plus the active MAT "
@@ -828,7 +827,6 @@ def render_header(d, title):
         ("Date", fmt_date(d.get("generated")), "date"),
         ("SNP sites in the panel", num(panel.get("n_sites")), "panel_sites"),
         ("Strains in the panel", num(panel.get("n_strains")), "panel_strains"),
-        ("Mating type of the sample", (d.get("mating_type") or {}).get("call"), "mating"),
     ]
     items = "\n".join(
         "      <div><dt>{} {}</dt><dd>{}</dd></div>".format(
@@ -838,13 +836,12 @@ def render_header(d, title):
     return """<header class="page">
   <div class="wrap">
     <h1>{title}</h1>
-    <div>Submitted sample <span class="sample">{sample}</span> {help}</div>
+    <div>Submitted sample <span class="sample">{sample}</span></div>
     <dl class="meta">
 {items}
     </dl>
   </div>
-</header>""".format(title=esc(title), sample=esc(d.get("sample") or "unknown"), items=items,
-                    help=help_btn("sample", "the submitted sample"))
+</header>""".format(title=esc(title), sample=esc(d.get("sample") or "unknown"), items=items)
 
 
 VERDICT = {
@@ -912,10 +909,15 @@ def render_decision(d):
     if d.get("unassigned") or not d.get("call"):
         return ""
     strain = esc(d.get("call"))
+    # Sex: the mating type in yeast. Set against the strain called only when
+    # its name carries one (BY4741 is MATa, W303 is either), else just shown.
     check = d.get("mating_check") or {}
-    mating = '<li><strong>Mating type:</strong> {m} {v}</li>'.format(
-        m=esc(check.get("measured") or (d.get("mating_type") or {}).get("call") or "unknown"),
-        v=verdict(check.get("agreement")))
+    mating = ""
+    measured = check.get("measured") or (d.get("mating_type") or {}).get("call")
+    if measured:
+        documented = check.get("agreement") in ("agree", "disagree")
+        mating = '<li><strong>Sex:</strong> mating type {m}{v}</li>'.format(
+            m=esc(measured), v=" " + verdict(check["agreement"]) if documented else "")
     genes = (d.get("markers_expected") or {}).get("genes") or []
     markers = ""
     if genes:
@@ -983,6 +985,10 @@ def render_warnings(d):
 </div>""".format(n=len(warns), items=items)
 
 
+# Strains listed in the ranking, the first ones only.
+N_STRAINS_SHOWN = 10
+
+
 def render_strains(d):
     strains = d.get("strains") or []
     if not strains:
@@ -995,7 +1001,7 @@ def render_strains(d):
     )
 
     blocks = []
-    for si, s in ordered:
+    for si, s in ordered[:N_STRAINS_SHOWN]:
         sites = s.get("sites") or []
         n_sites = len(sites)
         prob = clamp01(s.get("probability"))
@@ -1012,9 +1018,9 @@ def render_strains(d):
         <span class="chev" id="chev-{si}" aria-hidden="true">{chev}</span>
         <span class="rank">rank {rank}</span>
         <span class="sid">{sid}</span>
-        <span class="prob">{p} {h_prob}</span>
-        <span class="bar" role="img" aria-label="posterior probability {p}"><i style="width:{w:.2f}%"></i></span>
         <span class="prob">concordance {conc} {h_conc}</span>
+        <span class="prob">PP {p} {h_prob}</span>
+        <span class="bar" role="img" aria-label="posterior probability {p}"><i style="width:{w:.2f}%"></i></span>
       </span>
       <span class="counts">
         <span>matching <b>{m}</b> {h_m}</span>
@@ -1091,9 +1097,41 @@ def render_strains(d):
   It is normalised across those strains and therefore always sums to 1: it does <em>not</em> say whether the
   true strain of the sample is in the panel at all. That question is answered separately by the
   <em>unassigned</em> flag shown as a banner at the top of this report when it is raised.</p>
-  <p class="note">Click a strain row to expand its per-site detail table.</p>
+  <p class="note">{shown}Click a strain row to expand its per-site detail table.</p>
 {blocks}
-</section>""".format(blocks="\n".join(blocks))
+</section>""".format(blocks="\n".join(blocks),
+                     shown=("The {} first of the {} strains scored are shown. ".format(
+                         N_STRAINS_SHOWN, len(strains)) if len(strains) > N_STRAINS_SHOWN else ""))
+
+
+def render_sex(d):
+    """Sex of the sample, measured on its reads. Yeast: the mating type, set
+    beside the one documented for the strain called when there is one. Other
+    organisms: nothing measured yet."""
+    mating = d.get("mating_type")
+    if not mating:
+        return """<section id="sex">
+  <h2>Sex</h2>
+  <p class="empty">Not determined for this organism.</p>
+</section>"""
+    # (label, value), both as markup
+    check = d.get("mating_check") or {}
+    rows = [("Mating type of the sample " + help_btn("mating", "the mating type"),
+             esc(mating.get("call") or "unknown"))]
+    if mating.get("a_fraction") is not None:
+        rows.append(("a fraction a / (a + &alpha;)", esc(num(mating["a_fraction"]))))
+    if mating.get("reason"):
+        rows.append(("Reason", esc(mating["reason"])))
+    if check.get("agreement") in ("agree", "disagree"):
+        rows.append(("Documented for " + esc(check.get("strain")),
+                     esc(check.get("documented")) + " " + verdict(check["agreement"])))
+    items = "\n".join("    <div><dt>{}</dt><dd>{}</dd></div>".format(k, v) for k, v in rows)
+    return """<section id="sex">
+  <h2>Sex</h2>
+  <dl class="meta">
+{items}
+  </dl>
+</section>""".format(items=items)
 
 
 def tool_row(t):
@@ -1270,7 +1308,6 @@ def marker_row(m, expected=None):
         {expected}
         <td>{effect}<br><span class="muted">{pchange}</span></td>
         <td><code>{changes}</code></td>
-        <td>{known}</td>
         <td>{detail}</td>
         <td><span class="status {c}"><span class="g">{g}</span>{label}</span></td>
         {conclusion}</tr>""".format(
@@ -1279,8 +1316,6 @@ def marker_row(m, expected=None):
         conclusion=conclusion_cell(expected) if expected is not None else "",
         label=esc(label), effect=esc((first.get("effect") or "").replace("_", " ")),
         pchange=esc(first.get("protein_change") or ""), changes=esc(change_text or "none"),
-        known=esc(", ".join(first.get("known_as") or []) or
-                  ("%d catalogued strains" % first["carriers"] if first.get("carriers") else "")),
         detail="<br>".join(esc(chrom_names(x)) for x in detail if x))
 
 
@@ -1321,7 +1356,7 @@ def render_markers(d):
 {expected_note}
   <table>
     <thead><tr><th>gene</th>{expected_head}<th>effect</th><th>coding changes</th>
-      <th>known as</th><th>evidence</th><th>status {status_help}</th>{conclusion_head}</tr></thead>
+      <th>evidence</th><th>status {status_help}</th>{conclusion_head}</tr></thead>
     <tbody>
 {rows}
     </tbody>
@@ -1366,6 +1401,7 @@ def render(d, title):
         render_decision(d),
         render_warnings(d),
         render_strains(d),
+        render_sex(d),
         render_markers(d),
         render_tools(d),
         '<footer class="page">BioSentinelle report &mdash; rendered {} by '
@@ -1388,7 +1424,7 @@ def main(argv=None):
                     "BioSentinelle strain-identification results JSON file.")
     ap.add_argument("--json", required=True, metavar="FILE", help="input results JSON file")
     ap.add_argument("--out", required=True, metavar="FILE", help="output HTML file")
-    ap.add_argument("--title", default=None, help="report title (default: BioSentinelle report -- <sample>)")
+    ap.add_argument("--title", default="BioSentinelle report", help="report title")
     args = ap.parse_args(argv)
 
     with open(args.json, "r", encoding="utf-8") as fh:
@@ -1397,7 +1433,7 @@ def main(argv=None):
         sys.stderr.write("error: the JSON root must be an object\n")
         return 1
 
-    title = args.title or "BioSentinelle report — {}".format(data.get("sample") or "unknown sample")
+    title = args.title
 
     with open(args.out, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(render(data, title))

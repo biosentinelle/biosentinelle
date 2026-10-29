@@ -71,6 +71,6 @@ process StrainReport {
     render_report.py \\
         --json ${strain_json} \\
         --out strain_identity_report.html \\
-        --title "BioSentinelle strain identity - ${sample_name}"
+        --title "BioSentinelle strain identity"
     """
 }
