@@ -54,6 +54,7 @@ a mixed culture, and none of those is a single-strain question.
 """
 
 import argparse
+import array
 import csv
 import datetime
 import gzip
@@ -107,11 +108,24 @@ class Panel:
         self.sites, self.strains = sites, strains
         self.size = len(sites)
         self.full = (1 << self.size) - 1
+        # Per clade and site, how many members carry the alternative allele,
+        # are heterozygous, or are unknown, for scoring the unknown sites of
+        # a strain against its relatives. A strain without a clade gets -1.
+        names = sorted({strain.get("clade", "") for strain in strains} - {""})
+        number = {name: i for i, name in enumerate(names)}
+        self.clade_of = [number.get(strain.get("clade", ""), -1) for strain in strains]
+        self.clade_size = [self.clade_of.count(i) for i in range(len(names))]
+        self.clade_counts = {key: [array.array("H", [0]) * self.size for _ in names]
+                             for key in ("alt_strains", "het_strains", "unknown_strains")}
         per = {"alt_strains": {}, "het_strains": {}, "unknown_strains": {}}
         for index, site in enumerate(sites):
             for key, table in per.items():
+                counts = self.clade_counts[key]
                 for strain in site_lists(site, key):
                     table.setdefault(strain, []).append(index)
+                    clade = self.clade_of[strain]
+                    if clade >= 0:
+                        counts[clade][index] += 1
         self.alt, self.het, self.unknown = [], [], []
         for strain in range(len(strains)):
             self.alt.append(bitset(per["alt_strains"].get(strain, ()), self.size))
@@ -163,20 +177,36 @@ def score_strains(panel, calls, error_rate, max_detail_sites, detail_top):
     # A site where a strain is unknown cannot be left out of its score:
     # a strain with a gappy assembly would then have fewer chances to
     # mismatch than any other, and win against everything. It is scored
-    # instead with the probability a strain drawn from the panel would
-    # give the observed call there.
+    # instead with the probability a relative of the strain would give the
+    # observed call there: the frequency within its clade, or within the
+    # whole panel when no member of the clade is known at the site. The
+    # panel-wide frequency penalises every gap of a laboratory strain:
+    # where the S288C family carries the reference allele and most wild
+    # strains do not, it costs the strain about a mismatch, and BY4742,
+    # with three times the gaps of BY4741, lost to it while matching the
+    # sample better. Even one panel-wide pseudo-strain added to a clade of
+    # seven costs a tenth of a nat per gap, enough for the same result.
     n_strains = len(panel.strains)
-    log_unknown = {}
+    panel_freq = {}
     for index, site in enumerate(panel.sites):
         known = n_strains - int(site.get("n_unknown") or 0)
-        if known <= 0:
-            continue
-        p_alt = int(site.get("n_alt") or 0) / float(known)
-        p_het = int(site.get("n_het") or 0) / float(known)
-        log_unknown[index] = {
-            "A": math.log(max(p_alt, error_rate)),
-            "H": math.log(max(p_het, error_rate)),
-            "R": math.log(max(1.0 - p_alt - p_het, error_rate))}
+        if known > 0:
+            panel_freq[index] = (int(site.get("n_alt") or 0) / float(known),
+                                 int(site.get("n_het") or 0) / float(known))
+    counts = panel.clade_counts
+
+    def log_unknown(index, clade, call):
+        if index not in panel_freq:
+            return 0.0
+        p_alt, p_het = panel_freq[index]
+        known = (panel.clade_size[clade] - counts["unknown_strains"][clade][index]
+                 if clade >= 0 else 0)
+        if known > 0:
+            p_alt = counts["alt_strains"][clade][index] / float(known)
+            p_het = counts["het_strains"][clade][index] / float(known)
+        p = {"A": p_alt, "H": p_het, "R": 1.0 - p_alt - p_het}[call]
+        return math.log(min(max(p, error_rate), 1.0 - error_rate))
+
     call_of = {}
     for state in ("A", "R", "H"):
         bits = obs[state]
@@ -195,11 +225,12 @@ def score_strains(panel, calls, error_rate, max_detail_sites, detail_top):
         mismatching = (popcount(obs["A"] & ref) + popcount(obs["R"] & alt)
                        + popcount(obs["H"] & (alt | ref)))
         unknown_term = 0.0
+        clade = panel.clade_of[strain]
         bits = unknown & called
         while bits:
             low = bits & -bits
             index = low.bit_length() - 1
-            unknown_term += log_unknown.get(index, {}).get(call_of[index], 0.0)
+            unknown_term += log_unknown(index, clade, call_of[index])
             bits ^= low
         mismatching += partial
         sites_called = matching + mismatching
