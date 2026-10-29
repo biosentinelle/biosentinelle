@@ -18,7 +18,9 @@ process ToolDepth {
     """
     echo -e "\\n\\n<br /><br />\\n\\n### TOOL DEPTH for ${ref_name}\\n\\n" > tool_depth_report.txt
 
-    samtools sort -o sorted.bam ${bam} |& tee -a tool_depth_report.txt
+    # -m keeps the sort buffer (768M by default) under the 1G of the samtools
+    # label: above it, Slurm kills the job for memory.
+    samtools sort -m 400M -o sorted.bam ${bam} |& tee -a tool_depth_report.txt
     samtools index sorted.bam
 
     # -a keeps the zero-depth positions. Without it, breadth would be computed
