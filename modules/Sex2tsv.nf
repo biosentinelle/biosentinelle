@@ -12,6 +12,6 @@ process Sex2tsv {
     script:
     """
     echo -e "\\n\\n<br /><br />\\n\\n### VAR Counting for ${ref_name}\\n\\n" > var_count_report.txt
-    bcftools view -H ${vcf_file} 2>/dev/null > sex_geno.tsv | tee -a var_count_report.txt
+    bcftools view -H ${vcf_file} > sex_geno.tsv | tee -a var_count_report.txt
     """
 }

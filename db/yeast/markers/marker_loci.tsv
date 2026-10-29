@@ -1,0 +1,9 @@
+locus_id	gene	systematic_id	ensembl_name	chrom	genome_start	genome_end	strand	orf_start	orf_end	orf_length	protein_length	loss_of_function_phenotype	source
+URA3__YEL021W	URA3	YEL021W	URA3	ref|NC_001137|	115166	117970	+	1000	1804	804	267	uracil auxotrophy, 5-FOA resistance	https://rest.ensembl.org/lookup/id/YEL021W (Ensembl release 116, R64-1-1)
+HIS3__YOR202W	HIS3	YOR202W	HIS3	ref|NC_001147|	720945	723608	+	1000	1663	663	220	histidine auxotrophy	https://rest.ensembl.org/lookup/id/YOR202W (Ensembl release 116, R64-1-1)
+LEU2__YCL018W	LEU2	YCL018W	LEU2	ref|NC_001135|	90323	93418	+	1000	2095	1095	364	leucine auxotrophy	https://rest.ensembl.org/lookup/id/YCL018W (Ensembl release 116, R64-1-1)
+TRP1__YDR007W	TRP1	YDR007W	TRP1	ref|NC_001136|	460841	463516	+	1000	1675	675	224	tryptophan auxotrophy	https://rest.ensembl.org/lookup/id/YDR007W (Ensembl release 116, R64-1-1)
+LYS2__YBR115C	LYS2	YBR115C	LYS2	ref|NC_001134|	468747	474926	-	1000	5179	4179	1392	lysine auxotrophy, alpha-aminoadipate resistance	https://rest.ensembl.org/lookup/id/YBR115C (Ensembl release 116, R64-1-1)
+ADE2__YOR128C	ADE2	YOR128C	ADE2	ref|NC_001147|	563475	567191	-	1000	2716	1716	571	adenine auxotrophy, red colonies	https://rest.ensembl.org/lookup/id/YOR128C (Ensembl release 116, R64-1-1)
+MET15__YLR303W	MET15	YLR303W	MET17	ref|NC_001144|	731541	734876	+	1000	2335	1335	444	methionine auxotrophy, dark colonies on lead medium	https://rest.ensembl.org/lookup/id/YLR303W (Ensembl release 116, R64-1-1)
+CAN1__YEL063C	CAN1	YEL063C	CAN1	ref|NC_001137|	30693	34466	-	1000	2773	1773	590	canavanine resistance	https://rest.ensembl.org/lookup/id/YEL063C (Ensembl release 116, R64-1-1)

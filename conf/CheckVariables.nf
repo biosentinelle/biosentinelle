@@ -49,12 +49,23 @@ for(i1 in tested_files_modules){
 // Data
 if( ! (fastq_path in String || fastq_path in GString) ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID fastq_path PARAMETER IN nextflow.config FILE:\n${fastq_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}else if( ! fastq_path =~ /^http.*/){
-    // Skip file existence check for remote URLs
-    // SRA accessions will be downloaded by fastq-dump, zip files will be processed by Unzip
+}else if( ! (fastq_path =~ /^(SRR|ERR|DRR)[0-9]+$/) ){
+    // SRA, ENA and DDBJ accessions are downloaded by fastq-dump, so not checked here
     if( ! (file(fastq_path).exists()) ){
         error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID fastq_path PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${fastq_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
     }
+}
+if( ! (seq_kind in ["reads", "assembly"]) ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID seq_kind PARAMETER IN nextflow.config FILE:\n${seq_kind}\nMUST BE \"reads\" OR \"assembly\"\n\n========\n\n"
+}
+if( ! (seq_molecule in ["DNA", "RNA"]) ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID seq_molecule PARAMETER IN nextflow.config FILE:\n${seq_molecule}\nMUST BE \"DNA\" OR \"RNA\"\n\n========\n\n"
+}
+if( ! (shred_max_length =~ /^[0-9]+$/ && shred_length =~ /^[0-9]+$/ && shred_length.toInteger() >= 50) ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID shred_max_length OR shred_length PARAMETER IN nextflow.config FILE:\n${shred_max_length} ${shred_length}\nMUST BE INTEGERS BETWEEN QUOTES, shred_length AT LEAST 50\n\n========\n\n"
+}
+if( cram_reference != "NULL" && ! file(cram_reference).exists() ){
+    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID cram_reference PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${cram_reference}\n\n========\n\n"
 }
 if( ! (ref_path in String || ref_path in GString) ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ref_path PARAMETER IN nextflow.config FILE:\n${ref_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"

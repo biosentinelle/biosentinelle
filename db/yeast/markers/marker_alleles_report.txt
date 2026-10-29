@@ -1,0 +1,71 @@
+290 assemblies, 8 loci, 2320 alleles
+33 excluded, absent at 4 or more loci (another species): CBS18620 CBS432 CBS7001 CL1207 CL1603 CL1604 CL216 CL450 CR85 DG1768 FM1318 H6 IFO1802 IFO1815 LL2011_012 LL2012_001 LL2012_016 MSH604 N44 NBRC10994 NCYC3947 NCYC3962 NRRL_Y11845 R23 UCD646 UCD650 UFRJ50816 UWOPS919171 WX20 YPS138 ZP591 ZP964 ZP966
+
+URA3   18 protein forms; frameshift=1, insertion=8, late_truncation=3, missense=39, orf_deleted=24, reference=104, synonymous=111
+HIS3   20 protein forms; absent=1, frameshift=9, missense=150, nonsense=1, orf_deleted=7, reference=91, synonymous=31
+LEU2   18 protein forms; absent=1, frameshift=14, inframe_indel=2, large_deletion=1, late_truncation=1, missense=9, nonsense=2, orf_deleted=6, reference=18, synonymous=236
+TRP1   24 protein forms; frameshift=4, missense=149, nonsense=6, orf_deleted=3, reference=70, stop_lost=1, synonymous=57
+LYS2   118 protein forms; frameshift=9, insertion=3, missense=249, nonsense=1, orf_deleted=3, reference=23, synonymous=2
+ADE2   39 protein forms; absent=4, frameshift=2, missense=254, nonsense=4, orf_deleted=2, reference=24
+MET15  16 protein forms; absent=7, late_truncation=2, missense=120, nonsense=1, orf_deleted=2, reference=32, synonymous=126
+CAN1   57 protein forms; absent=10, frameshift=5, inframe_indel=4, missense=219, nonsense=4, orf_deleted=3, reference=37, synonymous=8
+
+repeat mask (locus bases also found elsewhere in the reference):
+  URA3__YEL021W    none
+  HIS3__YOR202W    none
+  LEU2__YCL018W    0-448
+  TRP1__YDR007W    none
+  LYS2__YBR115C    none
+  ADE2__YOR128C    none
+  MET15__YLR303W   133-462
+  CAN1__YEL063C    none
+
+documented strains:
+  BY4742       URA3   documented ura3D0         found orf_deleted      agree     ORF missing, deletion extends past the locus flank 
+  BY4742       HIS3   documented his3D1         found frameshift       agree     p.F104fs, protein of 136 instead of 220 aa 
+  BY4742       LEU2   documented leu2D0         found orf_deleted      agree     1095 of 1095 bp of the ORF deleted insertion of 1369 bp at locus 275; replacement of 1817 bp at locus 340-2157, 513 bp inserted
+  BY4742       TRP1   documented TRP1           found reference        agree      
+  BY4742       LYS2   documented lys2D0         found orf_deleted      agree     4179 of 4179 bp of the ORF deleted replacement of 4515 bp at locus 687-5202, 25 bp inserted
+  BY4742       ADE2   documented ADE2           found reference        agree      
+  BY4742       MET15  documented MET15          found reference        agree      
+  BY4742       CAN1   documented CAN1           found reference        agree      
+  CENPK21D     URA3   documented ura3-52        found insertion        agree     ORF interrupted at c.116 by an insertion of 5923 bp 
+  CENPK21D     HIS3   documented his3D1         found frameshift       agree     p.F104fs, protein of 136 instead of 220 aa 
+  CENPK21D     LEU2   documented leu2-3,112     found frameshift       agree     p.T84fs, protein of 85 instead of 364 aa 
+  CENPK21D     TRP1   documented trp1-289       found nonsense         agree     p.Q135*, 134 of 224 aa kept 
+  CENPK21D     LYS2   documented LYS2           found reference        agree      
+  CENPK21D     ADE2   documented ADE2           found reference        agree      
+  CENPK21D     MET15  documented MET15          found reference        agree      
+  CENPK21D     CAN1   documented CAN1           found missense         unconfirmed p.I534V 
+  S288C        URA3   documented URA3           found reference        agree      
+  S288C        HIS3   documented HIS3           found reference        agree      
+  S288C        LEU2   documented LEU2           found reference        agree      
+  S288C        TRP1   documented TRP1           found reference        agree      
+  S288C        LYS2   documented LYS2           found reference        agree      
+  S288C        ADE2   documented ADE2           found reference        agree      
+  S288C        MET15  documented MET15          found reference        agree      
+  S288C        CAN1   documented CAN1           found reference        agree      
+  SGDref       URA3   documented URA3           found reference        agree      
+  SGDref       HIS3   documented HIS3           found reference        agree      
+  SGDref       LEU2   documented LEU2           found reference        agree      
+  SGDref       TRP1   documented TRP1           found reference        agree      
+  SGDref       LYS2   documented LYS2           found reference        agree      
+  SGDref       ADE2   documented ADE2           found reference        agree      
+  SGDref       MET15  documented MET15          found reference        agree      
+  SGDref       CAN1   documented CAN1           found reference        agree      
+  W303         URA3   documented ura3-1         found missense         unconfirmed p.G234E 
+  W303         HIS3   documented his3-11,15     found frameshift       agree     p.A70fs, protein of 76 instead of 220 aa 
+  W303         LEU2   documented leu2-3,112     found frameshift       agree     p.T84fs, protein of 85 instead of 364 aa 
+  W303         TRP1   documented trp1-1         found nonsense         agree     p.E83*, 82 of 224 aa kept 
+  W303         LYS2   documented LYS2           found reference        agree      
+  W303         ADE2   documented ade2-1         found nonsense         agree     p.E64*, 63 of 571 aa kept 
+  W303         MET15  documented MET15          found reference        agree      
+  W303         CAN1   documented can1-100       found nonsense         agree     p.K47*, 46 of 590 aa kept 
+  YPH499       URA3   documented ura3-52        found insertion        agree     ORF interrupted at c.116 by an insertion of 5923 bp 
+  YPH499       HIS3   documented his3-D200      found orf_deleted      agree     ORF missing, deletion extends past the locus flank 
+  YPH499       LEU2   documented leu2-D1        found large_deletion   agree     in-frame deletion of 161 of 364 aa replacement of 96 bp at locus 423-519, 122 bp inserted
+  YPH499       TRP1   documented trp1-D63       found orf_deleted      agree     512 of 675 bp of the ORF deleted 
+  YPH499       LYS2   documented lys2-801       found nonsense         agree     p.W655*, 654 of 1392 aa kept 
+  YPH499       ADE2   documented ade2-101       found nonsense         agree     p.E64*, 63 of 571 aa kept 
+  YPH499       MET15  documented MET15          found synonymous       agree      insertion of 20191 bp at locus 459
+  YPH499       CAN1   documented CAN1           found reference        agree      

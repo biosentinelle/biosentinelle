@@ -1,0 +1,2 @@
+X2180-1A: 1 run(s), 198 variants kept, 0 dropped for disagreement between runs, 183 positions made unknown, 11.60 Mb callable
+warning: X2180-1A rests on one run; its private variants include that stock's own mutations and cannot be told apart from the strain's

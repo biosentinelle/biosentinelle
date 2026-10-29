@@ -1,0 +1,11 @@
+strain	documented_genotype	source
+S288C	MATalpha SUC2 gal2 mal2 mel flo1 flo8-1 hap1 ho bio1 bio6	SGD strain S288C, https://www.yeastgenome.org/strain/S288C ; wild type at every marker locus used here
+SGDref	MATalpha SUC2 gal2 mal2 mel flo1 flo8-1 hap1 ho bio1 bio6	S288C reference isolate, same documented genotype as S288C
+BY4742	MATalpha his3D1 leu2D0 lys2D0 ura3D0	Brachmann et al. 1998, Yeast 14:115-132, doi:10.1002/(SICI)1097-0061(19980130)14:2<115::AID-YEA204>3.0.CO;2-2
+W303	MATa leu2-3,112 trp1-1 can1-100 ura3-1 ade2-1 his3-11,15	Thomas and Rothstein 1989, Cell 56:619-630, doi:10.1016/0092-8674(89)90584-9
+YPH499	MATa ura3-52 lys2-801 ade2-101 trp1-D63 his3-D200 leu2-D1	Sikorski and Hieter 1989, Genetics 122:19-27, doi:10.1093/genetics/122.1.19
+CENPK21D	MATalpha ura3-52 trp1-289 leu2-3,112 his3D1 MAL2-8c SUC2	Entian and Koetter 2007, Methods in Microbiology 36:629-666, doi:10.1016/S0580-9517(06)36025-4 (CEN.PK2-1 genotype)
+BY4741	MATa his3D1 leu2D0 met15D0 ura3D0	Brachmann et al. 1998, Yeast 14:115-132, doi:10.1002/(SICI)1097-0061(19980130)14:2<115::AID-YEA204>3.0.CO;2-2 ; no assembly, genotype comparison only
+FY4	MATa srd1D0	Winston, Dollard and Ricupero-Hovasse 1995, Yeast 11:53-55, doi:10.1002/yea.320110107 ; genotype as listed by SGD, https://wiki.yeastgenome.org/index.php/straintable ; no assembly, genotype comparison only
+FY1679	MATa/alpha ura3-52/ura3-52 trp1D63/TRP1 leu2D1/LEU2 his3D200/HIS3 GAL2/GAL2	Winston, Dollard and Ricupero-Hovasse 1995, Yeast 11:53-55, doi:10.1002/yea.320110107 ; genotype as listed by SGD, https://wiki.yeastgenome.org/index.php/straintable
+X2180-1A	MATa SUC2 mal mel gal2 CUP1	Mortimer and Johnston 1986, Genetics 113:35-43, doi:10.1093/genetics/113.1.35 ; genotype as listed by SGD, https://wiki.yeastgenome.org/index.php/straintable ; no assembly, genotype comparison only

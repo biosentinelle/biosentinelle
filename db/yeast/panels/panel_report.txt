@@ -1,0 +1,33 @@
+1172 strains: 1011 from the matrix, 161 from their own VCF
+ref|NC_001133|: 18941 candidate sites so far
+ref|NC_001134|: 115885 candidate sites so far
+ref|NC_001135|: 152368 candidate sites so far
+ref|NC_001136|: 330809 candidate sites so far
+ref|NC_001137|: 400209 candidate sites so far
+ref|NC_001138|: 429571 candidate sites so far
+ref|NC_001139|: 557954 candidate sites so far
+ref|NC_001140|: 622062 candidate sites so far
+ref|NC_001141|: 673529 candidate sites so far
+ref|NC_001142|: 759053 candidate sites so far
+ref|NC_001143|: 840935 candidate sites so far
+ref|NC_001144|: 955429 candidate sites so far
+ref|NC_001145|: 1065579 candidate sites so far
+ref|NC_001146|: 1155658 candidate sites so far
+ref|NC_001147|: 1283994 candidate sites so far
+ref|NC_001148|: 1392914 candidate sites so far
+ref|NC_001224|: 1392914 candidate sites so far
+strains: 1172
+sites kept: 264652 (rare 234652, common 30000; SNV 251660, indel 12992), k-mers: 1485095, k=21
+  ambiguous        28
+  candidates       1896949
+  edge             19
+  indel_in_repeat  1934
+  low_complexity   61797
+  ref_mismatch     0
+  thinned_common   211528
+  too_unknown      126068
+  uninformative    25149
+  repeat           21672
+  kmer_collision   5934
+strain groups with identical expected alleles at every kept site:
+  IMDO050523, LW2591Y

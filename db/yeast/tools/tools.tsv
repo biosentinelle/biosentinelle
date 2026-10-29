@@ -1,0 +1,32 @@
+element_id	name	element_class	feature_type	length_bp	scorable	sha256_12	source_plasmid	source_page	seen_in	host_kmer_fraction	origin
+kanMX__0d01f9	kanMX	selection_marker_drug	gene	1357	yes	0d01f9451f0f	pFA6a-kanMX6	https://www.addgene.org/39296/	pFA6a-13Myc-kanMX6;pFA6a-3HA-kanMX6;pFA6a-5FLAG-kanMX6;pFA6a-GFP-S65T-kanMX6;pFA6a-GST-kanMX6;pFA6a-kanMX6;pFA6a-kanMX6-PGAL1-GFP;pUG6	0.0000	foreign
+natMX6__81ced0	natMX6	selection_marker_drug	gene	1120	yes	81ced09d68ff	pFA6a-natMX6	https://www.novoprolabs.com/vector/V10291	pFA6a-natMX6	0.0000	foreign
+TEF_promoter__f65cb0	TEF_promoter	promoter	promoter	344	yes	f65cb0a00e67	pFA6a-natMX6	https://www.novoprolabs.com/vector/V10291	pFA6a-natMX6	0.0000	foreign
+NrsR__b54131	NrsR	selection_marker_drug	CDS	573	yes	b541311ad06c	pFA6a-natMX6	https://www.novoprolabs.com/vector/V10291	pFA6a-natMX6	0.0000	foreign
+TEF_terminator__33a00d	TEF_terminator	terminator	terminator	198	yes	33a00d9f191c	pFA6a-natMX6	https://www.novoprolabs.com/vector/V10291	pFA6a-HA-KlURA3;pFA6a-natMX6;pUG66	0.0000	foreign
+hphMX6__332261	hphMX6	selection_marker_drug	gene	1576	yes	3322610d0a48	pFA6a-hphMX6	https://www.novoprolabs.com/vector/V10297	pFA6a-hphMX6	0.0000	foreign
+HIS3MX6__f34a48	HIS3MX6	selection_marker_auxo	gene	1201	yes	f34a48423afc	pFA6a-His3MX6	https://www.addgene.org/41596/ ; https://www.novoprolabs.com/vector/V10298	pFA6a-3HA-His3MX6;pFA6a-His3MX6;pFA6a-His3MX6-PGAL1-GFP	0.0000	foreign
+TRP1_promoter__482ed2	TRP1_promoter	promoter	promoter	148	yes	482ed27f09e1	pFA6a-TRP1	https://www.snapgene.com/plasmids/yeast_plasmids/pFA6a-TRP1	pFA6a-TRP1	0.8438	native
+TRP1__008d88	TRP1	selection_marker_auxo	CDS	672	yes	008d88d3af24	pFA6a-TRP1	https://www.snapgene.com/plasmids/yeast_plasmids/pFA6a-TRP1	pFA6a-TRP1	1.0000	native
+GFP_S65T__4e8728	GFP_S65T	reporter	CDS	711	yes	4e87281272a7	pFA6a-GFP-S65T-kanMX6	https://www.addgene.org/39292/	pFA6a-GFP-S65T-kanMX6;pFA6a-His3MX6-PGAL1-GFP;pFA6a-kanMX6-PGAL1-GFP	0.0000	foreign
+ADH1_terminator__e71e91	ADH1_terminator	terminator	terminator	188	yes	e71e91cbd510	pFA6a-GFP-S65T-kanMX6	https://www.addgene.org/39292/	pFA6a-13Myc-kanMX6;pFA6a-3HA-His3MX6;pFA6a-3HA-kanMX6;pFA6a-GFP-S65T-kanMX6;pFA6a-GST-kanMX6;pFA6a-His3MX6-PGAL1-GFP;pFA6a-kanMX6-PGAL1-GFP	1.0000	native
+3xHA__63edf3	3xHA	epitope_tag	CDS	90	short	63edf30dfddd	pFA6a-3HA-kanMX6	https://www.addgene.org/39295/ ; https://www.snapgene.com/plasmids/yeast_plasmids/pFA6a-3HA-kanMX6	pFA6a-3HA-His3MX6;pFA6a-3HA-kanMX6	0.0000	foreign
+Myc__76ce89	Myc	epitope_tag	CDS	30	short	76ce895ea119	pFA6a-13Myc-kanMX6	https://www.addgene.org/39294/	pFA6a-13Myc-kanMX6	0.0000	foreign
+5xFLAG__9b8528	5xFLAG	epitope_tag	CDS	132	yes	9b85280a043a	pFA6a-5FLAG-kanMX6	https://www.snapgene.com/plasmids/yeast_plasmids/pFA6a-5FLAG-kanMX6	pFA6a-5FLAG-kanMX6	0.0000	foreign
+ADH1_terminator__5ae10f	ADH1_terminator	terminator	terminator	188	yes	5ae10ffbca24	pFA6a-5FLAG-kanMX6	https://www.snapgene.com/plasmids/yeast_plasmids/pFA6a-5FLAG-kanMX6	pFA6a-5FLAG-kanMX6;pFA6a-His3MX6-pGAL1-VN;pYM44	0.8750	native
+GST__4274d9	GST	epitope_tag	CDS	654	yes	4274d9686987	pFA6a-GST-kanMX6	https://www.snapgene.com/plasmids/yeast_plasmids/pFA6a-GST-kanMX6	pFA6a-GST-kanMX6	0.0000	foreign
+GAL1_promoter__4d5ff4	GAL1_promoter	promoter	promoter	442	yes	4d5ff4a8d14a	pFA6a-kanMX6-PGAL1-GFP	https://www.addgene.org/41605/ ; https://www.novoprolabs.com/vector/V10295	pFA6a-His3MX6-PGAL1-GFP;pFA6a-His3MX6-pGAL1-VN;pFA6a-kanMX6-PGAL1-GFP	0.7062	native
+HA__8334fa	HA	epitope_tag	CDS	27	short	8334fa3a4aed	pFA6a-HA-KlURA3	https://www.novoprolabs.com/vector/Vgyzdemi	pFA6a-HA-KlURA3	0.0000	foreign
+HA__30d2e0	HA	epitope_tag	CDS	27	short	30d2e037d9c5	pFA6a-HA-KlURA3	https://www.novoprolabs.com/vector/Vgyzdemi	pFA6a-HA-KlURA3	0.0000	foreign
+URA3__3ff4fd	URA3	selection_marker_auxo	CDS	804	yes	3ff4fdac0521	pFA6a-HA-KlURA3	https://www.novoprolabs.com/vector/Vgyzdemi	pFA6a-HA-KlURA3	0.0000	foreign
+HIS3MX6__fa11d8	HIS3MX6	selection_marker_auxo	gene	1201	yes	fa11d8f00778	pFA6a-His3MX6-pGAL1-VN	https://www.novoprolabs.com/vector/Vgyzdgmi ; https://www.euroscarf.de/plasmid_details.php?accno=P30561	pFA6a-His3MX6-pGAL1-VN;pUG27;pYM44	0.0000	foreign
+VN173__3d79e7	VN173	reporter	CDS	519	yes	3d79e784ae74	pFA6a-His3MX6-pGAL1-VN	https://www.novoprolabs.com/vector/Vgyzdgmi ; https://www.euroscarf.de/plasmid_details.php?accno=P30561	pFA6a-His3MX6-pGAL1-VN	0.0000	foreign
+loxP__aa4ca5	loxP	recombination_site	protein_bind	34	short	aa4ca5056f89	pUG6	https://www.ncbi.nlm.nih.gov/nuccore/AF298793.1 ; https://www.novoprolabs.com/vector/V10292	pUG27;pUG6;pUG66;pUG74;pUG75	0.0000	foreign
+TEF_promoter__554642	TEF_promoter	promoter	promoter	344	yes	55464214b636	pUG66	https://www.novoprolabs.com/vector/V10298	pUG66;pYM25	0.0000	foreign
+ble__bc1214	ble	selection_marker_drug	CDS	387	yes	bc121453ff30	pUG66	https://www.novoprolabs.com/vector/V10298	pUG66	0.0000	foreign
+natMX6__3ffbb6	natMX6	selection_marker_drug	gene	1120	yes	3ffbb6f12601	pUG74	https://www.novoprolabs.com/vector/Vgeydgoya	pUG74	0.0000	foreign
+hphMX6__bce2bf	hphMX6	selection_marker_drug	gene	1576	yes	bce2bf47ed05	pUG75	https://www.novoprolabs.com/vector/Vgeydgnne	pUG75	0.0000	foreign
+yeGFP__3e3d44	yeGFP	reporter	CDS	714	yes	3e3d447391f4	pYM25	https://www.novoprolabs.com/vector/V10199 ; https://www.snapgene.com/plasmids/yeast_plasmids/pYM25	pYM25;pYM26;pYM44	0.0000	foreign
+HygR__bf2868	HygR	selection_marker_drug	CDS	1020	yes	bf2868e216f5	pYM25	https://www.novoprolabs.com/vector/V10199 ; https://www.snapgene.com/plasmids/yeast_plasmids/pYM25	pYM25	0.0000	foreign
+CYC1_terminator__3ccd06	CYC1_terminator	terminator	terminator	190	yes	3ccd06121928	pYM25	https://www.novoprolabs.com/vector/V10199 ; https://www.snapgene.com/plasmids/yeast_plasmids/pYM25	pYM25	0.7588	native
+Kluyveromyces_lactis_TRP1__5afbc1	Kluyveromyces_lactis_TRP1	epitope_tag	CDS	633	yes	5afbc168bba1	pYM26	https://www.snapgene.com/plasmids/yeast_plasmids/pYM26	pYM26	0.0000	foreign

@@ -1,0 +1,19 @@
+key	value
+organism_name	Saccharomyces cerevisiae
+reference_name	S288C_R64-1-1
+reference_strain	S288C
+reference_source	SGD R64-1-1, dataset/genome_references/test/S288C_reference_sequence_R64-1-1_20110203.fsa
+tool_db_source	dataset/features_test, yeast integrated individual feature FASTA package v1
+tool_elements	31 unique, 26 scorable, 5 under 100 bp
+panel_built	yes, 2026-10-28
+panel_kmer_size	21
+panel_sites	264652 (251660 SNVs, 12992 indels)
+panel_strains	1172: 1011 from the 1011 Yeast Genomes matrix (Peter et al. 2018), 154 from assemblies (ScRAPdb, SGD), 7 from reads (S288C, FY4, FY1679, BY4741, BY4742, X2180-1A, YPH499); see strains/strains.tsv
+variants_vs_reference	S288C family, after agreement between runs: S288C 155, FY4 135, BY4741 146, BY4742 46, X2180-1A 198, FY1679 423, YPH499 4686
+notes	Each strain carries its own k-mers, rebuilt from its own alleles around every site. Checked on 22 long-read assemblies of strains the panel takes from another source: 15 ranked first, 21 first or within the reported tie set; the miss is a DBVPG6044 stock disagreement between ScRAPdb and the 1011 matrix (db/README.md).
+caveat_BY4742	Inside the S288C family strains differ at a few to a few dozen panel sites, as much as two stocks of one strain drift apart. The SNP panel names the family; mating type and native markers name the strain, and the report lists every strain neither can exclude.
+caveat_read_length	k must stay well below the read length. The SRR26617475 run has 35 bp reads, where k=31 called 14 sites out of 35263 and k=21 called 34003 of 36694.
+marker_genes	URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1; coordinates from Ensembl, assembly R64-1-1
+marker_catalogue	290 assemblies, 2320 alleles, built 2026-10-23; 33 assemblies of other species excluded
+caveat_markers	An insertion that leaves the locus intact, a Ty1 as in ura3-52, needs reads crossing its junction; with reads under 50 bp it can be missed, and the report says so.
+mating_type_kmers	467 MATa and 495 MATalpha k-mers from HMRA1, HMRA2, MATALPHA1, MATALPHA2 (Ensembl R64-1-1), found in no other cassette; mating/mating_kmers.tsv

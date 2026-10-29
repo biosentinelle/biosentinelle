@@ -1,0 +1,2 @@
+FY1679: 1 run(s), 423 variants kept, 0 dropped for disagreement between runs, 0 positions made unknown, 11.64 Mb callable
+warning: FY1679 rests on one run; its private variants include that stock's own mutations and cannot be told apart from the strain's

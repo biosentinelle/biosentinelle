@@ -1,0 +1,1173 @@
+index	strain	display_name	source_type	source	clade	ploidy	zygosity	origin	n_sites_carried
+0	S288C	S288C	reads	SRR1178898,SRR1179835	S288C family	1		Laboratory	15
+1	FY4	FY4	reads	SRR1009262,SRR1009267	S288C family	1		Laboratory	10
+2	BY4741	BY4741	reads	SRR1569870,SRR3224843	S288C family	1		Laboratory	7
+3	BY4742	BY4742	reads	SRR1569895,SRR987871	S288C family	1		Laboratory	4
+4	FY1679	FY1679	reads	SRR1569694	S288C family	2		Laboratory	18
+5	X2180-1A	X2180-1A	reads	SRR1570792	S288C family	1		Laboratory	19
+6	YPH499	YPH499	reads	SRR1569739,DRR076693	S288C family	1		Laboratory	636
+7	RM11-1a	RM11-1a (AAA)	matrix	AAA	1. Wine/European	1	homozygous	Wine	4599
+8	CBS422a	CBS422a (AAB)	matrix	AAB	7. Mosaic beer	1	homozygous	Beer	4602
+9	CBS2165a	CBS2165a (AAC)	matrix	AAC	11. Ale beer	2	heterozygous	Beer	6211
+10	CBS436a	CBS436a (AAD)	matrix	AAD	25. Sake	2	homozygous	Sake	6385
+11	CBS2806a	CBS2806a (AAE)	matrix	AAE	1. Wine/European (subclade 4)	1	homozygous	Wine	4723
+12	CBS428a	CBS428a (AAG)	matrix	AAG	M3. Mosaic region 3	1	homozygous	Unknown	5419
+13	CBS1388a	CBS1388a (AAH)	matrix	AAH		1	homozygous	Unknown	5141
+14	CBS2966a	CBS2966a (AAI)	matrix	AAI	1. Wine/European	1	homozygous	Distillery	4414
+15	CBS4093a	CBS4093a (AAK)	matrix	AAK	1. Wine/European (subclade 4)	1	homozygous	Wine	4747
+16	CBS1236-a	CBS1236-a (AAL)	matrix	AAL	8. Mixed origin	2	heterozygous	Bakery	7003
+17	CLIB192_1b	CLIB192_1b (AAM)	matrix	AAM	8. Mixed origin	1	homozygous	Bakery	5270
+18	CLIB274_1	CLIB274_1 (AAN)	matrix	AAN	8. Mixed origin	2	heterozygous	Bakery	7328
+19	CLIB326_1	CLIB326_1 (AAP)	matrix	AAP	8. Mixed origin	2	heterozygous	Bakery	7130
+20	CLIB272_2	CLIB272_2 (AAQ)	matrix	AAQ	7. Mosaic beer	1	homozygous	Beer	4836
+21	CLIB382_1b	CLIB382_1b (AAR)	matrix	AAR	7. Mosaic beer	1	homozygous	Beer	4851
+22	YJM145_b	YJM145_b (AAS)	matrix	AAS	M3. Mosaic region 3	1	homozygous	Human, clinical	5175
+23	YJM280_b	YJM280_b (AAT)	matrix	AAT	M3. Mosaic region 3	1	homozygous	Human, clinical	5406
+24	YJM320b	YJM320b (AAV)	matrix	AAV	M3. Mosaic region 3	1	homozygous	Human, clinical	5202
+25	YJM326_b	YJM326_b (ABA)	matrix	ABA	M3. Mosaic region 3	1	homozygous	Human, clinical	5212
+26	YJM413_b	YJM413_b (ABB)	matrix	ABB	26. Asian fermentation	1	homozygous	Human, clinical	6141
+27	YJM421_b	YJM421_b (ABC)	matrix	ABC	M3. Mosaic region 3	1	homozygous	Human, clinical	5175
+28	YJM428_1b	YJM428_1b (ABD)	matrix	ABD	M3. Mosaic region 3	2	homozygous	Human, clinical	4981
+29	YJM434_1b	YJM434_1b (ABE)	matrix	ABE	1. Wine/European	1	homozygous	Human, clinical	4416
+30	YJM436_1b	YJM436_1b (ABF)	matrix	ABF	M3. Mosaic region 3	1	homozygous	Human, clinical	5321
+31	YJM440_1b	YJM440_1b (ABG)	matrix	ABG	M3. Mosaic region 3	1	homozygous	Human, clinical	5485
+32	YJM454_1b	YJM454_1b (ABH)	matrix	ABH	M3. Mosaic region 3	1	homozygous	Human, clinical	5486
+33	YJM653_1b	YJM653_1b (ABI)	matrix	ABI	M3. Mosaic region 3	1	homozygous	Human, clinical	5132
+34	YJM678_1b	YJM678_1b (ABK)	matrix	ABK	M3. Mosaic region 3	1	homozygous	Human, clinical	4962
+35	CBS2888_1b	CBS2888_1b (ABL)	matrix	ABL		1	homozygous	Soil	5654
+36	CBS3093_1b	CBS3093_1b (ABM)	matrix	ABM	2. Alpechin	1	homozygous	Industrial	4327
+37	CECT10109_1b	CECT10109_1b (ABP)	matrix	ABP	1. Wine/European	1	homozygous	Fruit	4325
+38	DBVPG1788_1b	DBVPG1788_1b (ABQ)	matrix	ABQ	1. Wine/European	1	homozygous	Soil	4430
+39	DBVPG1794_1b	DBVPG1794_1b (ABR)	matrix	ABR	1. Wine/European	1	homozygous	Soil	4420
+40	DBVPG3591_1b	DBVPG3591_1b (ABS)	matrix	ABS	1. Wine/European	1	homozygous	Nature	4400
+41	DBVPG4651_1b	DBVPG4651_1b (ABT)	matrix	ABT	1. Wine/European	1	homozygous	Nature	4387
+42	DBVPG6861	DBVPG6861 (ABV)	matrix	ABV	8. Mixed origin	3	heterozygous	Water	8956
+43	EM93_3	EM93_3 (ACA)	matrix	ACA	M3. Mosaic region 3	1	homozygous	Fruit	2611
+44	TL229S2.2	TL229S2.2 (ACB)	matrix	ACB	M3. Mosaic region 3	1	homozygous	Dairy	2612
+45	YPS1000_1b	YPS1000_1b (ACC)	matrix	ACC	21. Ecuadorean	1	homozygous	Tree	6558
+46	YPS163_1b	YPS163_1b (ACD)	matrix	ACD	23. North American oak	1	homozygous	Tree	5981
+47	CLIB294_1b	CLIB294_1b (ACF)	matrix	ACF	1. Wine/European	1	homozygous	Distillery	4425
+48	CLIB413_1b	CLIB413_1b (ACG)	matrix	ACG	M1. Mosaic region 1	1	homozygous	Fermentation	4424
+49	CLIB483_1b	CLIB483_1b (ACH)	matrix	ACH	M1. Mosaic region 1	1	homozygous	Cider	4426
+50	Y10_1b	Y10_1b (ACI)	matrix	ACI	M3. Mosaic region 3	1	homozygous	Fruit	5644
+51	Y12_1b	Y12_1b (ACK)	matrix	ACK	26. Asian fermentation	1	homozygous	Palm wine	6141
+52	Y3_1b	Y3_1b (ACL)	matrix	ACL	M3. Mosaic region 3	1	homozygous	Palm wine	5703
+53	Y9_4	Y9_4 (ACM)	matrix	ACM	26. Asian fermentation	1	homozygous	Fermentation	6208
+54	YJM269_1b	YJM269_1b (ACN)	matrix	ACN	M3. Mosaic region 3	1	homozygous	Wine	2503
+55	CLIB154_1b	CLIB154_1b (ACP)	matrix	ACP	1. Wine/European (subclade 1)	1	homozygous	Wine	4459
+56	CLIB219_2b	CLIB219_2b (ACQ)	matrix	ACQ	18. Far East Asia	1	homozygous	Wine	5665
+57	DBVPG1339_1b	DBVPG1339_1b (ACR)	matrix	ACR	1. Wine/European	1	homozygous	Wine	4393
+58	I14_1b	I14_1b (ACS)	matrix	ACS	M1. Mosaic region 1	1	homozygous	Wine	4712
+59	UC8_1b	UC8_1b (ACT)	matrix	ACT	1. Wine/European	1	homozygous	Wine	4407
+60	WE372_1b	WE372_1b (ACV)	matrix	ACV	1. Wine/European	1	homozygous	Wine	4409
+61	Y55_1b	Y55_1b (ADA)	matrix	ADA	M3. Mosaic region 3	1	homozygous	Wine	6124
+62	Y9J_1b	Y9J_1b (ADB)	matrix	ADB	1. Wine/European	1	homozygous	Wine	4558
+63	UC1_1b	UC1_1b (ADC)	matrix	ADC	1. Wine/European	1	homozygous	Wine	4430
+64	IL_01_b	IL_01_b (ADD)	matrix	ADD	1. Wine/European (subclade 2)	1	homozygous	Soil	4496
+65	PW5_b	PW5_b (ADE)	matrix	ADE		1	homozygous	Palm wine	6125
+66	YPS1009_b	YPS1009_b (ADF)	matrix	ADF	13. African palm wine	1	homozygous	Tree	6961
+67	NC_02_b	NC_02_b (ADG)	matrix	ADG		1	homozygous	Tree	6169
+68	T7_b	T7_b (ADH)	matrix	ADH	26. Asian fermentation	1	homozygous	Tree	6143
+69	YJM981_b	YJM981_b (ADI)	matrix	ADI	1. Wine/European (subclade 2)	1	homozygous	Human, clinical	4497
+70	CLIB208_1	CLIB208_1 (ADK)	matrix	ADK	M3. Mosaic region 3	2	heterozygous	Bakery	6172
+71	CLIB318_1	CLIB318_1 (ADL)	matrix	ADL	8. Mixed origin	2	heterozygous	Bakery	8052
+72	CLIB324_2	CLIB324_2 (ADM)	matrix	ADM	8. Mixed origin	2	heterozygous	Bakery	7640
+73	K1_1	K1_1 (ADN)	matrix	ADN	25. Sake	1	homozygous	Sake	6361
+74	Y6_b	Y6_b (ADP)	matrix	ADP	8. Mixed origin	2	heterozygous	Unknown	5021
+75	K12_2	K12_2 (ADQ)	matrix	ADQ	25. Sake	1	homozygous	Sake	6407
+76	M22_1b	M22_1b (ADR)	matrix	ADR	1. Wine/European	1	homozygous	Wine	4402
+77	T73_1b	T73_1b (ADS)	matrix	ADS	1. Wine/European	2	homozygous	Wine	4442
+78	CBS7765	CBS7765 (ADT)	matrix	ADT	M3. Mosaic region 3	1	homozygous	Nature	11
+79	CBS7903	CBS7903 (ADV)	matrix	ADV	13. African palm wine	1	homozygous	Palm wine	6760
+80	CBS7958	CBS7958 (AEA)	matrix	AEA	7. Mosaic beer	1	homozygous	Industrial	4821
+81	CBS1171	CBS1171 (AEB)	matrix	AEB	11. Ale beer	4	heterozygous	Beer	6896
+82	CBS1248	CBS1248 (AEC)	matrix	AEC	11. Ale beer	Xn	heterozygous	Beer	7150
+83	CBS2441	CBS2441 (AEE)	matrix	AEE	M3. Mosaic region 3	3	heterozygous	Distillery	7641
+84	CBS6414	CBS6414 (AEF)	matrix	AEF	25. Sake	1	homozygous	Sake	6335
+85	CBS7962	CBS7962 (AEG)	matrix	AEG	3. Brazilian bioethanol	1	homozygous	Industrial	5200
+86	CBS7964	CBS7964 (AEH)	matrix	AEH	3. Brazilian bioethanol	1	homozygous	Industrial	4981
+87	CBS1428	CBS1428 (AEI)	matrix	AEI	M3. Mosaic region 3	1	homozygous	Bakery	5810
+88	CBS4079	CBS4079 (AEK)	matrix	AEK	1. Wine/European (subclade 4)	1	homozygous	Wine	4680
+89	CBS1394	CBS1394 (AEL)	matrix	AEL	M3. Mosaic region 3	2	heterozygous	Distillery	7076
+90	CBS2973	CBS2973 (AEM)	matrix	AEM	8. Mixed origin	1	heterozygous	Beer	5206
+91	CBS4454	CBS4454 (AEN)	matrix	AEN	6. African beer	2	heterozygous	Beer	5534
+92	CBS1508	CBS1508 (AEP)	matrix	AEP	26. Asian fermentation	2	homozygous	Distillery	6291
+93	CBS1782	CBS1782 (AEQ)	matrix	AEQ	7. Mosaic beer	1	homozygous	Beer	4884
+94	CBS2970	CBS2970 (AER)	matrix	AER	M2. Mosaic region 2	1	heterozygous	Industrial	5120
+95	CBS4054	CBS4054 (AES)	matrix	AES	1. Wine/European (subclade 4)	1	homozygous	Wine	4752
+96	CBS6007	CBS6007 (AET)	matrix	AET	1. Wine/European (subclade 4)	1	homozygous	Wine	4732
+97	CBS6216	CBS6216 (AEV)	matrix	AEV	8. Mixed origin	2	heterozygous	Water	7357
+98	CBS6503	CBS6503 (AFA)	matrix	AFA	7. Mosaic beer	2	homozygous	Beer	4837
+99	CBS7371	CBS7371 (AFB)	matrix	AFB	7. Mosaic beer	1	homozygous	Beer	4850
+100	CBS7764	CBS7764 (AFC)	matrix	AFC	8. Mixed origin	2	heterozygous	Nature	6861
+101	CBS7960	CBS7960 (AFD)	matrix	AFD	3. Brazilian bioethanol	1	homozygous	Industrial	4935
+102	CBS8291	CBS8291 (AFE)	matrix	AFE	8. Mixed origin	2	heterozygous	Water	6759
+103	CBS1252	CBS1252 (AFF)	matrix	AFF	8. Mixed origin	1	homozygous	Bakery	5068
+104	CBS1387	CBS1387 (AFG)	matrix	AFG	M3. Mosaic region 3	1	homozygous	Bakery	5918
+105	CBS1509	CBS1509 (AFH)	matrix	AFH	26. Asian fermentation	1	homozygous	Distillery	6115
+106	CBS2183	CBS2183 (AFI)	matrix	AFI	1. Wine/European (subclade 4)	1	homozygous	Wine	4766
+107	CBS2992	CBS2992 (AFK)	matrix	AFK	24. Asian islands	2	homozygous	Palm wine	5930
+108	CBS4456	CBS4456 (AFL)	matrix	AFL	6. African beer	1	homozygous	Beer	4953
+109	CBS6412	CBS6412 (AFM)	matrix	AFM	25. Sake	1	homozygous	Sake	6368
+110	CBS6413	CBS6413 (AFN)	matrix	AFN	25. Sake	1	homozygous	Sake	6389
+111	CBS6505	CBS6505 (AFP)	matrix	AFP	7. Mosaic beer	2	heterozygous	Beer	4851
+112	CBS7993	CBS7993 (AFQ)	matrix	AFQ	M2. Mosaic region 2	1	homozygous	Water	5153
+113	CBS7959	CBS7959 (AFR)	matrix	AFR	3. Brazilian bioethanol	1	homozygous	Industrial	5159
+114	CBS1173	CBS1173 (AFS)	matrix	AFS		2	heterozygous	Fruit	5873
+115	CBS1464	CBS1464 (AFT)	matrix	AFT	8. Mixed origin	4	homozygous	Human, clinical	5295
+116	CBS2814	CBS2814 (AFV)	matrix	AFV	1. Wine/European (subclade 4)	2	homozygous	Wine	4746
+117	CBS3012	CBS3012 (AGA)	matrix	AGA	1. Wine/European	2	homozygous	Wine	4435
+118	CBS6308	CBS6308 (AGB)	matrix	AGB	11. Ale beer	2	heterozygous	Beer	5552
+119	CBS2444	CBS2444 (AGC)	matrix	AGC		1	heterozygous	Distillery	5149
+120	CBS1385	CBS1385 (AGE)	matrix	AGE	8. Mixed origin	2	heterozygous	Bakery	6945
+121	CBS1479	CBS1479 (AGF)	matrix	AGF	1. Wine/European	1	homozygous	Wine	4399
+122	CBS1480	CBS1480 (AGG)	matrix	AGG	26. Asian fermentation	2	heterozygous	Distillery	6443
+123	CBS1582	CBS1582 (AGH)	matrix	AGH	1. Wine/European	1	homozygous	Wine	4394
+124	CBS1590	CBS1590 (AGI)	matrix	AGI	1. Wine/European	2	homozygous	Wine	4432
+125	CBS2361	CBS2361 (AGK)	matrix	AGK	8. Mixed origin	1	homozygous	Nature	5266
+126	CBS4458	CBS4458 (AGL)	matrix	AGL	1. Wine/European	1	homozygous	Wine	4356
+127	CBS7961	CBS7961 (AGM)	matrix	AGM	3. Brazilian bioethanol	1	homozygous	Industrial	5476
+128	CBS439	CBS439 (AGN)	matrix	AGN	M1. Mosaic region 1	1	homozygous	Wine	4533
+129	CBS1544	CBS1544 (AGP)	matrix	AGP	M3. Mosaic region 3	1	heterozygous	Fruit	5141
+130	CBS1594	CBS1594 (AGR)	matrix	AGR	24. Asian islands	1	homozygous	Nature	5918
+131	CBS3013	CBS3013 (AGS)	matrix	AGS	1. Wine/European	1	homozygous	Wine	4434
+132	CBS3078	CBS3078 (AGT)	matrix	AGT	M3. Mosaic region 3	1	homozygous	Unknown	5273
+133	CBS6223	CBS6223 (AGV)	matrix	AGV	1. Wine/European	1	homozygous	Wine	4514
+134	CBS6333	CBS6333 (AHA)	matrix	AHA	M3. Mosaic region 3	1	homozygous	Fruit	5091
+135	CBS4734	CBS4734 (AHB)	matrix	AHB		1	homozygous	Nature	4932
+136	CBS7963	CBS7963 (AHC)	matrix	AHC	3. Brazilian bioethanol	1	homozygous	Industrial	4959
+137	CBS1192	CBS1192 (AHD)	matrix	AHD	1. Wine/European	1	homozygous	Wine	4418
+138	CBS1194	CBS1194 (AHE)	matrix	AHE	1. Wine/European	1	homozygous	Wine	4400
+139	CBS1540	CBS1540 (AHF)	matrix	AHF	M1. Mosaic region 1	1	homozygous	Nature	4682
+140	CBS1586	CBS1586 (AHG)	matrix	AHG	1. Wine/European	1	homozygous	Fruit	4414
+141	CBS3000	CBS3000 (AHH)	matrix	AHH	24. Asian islands	1	homozygous	Palm wine	5930
+142	CBS6914	CBS6914 (AHI)	matrix	AHI	1. Wine/European	1	homozygous	Wine	4470
+143	CBS2247	CBS2247 (AHK)	matrix	AHK	1. Wine/European (subclade 4)	1	homozygous	Wine	4753
+144	CBS3081	CBS3081 (AHL)	matrix	AHL	2. Alpechin	1	homozygous	Industrial	4193
+145	CBS3093	CBS3093 (AHM)	matrix	AHM	2. Alpechin	1	homozygous	Industrial	4232
+146	CBS5635	CBS5635 (AHN)	matrix	AHN	1. Wine/European	1	homozygous	Wine	4407
+147	CBS5835	CBS5835 (AHP)	matrix	AHP	1. Wine/European (subclade 4)	2	heterozygous	Wine	4863
+148	CBS440	CBS440 (AHQ)	matrix	AHQ	26. Asian fermentation	1	homozygous	Industrial	5972
+149	CBS1227	CBS1227 (AHR)	matrix	AHR	1. Wine/European	1	homozygous	Human, clinical	4390
+150	CBS1419	CBS1419 (AHS)	matrix	AHS	13. African palm wine	1	homozygous	Wine	6742
+151	CBS1460	CBS1460 (AHT)	matrix	AHT	1. Wine/European	1	homozygous	Fermentation	4439
+152	CBS1487	CBS1487 (AHV)	matrix	AHV	8. Mixed origin	1	heterozygous	Beer	5054
+153	CBS2180	CBS2180 (AIA)	matrix	AIA	1. Wine/European (subclade 4)	1	homozygous	Wine	4754
+154	CBS2805	CBS2805 (AIB)	matrix	AIB	1. Wine/European (subclade 4)	1	homozygous	Wine	4780
+155	CBS2807	CBS2807 (AIC)	matrix	AIC	1. Wine/European (subclade 4)	1	homozygous	Wine	4764
+156	CBS2909	CBS2909 (AID)	matrix	AID	2. Alpechin	2	heterozygous	Human	4405
+157	CBS2910	CBS2910 (AIE)	matrix	AIE	2. Alpechin	1	homozygous	Human	4248
+158	CBS457	CBS457 (AIF)	matrix	AIF	1. Wine/European	2	heterozygous	Wine	4527
+159	CBS1463	CBS1463 (AIG)	matrix	AIG	7. Mosaic beer	1	homozygous	Beer	4774
+160	C6.1	C6.1 (AII)	matrix	AII	1. Wine/European	2	heterozygous	Palm wine	4478
+161	C15.1	C15.1 (AIK)	matrix	AIK	1. Wine/European	2	heterozygous	Nature	4641
+162	C10.4	C10.4 (AIL)	matrix	AIL	1. Wine/European	2	heterozygous	Nature	4614
+163	E4	E4 (AIM)	matrix	AIM	1. Wine/European	2	heterozygous	Wine	5138
+164	MC5	MC5 (AIN)	matrix	AIN	1. Wine/European	2	heterozygous	Wine	4541
+165	MC6	MC6 (AIP)	matrix	AIP	1. Wine/European (subclade 4)	2	heterozygous	Wine	4848
+166	MC7	MC7 (AIQ)	matrix	AIQ	1. Wine/European	2	heterozygous	Fermentation	4965
+167	MC8	MC8 (AIR)	matrix	AIR	1. Wine/European	2	homozygous	Wine	4402
+168	MC10	MC10 (AIT)	matrix	AIT	1. Wine/European	2	homozygous	Wine	4399
+169	NPA07.1	NPA07.1 (AKB)	matrix	AKB	13. African palm wine	2	heterozygous	Palm wine	7305
+170	NPA05a1	NPA05a1 (AKC)	matrix	AKC	13. African palm wine	3	heterozygous	Palm wine	7059
+171	NPA05b1	NPA05b1 (AKD)	matrix	AKD	13. African palm wine	3	heterozygous	Palm wine	7024
+172	NPA03.1	NPA03.1 (AKE)	matrix	AKE	13. African palm wine	2	homozygous	Palm wine	6985
+173	NPA06.1	NPA06.1 (AKG)	matrix	AKG	13. African palm wine	2	homozygous	Palm wine	6741
+174	NPA02-1	NPA02-1 (AKH)	matrix	AKH	13. African palm wine	2	homozygous	Palm wine	6972
+175	DBVPG6044	DBVPG6044 (AKI)	matrix	AKI	M3. Mosaic region 3	2	homozygous	Wine	6117
+176	K12	K12 (AKL)	matrix	AKL	26. Asian fermentation	2	heterozygous	Sake	7151
+177	UWOPS03-461.4	UWOPS03-461.4 (AKM)	matrix	AKM	19. Malaysian	2	homozygous	Tree	5799
+178	YPS128	YPS128 (AKN)	matrix	AKN	23. North American oak	2	homozygous	Soil	5989
+179	CLQCA_02-003	CLQCA_02-003 (AKP)	matrix	AKP	1. Wine/European	2	homozygous	Industrial	4403
+180	CLQCA_04-021	CLQCA_04-021 (AKQ)	matrix	AKQ	M3. Mosaic region 3	2	homozygous	Insect	5323
+181	CLQCA_05-006	CLQCA_05-006 (AKR)	matrix	AKR	26. Asian fermentation	2	heterozygous	Fruit	6448
+182	CLQCA_09-001	CLQCA_09-001 (AKS)	matrix	AKS	M3. Mosaic region 3	2	homozygous	Flower	5598
+183	CLQCA_10-003	CLQCA_10-003 (AKT)	matrix	AKT	8. Mixed origin	2	heterozygous	Insect	7534
+184	CLQCA_10-027	CLQCA_10-027 (AKV)	matrix	AKV	1. Wine/European	2	homozygous	Nature	4403
+185	CLQCA_10-619	CLQCA_10-619 (ALA)	matrix	ALA	26. Asian fermentation	2	heterozygous	Insect	6407
+186	CLQCA_10-620	CLQCA_10-620 (ALB)	matrix	ALB	26. Asian fermentation	2	heterozygous	Insect	6422
+187	CLQCA_11-024	CLQCA_11-024 (ALC)	matrix	ALC	26. Asian fermentation	2	heterozygous	Nature	6376
+188	CLQCA_13-023	CLQCA_13-023 (ALD)	matrix	ALD	5. French dairy	2	heterozygous	Nature	6896
+189	CLQCA_17-060	CLQCA_17-060 (ALE)	matrix	ALE	1. Wine/European	2	homozygous	Insect	4408
+190	CLQCA_18-003	CLQCA_18-003 (ALG)	matrix	ALG	M3. Mosaic region 3	2	homozygous	Fruit	5204
+191	CLQCA_19-011	CLQCA_19-011 (ALH)	matrix	ALH	26. Asian fermentation	2	heterozygous	Nature	6403
+192	CLQCA_20-060	CLQCA_20-060 (ALI)	matrix	ALI		2	heterozygous	Water	7278
+193	CLQCA_24SC-235	CLQCA_24SC-235 (ALK)	matrix	ALK	26. Asian fermentation	2	heterozygous	Tree	6310
+194	21-4-99	21-4-99 (ALL)	matrix	ALL	1. Wine/European	2	heterozygous	Water	4664
+195	21-4-101	21-4-101 (ALM)	matrix	ALM	1. Wine/European	2	heterozygous	Water	4642
+196	21-4-103	21-4-103 (ALN)	matrix	ALN	8. Mixed origin	2	heterozygous	Water	7444
+197	21-4-105	21-4-105 (ALP)	matrix	ALP	8. Mixed origin	2	heterozygous	Water	7282
+198	21-4-111	21-4-111 (ALQ)	matrix	ALQ	1. Wine/European (subclade 1)	2	homozygous	Tree	4395
+199	21-4-114	21-4-114 (ALR)	matrix	ALR	M3. Mosaic region 3	3	heterozygous	Tree	7608
+200	21-4-116	21-4-116 (ALS)	matrix	ALS	1. Wine/European (subclade 1)	2	homozygous	Flower	4431
+201	21-4-122	21-4-122 (ALT)	matrix	ALT	1. Wine/European (subclade 1)	2	homozygous	Flower	4429
+202	21-4-124	21-4-124 (ALV)	matrix	ALV	8. Mixed origin	3	heterozygous	Fruit	9054
+203	21-4-125	21-4-125 (AMA)	matrix	AMA	1. Wine/European (subclade 1)	3	heterozygous	Fruit	4933
+204	IY_03-5-30-1-1-1_1	IY_03-5-30-1-1-1_(1) (AMB)	matrix	AMB		2	homozygous	Insect	5982
+205	IY_03-5-26-5-1-1_1	IY_03-5-26-5-1-1_(1) (AMC)	matrix	AMC		2	homozygous	Insect	5985
+206	ES4M07	ES4M07 (AMD)	matrix	AMD		2	homozygous	Fruit	5817
+207	ES2M03	ES2M03 (AMF)	matrix	AMF		2	homozygous	Fruit	5782
+208	SJ7L01	SJ7L01 (AMG)	matrix	AMG	8. Mixed origin	3	heterozygous	Tree	8158
+209	EN14S01	EN14S01 (AMH)	matrix	AMH	17. Taiwanese	2	homozygous	Soil	5834
+210	SJ1L04	SJ1L04 (AMI)	matrix	AMI	8. Mixed origin	3	heterozygous	Tree	8127
+211	SJ6L01	SJ6L01 (AMK)	matrix	AMK	8. Mixed origin	3	heterozygous	Tree	7913
+212	SJ5L11	SJ5L11 (AML)	matrix	AML	8. Mixed origin	3	heterozygous	Tree	7792
+213	SJ5L12	SJ5L12 (AMM)	matrix	AMM		2	homozygous	Tree	5898
+214	SJ5L13	SJ5L13 (AMN)	matrix	AMN	8. Mixed origin	4	heterozygous	Tree	9782
+215	SJ5L14	SJ5L14 (AMP)	matrix	AMP	M1. Mosaic region 1	2	heterozygous	Fruit	5192
+216	SJ5L15	SJ5L15 (AMQ)	matrix	AMQ	8. Mixed origin	3	heterozygous	Tree	8103
+217	SJ5L16	SJ5L16 (AMR)	matrix	AMR	1. Wine/European	2	homozygous	Soil	4391
+218	SJ5L17	SJ5L17 (AMS)	matrix	AMS	1. Wine/European	2	heterozygous	Probiotic	4669
+219	SJ5L18	SJ5L18 (AMT)	matrix	AMT	1. Wine/European (subclade 3)	2	heterozygous	Probiotic	4366
+220	DBVPG6696	DBVPG6696 (ANA)	matrix	ANA	M3. Mosaic region 3	2	heterozygous	Wine	5572
+221	YPS129	YPS129 (ANC)	matrix	ANC	23. North American oak	2	homozygous	Tree	5996
+222	YPS133	YPS133 (AND)	matrix	AND	23. North American oak	2	homozygous	Soil	5980
+223	YPS134	YPS134 (ANE)	matrix	ANE	23. North American oak	2	homozygous	Soil	5976
+224	YPS139	YPS139 (ANF)	matrix	ANF	23. North American oak	2	homozygous	Soil	5977
+225	YPS141	YPS141 (ANG)	matrix	ANG	23. North American oak	2	homozygous	Soil	5978
+226	YPS142	YPS142 (ANH)	matrix	ANH	23. North American oak	2	homozygous	Nature	5984
+227	YPS143	YPS143 (ANI)	matrix	ANI	23. North American oak	2	homozygous	Soil	5987
+228	YPS154	YPS154 (ANK)	matrix	ANK	23. North American oak	2	homozygous	Tree	5978
+229	A-6	A-6 (ANL)	matrix	ANL	6. African beer	4	heterozygous	Beer	5289
+230	A-18	A-18 (ANM)	matrix	ANM	6. African beer	4	heterozygous	Beer	5282
+231	AY529516	AY529516 (ANN)	matrix	ANN	12. West African cocoa	2	heterozygous	Fermentation	6195
+232	UWOPS83-883-2	UWOPS83-883-2 (ANP)	matrix	ANP	8. Mixed origin	2	heterozygous	Insect	7392
+233	L-1191	L-1191 (ANQ)	matrix	ANQ	1. Wine/European	2	homozygous	Wine	4406
+234	RIB0001	RIB0001 (ANR)	matrix	ANR	25. Sake	2	heterozygous	Sake	6628
+235	RIB0002	RIB0002 (ANS)	matrix	ANS	25. Sake	2	heterozygous	Sake	6393
+236	RIB0003	RIB0003 (ANT)	matrix	ANT	25. Sake	2	heterozygous	Sake	6633
+237	RIB0004	RIB0004 (ANV)	matrix	ANV	25. Sake	2	heterozygous	Sake	6635
+238	RIB0005	RIB0005 (APA)	matrix	APA	25. Sake	2	heterozygous	Sake	6444
+239	RIB1001	RIB1001 (APC)	matrix	APC	25. Sake	2	heterozygous	Sake	6692
+240	RIB1002	RIB1002 (APD)	matrix	APD	25. Sake	2	heterozygous	Sake	6713
+241	RIB1003	RIB1003 (APE)	matrix	APE	25. Sake	2	heterozygous	Sake	6575
+242	RIB1004	RIB1004 (APF)	matrix	APF	25. Sake	2	heterozygous	Sake	6598
+243	VF8_6	VF8_(6) (APG)	matrix	APG	3. Brazilian bioethanol	1	homozygous	Bioethanol	4914
+244	M1.1	M1.1 (APH)	matrix	APH	3. Brazilian bioethanol	2	heterozygous	Distillery	6114
+245	YS20	YS20 (API)	matrix	API	8. Mixed origin	2	heterozygous	Bakery	7032
+246	YS10_E	YS10(E) (APK)	matrix	APK	8. Mixed origin	3	heterozygous	Bakery	8165
+247	YS11_E	YS11(E) (APL)	matrix	APL	8. Mixed origin	2	heterozygous	Bakery	7506
+248	YS15	YS15 (APM)	matrix	APM	8. Mixed origin	2	heterozygous	Bakery	6610
+249	YS19	YS19 (APN)	matrix	APN	8. Mixed origin	3	heterozygous	Bakery	8117
+250	CBS382	CBS382 (APP)	matrix	APP	7. Mosaic beer	3	heterozygous	Beer	5929
+251	CBS400	CBS400 (APQ)	matrix	APQ	13. African palm wine	2	homozygous	Palm wine	7351
+252	CBS403	CBS403 (APR)	matrix	APR	13. African palm wine	2	homozygous	Beer	7353
+253	CBS423	CBS423 (APS)	matrix	APS	1. Wine/European	2	heterozygous	Wine	4584
+254	CBS459	CBS459 (APT)	matrix	APT	1. Wine/European	2	homozygous	Wine	4567
+255	CBS1250	CBS1250 (APV)	matrix	APV	1. Wine/European	2	homozygous	Wine	4425
+256	CBS4903	CBS4903 (AQA)	matrix	AQA	2. Alpechin	2	heterozygous	Industrial	4234
+257	CBS5112	CBS5112 (AQB)	matrix	AQB	1. Wine/European	2	homozygous	Wine	4396
+258	CBS5155	CBS5155 (AQC)	matrix	AQC	1. Wine/European (subclade 4)	2	heterozygous	Wine	4822
+259	CBS5378	CBS5378 (AQD)	matrix	AQD	2. Alpechin	2	heterozygous	Industrial	4269
+260	CBS6006	CBS6006 (AQE)	matrix	AQE	1. Wine/European (subclade 4)	2	heterozygous	Wine	4823
+261	CBS7539	CBS7539 (AQG)	matrix	AQG	7. Mosaic beer	2	heterozygous	Beer	5457
+262	CBS7957	CBS7957 (AQH)	matrix	AQH	7. Mosaic beer	3	heterozygous	Industrial	6591
+263	CBS8292	CBS8292 (AQI)	matrix	AQI	8. Mixed origin	2	heterozygous	Water	6975
+264	CBS420	CBS420 (AQM)	matrix	AQM	5. French dairy	2	heterozygous	Dairy	5360
+265	CBS435	CBS435 (AQN)	matrix	AQN	25. Sake	2	heterozygous	Sake	6408
+266	CBS462	CBS462 (AQP)	matrix	AQP	1. Wine/European (subclade 4)	2	heterozygous	Wine	4815
+267	CBS1175	CBS1175 (AQQ)	matrix	AQQ	1. Wine/European	2	heterozygous	Wine	4602
+268	CBS1190	CBS1190 (AQR)	matrix	AQR	1. Wine/European	2	heterozygous	Wine	4515
+269	CBS1196	CBS1196 (AQS)	matrix	AQS	26. Asian fermentation	2	heterozygous	Distillery	6197
+270	CBS1230	CBS1230 (AQT)	matrix	AQT	11. Ale beer	3	heterozygous	Beer	6621
+271	CBS1239	CBS1239 (ARA)	matrix	ARA	M3. Mosaic region 3	4	heterozygous	Distillery	7641
+272	CBS1254	CBS1254 (ARB)	matrix	ARB	M3. Mosaic region 3	4	heterozygous	Bakery	7665
+273	CBS1257	CBS1257 (ARC)	matrix	ARC	1. Wine/European	2	heterozygous	Wine	4521
+274	CBS1398	CBS1398 (ARE)	matrix	ARE	7. Mosaic beer	2	heterozygous	Tree	5800
+275	CBS1576	CBS1576 (ARG)	matrix	ARG	24. Asian islands	2	homozygous	Tree	5896
+276	CBS1592	CBS1592 (ARH)	matrix	ARH	24. Asian islands	2	heterozygous	Fermentation	6088
+277	CBS1593	CBS1593 (ARI)	matrix	ARI	24. Asian islands	2	heterozygous	Fermentation	6325
+278	CBS1602	CBS1602 (ARK)	matrix	ARK	1. Wine/European	2	heterozygous	Fruit	4489
+279	CBS2087	CBS2087 (ARL)	matrix	ARL	1. Wine/European	2	heterozygous	Flower	4699
+280	CBS2188	CBS2188 (ARM)	matrix	ARM	25. Sake	2	heterozygous	Fruit	6483
+281	CBS2246	CBS2246 (ARN)	matrix	ARN	5. French dairy	3	heterozygous	Human, clinical	7217
+282	CBS2270	CBS2270 (ARP)	matrix	ARP	25. Sake	2	heterozygous	Wine	6376
+283	CBS2271	CBS2271 (ARQ)	matrix	ARQ	1. Wine/European	2	homozygous	Wine	4401
+284	CBS2272	CBS2272 (ARR)	matrix	ARR	5. French dairy	2	heterozygous	Dairy	6580
+285	CBS2421	CBS2421 (ARS)	matrix	ARS	5. French dairy	2	heterozygous	Nature	6325
+286	CBS2808	CBS2808 (ART)	matrix	ART	1. Wine/European (subclade 4)	2	heterozygous	Wine	5116
+287	CBS2965	CBS2965 (ARV)	matrix	ARV	1. Wine/European	2	homozygous	Distillery	4408
+288	CBS4092	CBS4092 (ASA)	matrix	ASA	1. Wine/European (subclade 4)	3	heterozygous	Wine	4968
+289	CBS4255	CBS4255 (ASB)	matrix	ASB	7. Mosaic beer	2	heterozygous	Human, clinical	6180
+290	CBS4455	CBS4455 (ASC)	matrix	ASC	6. African beer	3	heterozygous	Beer	6102
+291	CBS4507	CBS4507 (ASD)	matrix	ASD	1. Wine/European	2	heterozygous	Beer	4446
+292	CBS4667	CBS4667 (ASE)	matrix	ASE	1. Wine/European	2	heterozygous	Wine	4444
+293	CBS1489	CBS1489 (ASG)	matrix	ASG	1. Wine/European	2	homozygous	Human, clinical	4399
+294	CLIB227	CLIB227 (ASH)	matrix	ASH	11. Ale beer	4	heterozygous	Beer	6647
+295	CLIB340	CLIB340 (ASL)	matrix	ASL	8. Mixed origin	2	heterozygous	Bakery	6804
+296	CLIB409	CLIB409 (ASM)	matrix	ASM		3	heterozygous	Nature	6272
+297	CLIB630	CLIB630 (ASN)	matrix	ASN	5. French dairy	2	heterozygous	Dairy	7207
+298	B1	B1 (ASP)	matrix	ASP	8. Mixed origin	2	heterozygous	Unknown	7575
+299	M1	M1 (ASR)	matrix	ASR	1. Wine/European	2	heterozygous	Wine	5532
+300	M5	M5 (ASS)	matrix	ASS	1. Wine/European	2	homozygous	Wine	4628
+301	M6	M6 (AST)	matrix	AST	M1. Mosaic region 1	2	heterozygous	Wine	5316
+302	M9	M9 (ASV)	matrix	ASV	M1. Mosaic region 1	2	heterozygous	Wine	5351
+303	PR	PR (ATA)	matrix	ATA	1. Wine/European	2	homozygous	Wine	4408
+304	Y1	Y1 (ATB)	matrix	ATB	M3. Mosaic region 3	3	heterozygous	Nature	7943
+305	YJM308	YJM308 (ATC)	matrix	ATC	M3. Mosaic region 3	2	heterozygous	Human, clinical	6679
+306	YJM339	YJM339 (ATD)	matrix	ATD	M3. Mosaic region 3	2	homozygous	Human, clinical	5191
+307	YJM627	YJM627 (ATE)	matrix	ATE	M3. Mosaic region 3	2	homozygous	Unknown	6117
+308	UC4	UC4 (ATH)	matrix	ATH	1. Wine/European	2	heterozygous	Wine	4522
+309	UC10	UC10 (ATM)	matrix	ATM	1. Wine/European	2	homozygous	Wine	4495
+310	Y4	Y4 (ATN)	matrix	ATN	1. Wine/European	2	homozygous	Fruit	4431
+311	Y5	Y5 (ATP)	matrix	ATP	13. African palm wine	2	homozygous	Palm wine	7363
+312	CECT10497	CECT10497 (ATQ)	matrix	ATQ	2. Alpechin	2	homozygous	Industrial	4279
+313	CECT10120	CECT10120 (ATR)	matrix	ATR	8. Mixed origin	2	heterozygous	Fruit	6727
+314	CECT10131	CECT10131 (ATS)	matrix	ATS	8. Mixed origin	2	heterozygous	Flower	6968
+315	CECT1462	CECT1462 (ATV)	matrix	ATV	11. Ale beer	4	heterozygous	Beer	7233
+316	CECT10266	CECT10266 (AVB)	matrix	AVB	2. Alpechin	1	homozygous	Industrial	4222
+317	CECT10711	CECT10711 (AVC)	matrix	AVC	25. Sake	2	heterozygous	Sake	6608
+318	CECT10712	CECT10712 (AVD)	matrix	AVD	25. Sake	2	heterozygous	Sake	6475
+319	CECT1478	CECT1478 (AVH)	matrix	AVH	1. Wine/European	2	homozygous	Wine	4424
+320	YPS163	YPS163 (AVI)	matrix	AVI	23. North American oak	2	homozygous	Soil	5972
+321	L-1194	L-1194 (AVK)	matrix	AVK	1. Wine/European	2	homozygous	Wine	4470
+322	RIB6008	RIB6008 (AVL)	matrix	AVL	25. Sake	2	heterozygous	Sake	6553
+323	RIB6009	RIB6009 (AVM)	matrix	AVM	25. Sake	2	heterozygous	Sake	6555
+324	CH02	CH02 (AVN)	matrix	AVN	6. African beer	4	heterozygous	Beer	5248
+325	CH06	CH06 (AVP)	matrix	AVP	6. African beer	5	heterozygous	Beer	5328
+326	CH10	CH10 (AVQ)	matrix	AVQ	6. African beer	5	heterozygous	Beer	5313
+327	CH11	CH11 (AVR)	matrix	AVR	6. African beer	5	heterozygous	Beer	5336
+328	CH14	CH14 (AVS)	matrix	AVS	6. African beer	5	heterozygous	Beer	5341
+329	CH13	CH13 (AVT)	matrix	AVT	6. African beer	5	heterozygous	Beer	5313
+330	DJ65	DJ65 (AVV)	matrix	AVV	13. African palm wine	3	heterozygous	Palm wine	7025
+331	DJ66	DJ66 (BAA)	matrix	BAA	13. African palm wine	3	heterozygous	Palm wine	6927
+332	DJ68	DJ68 (BAB)	matrix	BAB	13. African palm wine	3	heterozygous	Palm wine	7088
+333	DJ70	DJ70 (BAC)	matrix	BAC	13. African palm wine	3	heterozygous	Palm wine	6992
+334	DJ71	DJ71 (BAD)	matrix	BAD	13. African palm wine	3	heterozygous	Palm wine	7023
+335	DJ73	DJ73 (BAE)	matrix	BAE	13. African palm wine	3	heterozygous	Palm wine	7050
+336	DJ74	DJ74 (BAF)	matrix	BAF	13. African palm wine	2	heterozygous	Palm wine	7183
+337	SX1	SX1 (BAG)	matrix	BAG	15. CHNII	2	homozygous	Tree	5621
+338	SX3	SX3 (BAH)	matrix	BAH	15. CHNII	2	homozygous	Tree	5701
+339	BJ6	BJ6 (BAI)	matrix	BAI	18. Far East Asia	2	homozygous	Fruit	5621
+340	BJ20	BJ20 (BAK)	matrix	BAK	18. Far East Asia	2	homozygous	Tree	5592
+341	HN6	HN6 (BAL)	matrix	BAL	16. CHNI	2	homozygous	Nature	5769
+342	HN10	HN10 (BAM)	matrix	BAM	14. CHNIII	2	homozygous	Nature	5332
+343	HN15	HN15 (BAN)	matrix	BAN	20. CHN V	2	homozygous	Nature	6211
+344	HN16	HN16 (BAP)	matrix	BAP	20. CHN V	2	homozygous	Soil	6235
+345	HN19	HN19 (BAQ)	matrix	BAQ	14. CHNIII	2	homozygous	Tree	5315
+346	PB56	PB56 (BAR)	matrix	BAR	1. Wine/European	2	homozygous	Tree	4417
+347	PB67	PB67 (BAS)	matrix	BAS	1. Wine/European	2	homozygous	Soil	4418
+348	PB94	PB94 (BAT)	matrix	BAT	1. Wine/European	2	homozygous	Soil	4417
+349	PB137	PB137 (BAV)	matrix	BAV	1. Wine/European	2	homozygous	Wine	4446
+350	PB197	PB197 (BBA)	matrix	BBA	1. Wine/European	2	homozygous	Soil	4444
+351	PB200	PB200 (BBB)	matrix	BBB	1. Wine/European	2	homozygous	Soil	4450
+352	CCY_21-4-88	CCY_21-4-88 (BBC)	matrix	BBC	8. Mixed origin	3	heterozygous	Fruit	8784
+353	CCY_21-4-97	CCY_21-4-97 (BBD)	matrix	BBD	8. Mixed origin	2	heterozygous	Water	7171
+354	CCY_21-4-98	CCY_21-4-98 (BBE)	matrix	BBE	8. Mixed origin	2	heterozygous	Water	6962
+355	CCY_21-4-102	CCY_21-4-102 (BBF)	matrix	BBF	8. Mixed origin	2	heterozygous	Water	7144
+356	CCY_21-4-106	CCY_21-4-106 (BBG)	matrix	BBG	11. Ale beer	4	heterozygous	Water	6655
+357	CCY_21-4-119	CCY_21-4-119 (BBH)	matrix	BBH	1. Wine/European (subclade 1)	2	homozygous	Flower	4428
+358	CCY_21-4-120	CCY_21-4-120 (BBI)	matrix	BBI	1. Wine/European (subclade 1)	2	homozygous	Flower	4431
+359	CCY_21-4-121	CCY_21-4-121 (BBK)	matrix	BBK	1. Wine/European (subclade 1)	2	homozygous	Flower	4435
+360	IMB-53	IMB-53 (BBL)	matrix	BBL	M3. Mosaic region 3	2	homozygous	Insect	5422
+361	908	908 (BBM)	matrix	BBM		2	homozygous	Distillery	5954
+362	1663	1663 (BBP)	matrix	BBP	8. Mixed origin	2	heterozygous	Flower	6965
+363	2162	2162 (BBQ)	matrix	BBQ	4. Mediterranean oak	2	homozygous	Soil	4260
+364	2163	2163 (BBR)	matrix	BBR		2	homozygous	Tree	6308
+365	2187	2187 (BBS)	matrix	BBS	4. Mediterranean oak	2	homozygous	Soil	4258
+366	2281	2281 (BBT)	matrix	BBT	M3. Mosaic region 3	3	heterozygous	Wine	7993
+367	2282	2282 (BBV)	matrix	BBV	1. Wine/European	2	heterozygous	Wine	4776
+368	2644	2644 (BCA)	matrix	BCA	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4357
+369	HE001	HE001 (BCB)	matrix	BCB	10. French Guiana human	2	heterozygous	Human	8168
+370	HE004	HE004 (BCC)	matrix	BCC	10. French Guiana human	2	heterozygous	Human	8116
+371	HE005	HE005 (BCD)	matrix	BCD	10. French Guiana human	2	heterozygous	Human	8213
+372	HE006	HE006 (BCE)	matrix	BCE	10. French Guiana human	2	heterozygous	Human	8096
+373	HE007	HE007 (BCF)	matrix	BCF	10. French Guiana human	2	heterozygous	Human	8162
+374	HE008	HE008 (BCG)	matrix	BCG	10. French Guiana human	2	heterozygous	Human	8239
+375	HE009	HE009 (BCH)	matrix	BCH	10. French Guiana human	2	heterozygous	Human	8157
+376	HE010	HE010 (BCI)	matrix	BCI	10. French Guiana human	2	heterozygous	Human	8234
+377	HE011	HE011 (BCK)	matrix	BCK	10. French Guiana human	2	heterozygous	Human	8191
+378	HE012	HE012 (BCL)	matrix	BCL	10. French Guiana human	2	heterozygous	Human	8074
+379	HE013	HE013 (BCM)	matrix	BCM	10. French Guiana human	2	heterozygous	Human	8181
+380	HE015	HE015 (BCN)	matrix	BCN	10. French Guiana human	1	homozygous	Human	7932
+381	HE016	HE016 (BCP)	matrix	BCP	10. French Guiana human	2	heterozygous	Human	8091
+382	HE020	HE020 (BCQ)	matrix	BCQ	10. French Guiana human	2	heterozygous	Human	8076
+383	23	#23 (BCR)	matrix	BCR	8. Mixed origin	4	heterozygous	Nature	9049
+384	03	#03 (BCS)	matrix	BCS	8. Mixed origin	2	heterozygous	Nature	6872
+385	05	#05 (BCT)	matrix	BCT	8. Mixed origin	2	heterozygous	Nature	6815
+386	33	#33 (BCV)	matrix	BCV	M2. Mosaic region 2	2	heterozygous	Nature	5170
+387	34	#34 (BDA)	matrix	BDA	M2. Mosaic region 2	2	heterozygous	Nature	5148
+388	35	#35 (BDB)	matrix	BDB	M2. Mosaic region 2	2	heterozygous	Nature	5078
+389	36	#36 (BDC)	matrix	BDC	M3. Mosaic region 3	2	heterozygous	Nature	6596
+390	13	#13 (BDD)	matrix	BDD	M2. Mosaic region 2	2	heterozygous	Nature	5327
+391	14	#14 (BDE)	matrix	BDE	M2. Mosaic region 2	3	heterozygous	Nature	5526
+392	57	#57 (BDF)	matrix	BDF	M3. Mosaic region 3	2	heterozygous	Nature	6414
+393	58	#58 (BDG)	matrix	BDG	M3. Mosaic region 3	2	heterozygous	Nature	6449
+394	59	#59 (BDH)	matrix	BDH	M2. Mosaic region 2	2	heterozygous	Nature	5335
+395	60	#60 (BDI)	matrix	BDI	M2. Mosaic region 2	2	heterozygous	Nature	5347
+396	63	#63 (BDK)	matrix	BDK	M2. Mosaic region 2	2	homozygous	Nature	4896
+397	CLQCA_10-386	CLQCA_10-386 (BDL)	matrix	BDL	8. Mixed origin	2	heterozygous	Beer	7683
+398	MAJ_A	MAJ_A (BDM)	matrix	BDM	M3. Mosaic region 3	2	heterozygous	Nature	6231
+399	MAJ_G	MAJ_G (BDN)	matrix	BDN	6. African beer	2	heterozygous	Nature	4855
+400	CEY615	CEY615 (BDP)	matrix	BDP	10. French Guiana human	2	heterozygous	Human	8146
+401	CEY616	CEY616 (BDQ)	matrix	BDQ	10. French Guiana human	2	heterozygous	Human	8187
+402	CEY617	CEY617 (BDR)	matrix	BDR	10. French Guiana human	2	heterozygous	Human	8121
+403	CEY618	CEY618 (BDS)	matrix	BDS	10. French Guiana human	2	heterozygous	Human	8175
+404	CEY619	CEY619 (BDT)	matrix	BDT	10. French Guiana human	2	heterozygous	Human	8184
+405	CEY620	CEY620 (BDV)	matrix	BDV	10. French Guiana human	2	heterozygous	Human	8090
+406	CEY621	CEY621 (BEA)	matrix	BEA	10. French Guiana human	2	heterozygous	Human	8227
+407	CEY622	CEY622 (BEB)	matrix	BEB	10. French Guiana human	2	heterozygous	Human	8181
+408	CEY623	CEY623 (BEC)	matrix	BEC	10. French Guiana human	2	heterozygous	Human	8127
+409	CEY624	CEY624 (BED)	matrix	BED	10. French Guiana human	2	heterozygous	Human	8165
+410	CEY625	CEY625 (BEE)	matrix	BEE	10. French Guiana human	2	heterozygous	Human	8244
+411	CLIB413	CLIB413 (BEF)	matrix	BEF	26. Asian fermentation	2	heterozygous	Fermentation	6488
+412	CLIB414	CLIB414 (BEG)	matrix	BEG		2	homozygous	Industrial	5890
+413	CLIB415	CLIB415 (BEH)	matrix	BEH	26. Asian fermentation	2	homozygous	Fermentation	6129
+414	CLIB650	CLIB650 (BEI)	matrix	BEI	6. African beer	3	heterozygous	Beer	5083
+415	CLIB651	CLIB651 (BEK)	matrix	BEK	6. African beer	4	heterozygous	Beer	5159
+416	CLIB653	CLIB653 (BEM)	matrix	BEM	6. African beer	4	heterozygous	Beer	5273
+417	CLIB654	CLIB654 (BEN)	matrix	BEN	6. African beer	3	heterozygous	Beer	5071
+418	EXF-3387	EXF-3387 (BEP)	matrix	BEP	1. Wine/European (subclade 1)	2	heterozygous	Unknown	4654
+419	EXF-4126	EXF-4126 (BEQ)	matrix	BEQ	1. Wine/European	2	heterozygous	Wine	5091
+420	EXF-5042	EXF-5042 (BER)	matrix	BER	1. Wine/European	2	heterozygous	Wine	4509
+421	EXF-5046	EXF-5046 (BES)	matrix	BES	1. Wine/European	2	heterozygous	Wine	4510
+422	EXF-5247	EXF-5247 (BET)	matrix	BET	1. Wine/European	2	homozygous	Water	4444
+423	EXF-5248	EXF-5248 (BEV)	matrix	BEV	1. Wine/European	2	homozygous	Water	4439
+424	EXF-5284	EXF-5284 (BFA)	matrix	BFA		2	homozygous	Soil	5861
+425	EXF-5287	EXF-5287 (BFB)	matrix	BFB	1. Wine/European (subclade 1)	2	heterozygous	Nature	4903
+426	EXF-5295	EXF-5295 (BFC)	matrix	BFC	1. Wine/European	2	homozygous	Fermentation	4433
+427	EXF-5297	EXF-5297 (BFD)	matrix	BFD	1. Wine/European (subclade 1)	2	homozygous	Fruit	4435
+428	EXF-5734	EXF-5734 (BFE)	matrix	BFE	8. Mixed origin	4	heterozygous	Industrial	10329
+429	EXF-5869	EXF-5869 (BFG)	matrix	BFG	8. Mixed origin	4	heterozygous	Nature	10472
+430	EXF-5871	EXF-5871 (BFH)	matrix	BFH	5. French dairy	2	heterozygous	Dairy	6911
+431	EXF-6761	EXF-6761 (BFK)	matrix	BFK	1. Wine/European	2	homozygous	Tree	4443
+432	EXF-6780	EXF-6780 (BFL)	matrix	BFL		2	homozygous	Tree	5856
+433	EXF-6835	EXF-6835 (BFM)	matrix	BFM	8. Mixed origin	4	heterozygous	Industrial	9608
+434	EXF-7145	EXF-7145 (BFN)	matrix	BFN	5. French dairy	2	heterozygous	Tree	4129
+435	EXF-7197	EXF-7197 (BFP)	matrix	BFP	4. Mediterranean oak	2	homozygous	Tree	4276
+436	CLIB484	CLIB484 (BFQ)	matrix	BFQ	1. Wine/European	2	homozygous	Cider	4400
+437	CLIB485	CLIB485 (BFR)	matrix	BFR	1. Wine/European	2	homozygous	Cider	4418
+438	CLIB546	CLIB546 (BFS)	matrix	BFS	5. French dairy	2	heterozygous	Dairy	7104
+439	CLIB547	CLIB547 (BFT)	matrix	BFT	5. French dairy	2	heterozygous	Dairy	6758
+440	CLIB548	CLIB548 (BFV)	matrix	BFV	5. French dairy	2	heterozygous	Dairy	7191
+441	CLIB549	CLIB549 (BGA)	matrix	BGA	5. French dairy	2	heterozygous	Dairy	7113
+442	CLIB550	CLIB550 (BGB)	matrix	BGB	5. French dairy	2	heterozygous	Dairy	7091
+443	CLIB551	CLIB551 (BGC)	matrix	BGC	5. French dairy	2	heterozygous	Dairy	7207
+444	CLIB552	CLIB552 (BGD)	matrix	BGD	5. French dairy	2	heterozygous	Dairy	6773
+445	CLIB553	CLIB553 (BGE)	matrix	BGE	5. French dairy	2	heterozygous	Dairy	6675
+446	CLIB554	CLIB554 (BGF)	matrix	BGF	5. French dairy	2	heterozygous	Dairy	7139
+447	CLIB555	CLIB555 (BGG)	matrix	BGG	5. French dairy	2	heterozygous	Dairy	7212
+448	CLIB556	CLIB556 (BGH)	matrix	BGH	5. French dairy	2	heterozygous	Dairy	6943
+449	CLIB557	CLIB557 (BGI)	matrix	BGI	5. French dairy	2	heterozygous	Dairy	7132
+450	CLIB558	CLIB558 (BGK)	matrix	BGK	5. French dairy	2	heterozygous	Dairy	7141
+451	CLIB559	CLIB559 (BGL)	matrix	BGL	5. French dairy	2	heterozygous	Dairy	7328
+452	CLIB560	CLIB560 (BGM)	matrix	BGM	5. French dairy	2	heterozygous	Dairy	6215
+453	CLIB561	CLIB561 (BGN)	matrix	BGN	5. French dairy	2	heterozygous	Dairy	6878
+454	CLIB562	CLIB562 (BGP)	matrix	BGP	5. French dairy	2	heterozygous	Dairy	6149
+455	CLIB563	CLIB563 (BGQ)	matrix	BGQ	5. French dairy	2	heterozygous	Dairy	7232
+456	CLIB564	CLIB564 (BGR)	matrix	BGR	5. French dairy	2	heterozygous	Dairy	6696
+457	CLIB631	CLIB631 (BGS)	matrix	BGS	5. French dairy	2	heterozygous	Dairy	7014
+458	CLIB648	CLIB648 (BGT)	matrix	BGT	5. French dairy	2	heterozygous	Dairy	6994
+459	CLIB649	CLIB649 (BGV)	matrix	BGV	5. French dairy	2	heterozygous	Dairy	6976
+460	CLIB655	CLIB655 (BHA)	matrix	BHA	6. African beer	3	heterozygous	Beer	5078
+461	CLIB889	CLIB889 (BHB)	matrix	BHB	1. Wine/European	2	heterozygous	Bakery	5154
+462	CLIB1040	CLIB1040 (BHC)	matrix	BHC	1. Wine/European	2	heterozygous	Cider	4631
+463	CLIB1059	CLIB1059 (BHD)	matrix	BHD	M1. Mosaic region 1	2	heterozygous	Cider	5323
+464	CLIB1060	CLIB1060 (BHE)	matrix	BHE	M1. Mosaic region 1	2	heterozygous	Cider	5285
+465	CLIB1062	CLIB1062 (BHF)	matrix	BHF	1. Wine/European	2	homozygous	Cider	4393
+466	CLIB1070	CLIB1070 (BHG)	matrix	BHG	M2. Mosaic region 2	2	heterozygous	Cider	5951
+467	CLIB1071	CLIB1071 (BHH)	matrix	BHH	M2. Mosaic region 2	2	homozygous	Cider	4817
+468	CLIB1072	CLIB1072 (BHI)	matrix	BHI	M2. Mosaic region 2	2	heterozygous	Cider	4721
+469	CLIB1077	CLIB1077 (BHK)	matrix	BHK	M1. Mosaic region 1	2	heterozygous	Cider	5628
+470	CLIB1082	CLIB1082 (BHL)	matrix	BHL	M1. Mosaic region 1	2	heterozygous	Cider	5605
+471	CLIB1085	CLIB1085 (BHM)	matrix	BHM	M1. Mosaic region 1	2	heterozygous	Cider	4657
+472	CLIB1410	CLIB1410 (BHN)	matrix	BHN	1. Wine/European	2	homozygous	Fermentation	4472
+473	CLIB1411	CLIB1411 (BHP)	matrix	BHP	26. Asian fermentation	2	heterozygous	Fermentation	6472
+474	CLIB1412	CLIB1412 (BHQ)	matrix	BHQ	26. Asian fermentation	2	heterozygous	Fermentation	6415
+475	CLIB1413	CLIB1413 (BHR)	matrix	BHR	26. Asian fermentation	2	heterozygous	Fermentation	6438
+476	CLIB1414	CLIB1414 (BHS)	matrix	BHS	26. Asian fermentation	2	heterozygous	Fermentation	6525
+477	CLIB1083	CLIB1083 (BHT)	matrix	BHT	M1. Mosaic region 1	2	homozygous	Cider	4724
+478	DBVPG1014	DBVPG1014 (BHV)	matrix	BHV	1. Wine/European	2	homozygous	Wine	4382
+479	DBVPG1029	DBVPG1029 (BIA)	matrix	BIA	1. Wine/European	2	homozygous	Wine	4442
+480	DBVPG1041	DBVPG1041 (BIB)	matrix	BIB	1. Wine/European	2	homozygous	Wine	4423
+481	DBVPG1056	DBVPG1056 (BIC)	matrix	BIC	1. Wine/European	2	homozygous	Wine	4485
+482	DBVPG1058	DBVPG1058 (BID)	matrix	BID	1. Wine/European	2	homozygous	Bakery	4435
+483	DBVPG1074	DBVPG1074 (BIE)	matrix	BIE	M3. Mosaic region 3	2	heterozygous	Wine	7877
+484	DBVPG1076	DBVPG1076 (BIF)	matrix	BIF	1. Wine/European	2	homozygous	Wine	4435
+485	DBVPG1080	DBVPG1080 (BIG)	matrix	BIG	1. Wine/European	2	homozygous	Wine	4468
+486	DBVPG1105	DBVPG1105 (BIH)	matrix	BIH	1. Wine/European	2	heterozygous	Wine	4776
+487	DBVPG1106	DBVPG1106 (BII)	matrix	BII	1. Wine/European	2	homozygous	Wine	4402
+488	DBVPG1107	DBVPG1107 (BIK)	matrix	BIK	1. Wine/European	2	homozygous	Wine	4381
+489	DBVPG1108	DBVPG1108 (BIL)	matrix	BIL	1. Wine/European	2	homozygous	Wine	4456
+490	DBVPG1122	DBVPG1122 (BIM)	matrix	BIM	1. Wine/European	2	homozygous	Wine	4347
+491	DBVPG1123	DBVPG1123 (BIN)	matrix	BIN	1. Wine/European	2	homozygous	Wine	4344
+492	DBVPG1125	DBVPG1125 (BIP)	matrix	BIP	1. Wine/European	2	homozygous	Wine	4393
+493	DBVPG1126	DBVPG1126 (BIQ)	matrix	BIQ	1. Wine/European	1	homozygous	Wine	4393
+494	DBVPG1127	DBVPG1127 (BIR)	matrix	BIR	1. Wine/European	2	heterozygous	Wine	4702
+495	DBVPG1129	DBVPG1129 (BIS)	matrix	BIS	1. Wine/European	2	homozygous	Wine	4406
+496	DBVPG1145	DBVPG1145 (BIT)	matrix	BIT	1. Wine/European	2	homozygous	Wine	4468
+497	DBVPG1163	DBVPG1163 (BKA)	matrix	BKA	1. Wine/European	2	homozygous	Fruit	4348
+498	DBVPG1339	DBVPG1339 (BKC)	matrix	BKC	1. Wine/European	2	heterozygous	Wine	4787
+499	DBVPG1374	DBVPG1374 (BKD)	matrix	BKD	1. Wine/European	2	heterozygous	Soil	4664
+500	DBVPG1380	DBVPG1380 (BKE)	matrix	BKE	1. Wine/European	2	homozygous	Wine	4498
+501	DBVPG1473	DBVPG1473 (BKF)	matrix	BKF	1. Wine/European	2	heterozygous	Wine	4657
+502	DBVPG1490	DBVPG1490 (BKG)	matrix	BKG	1. Wine/European	2	heterozygous	Wine	4589
+503	DBVPG1523	DBVPG1523 (BKH)	matrix	BKH	1. Wine/European	2	homozygous	Wine	4413
+504	DBVPG1554	DBVPG1554 (BKI)	matrix	BKI	1. Wine/European	2	homozygous	Wine	4428
+505	DBVPG1555	DBVPG1555 (BKK)	matrix	BKK	1. Wine/European	2	homozygous	Unknown	4347
+506	DBVPG1564	DBVPG1564 (BKL)	matrix	BKL	1. Wine/European	2	homozygous	Wine	4440
+507	DBVPG1577	DBVPG1577 (BKM)	matrix	BKM	1. Wine/European	2	heterozygous	Wine	4703
+508	DBVPG1580	DBVPG1580 (BKN)	matrix	BKN	1. Wine/European	2	homozygous	Wine	4402
+509	DBVPG1581	DBVPG1581 (BKP)	matrix	BKP	1. Wine/European	2	heterozygous	Wine	4612
+510	DBVPG1584	DBVPG1584 (BKQ)	matrix	BKQ	1. Wine/European	2	heterozygous	Unknown	4521
+511	DBVPG1594	DBVPG1594 (BKR)	matrix	BKR	1. Wine/European	2	homozygous	Wine	4404
+512	DBVPG1595	DBVPG1595 (BKS)	matrix	BKS	1. Wine/European	2	heterozygous	Wine	4841
+513	DBVPG1596	DBVPG1596 (BKT)	matrix	BKT	1. Wine/European	2	homozygous	Wine	4439
+514	DBVPG1599	DBVPG1599 (BLA)	matrix	BLA	1. Wine/European	2	homozygous	Wine	4442
+515	DBVPG1601	DBVPG1601 (BLB)	matrix	BLB	1. Wine/European	2	homozygous	Wine	4428
+516	DBVPG1606	DBVPG1606 (BLC)	matrix	BLC	1. Wine/European	2	heterozygous	Wine	4564
+517	DBVPG1608	DBVPG1608 (BLD)	matrix	BLD	1. Wine/European	2	homozygous	Wine	4450
+518	DBVPG1611	DBVPG1611 (BLE)	matrix	BLE	1. Wine/European	2	homozygous	Wine	4475
+519	DBVPG1615	DBVPG1615 (BLF)	matrix	BLF	1. Wine/European	2	heterozygous	Wine	4758
+520	DBVPG1625	DBVPG1625 (BLG)	matrix	BLG	1. Wine/European	2	heterozygous	Wine	4715
+521	DBVPG1626	DBVPG1626 (BLH)	matrix	BLH	1. Wine/European	2	homozygous	Wine	4443
+522	DBVPG1629	DBVPG1629 (BLI)	matrix	BLI	1. Wine/European	2	heterozygous	Wine	4742
+523	DBVPG1631	DBVPG1631 (BLK)	matrix	BLK	1. Wine/European	2	homozygous	Wine	4453
+524	DBVPG1632	DBVPG1632 (BLL)	matrix	BLL	1. Wine/European	2	heterozygous	Wine	4633
+525	DBVPG1656	DBVPG1656 (BLM)	matrix	BLM	1. Wine/European	2	homozygous	Wine	4428
+526	DBVPG1659	DBVPG1659 (BLN)	matrix	BLN	1. Wine/European	2	heterozygous	Wine	4852
+527	DBVPG1661	DBVPG1661 (BLP)	matrix	BLP	1. Wine/European	2	heterozygous	Wine	4781
+528	DBVPG1669	DBVPG1669 (BLQ)	matrix	BLQ	1. Wine/European	2	homozygous	Wine	4358
+529	DBVPG1973	DBVPG1973 (BLR)	matrix	BLR	1. Wine/European	2	heterozygous	Wine	4581
+530	DBVPG1975	DBVPG1975 (BLS)	matrix	BLS	1. Wine/European	2	heterozygous	Wine	4668
+531	DBVPG1984	DBVPG1984 (BLT)	matrix	BLT	1. Wine/European	2	heterozygous	Wine	4571
+532	DBVPG3022	DBVPG3022 (BLV)	matrix	BLV	1. Wine/European	2	homozygous	Wine	4353
+533	UWOPS03-429.1	UWOPS03-429.1 (BMA)	matrix	BMA	19. Malaysian	2	homozygous	Tree	5798
+534	UWOPS03-433.3	UWOPS03-433.3 (BMB)	matrix	BMB	19. Malaysian	2	homozygous	Tree	5810
+535	UWOPS03-459.1	UWOPS03-459.1 (BMC)	matrix	BMC	19. Malaysian	2	homozygous	Tree	5813
+536	384103A	384103A (BMD)	matrix	BMD	M3. Mosaic region 3	2	heterozygous	Human	7158
+537	368428S	368428S (BME)	matrix	BME	5. French dairy	3	heterozygous	Human	7651
+538	269521J	269521J (BMF)	matrix	BMF	M3. Mosaic region 3	2	heterozygous	Human	7109
+539	NCYC_2925	NCYC_2925 (BMG)	matrix	BMG	8. Mixed origin	3	heterozygous	Human, clinical	7683
+540	YJM984	YJM984 (BMH)	matrix	BMH	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4487
+541	YJM989	YJM989 (BMI)	matrix	BMI	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4486
+542	YJM990	YJM990 (BMK)	matrix	BMK	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4474
+543	NCYC_2780	NCYC_2780 (BML)	matrix	BML	8. Mixed origin	4	heterozygous	Human, clinical	9616
+544	2680	2680 (BMM)	matrix	BMM	8. Mixed origin	4	heterozygous	Human, clinical	10130
+545	2698	2698 (BMN)	matrix	BMN	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4354
+546	2720	2720 (BMQ)	matrix	BMQ	M3. Mosaic region 3	2	heterozygous	Human, clinical	5091
+547	CEY646	CEY646 (BMR)	matrix	BMR	10. French Guiana human	2	heterozygous	Nature	8060
+548	CEY649	CEY649 (BMV)	matrix	BMV	10. French Guiana human	2	heterozygous	Nature	8089
+549	CEY650	CEY650 (BNA)	matrix	BNA	10. French Guiana human	2	heterozygous	Nature	8198
+550	CEY651	CEY651 (BNB)	matrix	BNB	10. French Guiana human	2	heterozygous	Fruit	8192
+551	CEY652	CEY652 (BNC)	matrix	BNC	10. French Guiana human	2	heterozygous	Fruit	8086
+552	CEY653	CEY653 (BND)	matrix	BND	10. French Guiana human	2	heterozygous	Fruit	8094
+553	DBVPG1057	DBVPG1057 (BNE)	matrix	BNE	1. Wine/European	2	homozygous	Wine	4370
+554	DBVPG1078	DBVPG1078 (BNF)	matrix	BNF	1. Wine/European	2	homozygous	Wine	4454
+555	DBVPG1085	DBVPG1085 (BNG)	matrix	BNG	1. Wine/European	3	heterozygous	Wine	5412
+556	DBVPG1685	DBVPG1685 (BNH)	matrix	BNH	1. Wine/European	2	homozygous	Wine	4433
+557	DBVPG1699	DBVPG1699 (BNI)	matrix	BNI	1. Wine/European	2	homozygous	Wine	4392
+558	DBVPG1701	DBVPG1701 (BNK)	matrix	BNK	1. Wine/European	2	homozygous	Wine	4419
+559	DBVPG1708	DBVPG1708 (BNL)	matrix	BNL	1. Wine/European	2	heterozygous	Soil	4504
+560	DBVPG1711	DBVPG1711 (BNM)	matrix	BNM	1. Wine/European	2	homozygous	Wine	4415
+561	DBVPG1712	DBVPG1712 (BNN)	matrix	BNN	1. Wine/European	2	homozygous	Wine	4421
+562	DBVPG1714	DBVPG1714 (BNP)	matrix	BNP	1. Wine/European	2	heterozygous	Wine	4640
+563	DBVPG1719	DBVPG1719 (BNQ)	matrix	BNQ	1. Wine/European	2	homozygous	Wine	4402
+564	DBVPG1725	DBVPG1725 (BNR)	matrix	BNR	1. Wine/European	2	homozygous	Wine	4419
+565	DBVPG1772	DBVPG1772 (BNT)	matrix	BNT	1. Wine/European	2	homozygous	Soil	4467
+566	DBVPG1790	DBVPG1790 (BNV)	matrix	BNV	1. Wine/European	2	homozygous	Soil	4420
+567	DBVPG1792	DBVPG1792 (BPA)	matrix	BPA	M3. Mosaic region 3	2	heterozygous	Soil	7899
+568	DBVPG1795	DBVPG1795 (BPB)	matrix	BPB	1. Wine/European	2	homozygous	Wine	4447
+569	DBVPG1798	DBVPG1798 (BPC)	matrix	BPC	1. Wine/European	2	homozygous	Wine	4481
+570	DBVPG1832	DBVPG1832 (BPF)	matrix	BPF	1. Wine/European	2	heterozygous	Fruit	4544
+571	DBVPG1841	DBVPG1841 (BPG)	matrix	BPG	1. Wine/European	2	homozygous	Unknown	4338
+572	DBVPG1843	DBVPG1843 (BPH)	matrix	BPH	1. Wine/European	2	homozygous	Unknown	4293
+573	DBVPG1848	DBVPG1848 (BPI)	matrix	BPI		2	heterozygous	Unknown	6435
+574	DBVPG1861	DBVPG1861 (BPK)	matrix	BPK	1. Wine/European	2	heterozygous	Water	4565
+575	DBVPG1878	DBVPG1878 (BPL)	matrix	BPL	1. Wine/European (subclade 4)	2	heterozygous	Wine	5013
+576	DBVPG1880	DBVPG1880 (BPM)	matrix	BPM	1. Wine/European	2	heterozygous	Wine	4518
+577	DBVPG1895	DBVPG1895 (BPN)	matrix	BPN		2	heterozygous	Wine	6240
+578	DBVPG1898	DBVPG1898 (BPP)	matrix	BPP	1. Wine/European	2	homozygous	Wine	4396
+579	DBVPG1918	DBVPG1918 (BPQ)	matrix	BPQ	1. Wine/European (subclade 1)	2	homozygous	Wine	4499
+580	DBVPG1919	DBVPG1919 (BPR)	matrix	BPR	1. Wine/European (subclade 4)	3	heterozygous	Nature	5001
+581	DBVPG1960	DBVPG1960 (BPT)	matrix	BPT	1. Wine/European	2	heterozygous	Wine	4651
+582	DBVPG1976	DBVPG1976 (BPV)	matrix	BPV	1. Wine/European	2	homozygous	Wine	4431
+583	DBVPG1994	DBVPG1994 (BQA)	matrix	BQA	1. Wine/European (subclade 1)	2	homozygous	Wine	4450
+584	DBVPG2049	DBVPG2049 (BQB)	matrix	BQB	1. Wine/European	2	heterozygous	Wine	4848
+585	DBVPG2088	DBVPG2088 (BQC)	matrix	BQC	1. Wine/European	2	homozygous	Distillery	4474
+586	DBVPG2166	DBVPG2166 (BQE)	matrix	BQE	1. Wine/European	2	heterozygous	Wine	4775
+587	DBVPG3098	DBVPG3098 (BQG)	matrix	BQG	1. Wine/European	2	homozygous	Wine	4354
+588	DBVPG3100	DBVPG3100 (BQH)	matrix	BQH	1. Wine/European	2	heterozygous	Wine	4817
+589	DBVPG3924	DBVPG3924 (BQI)	matrix	BQI	1. Wine/European	2	homozygous	Wine	4465
+590	DBVPG4162	DBVPG4162 (BQM)	matrix	BQM	1. Wine/European	2	heterozygous	Wine	4680
+591	DBVPG4186	DBVPG4186 (BQN)	matrix	BQN	1. Wine/European (subclade 1)	2	homozygous	Wine	4392
+592	DBVPG4297	DBVPG4297 (BQP)	matrix	BQP	1. Wine/European	2	homozygous	Wine	4463
+593	DBVPG4317	DBVPG4317 (BQQ)	matrix	BQQ	1. Wine/European	2	homozygous	Wine	4390
+594	DBVPG4381	DBVPG4381 (BQR)	matrix	BQR	1. Wine/European	2	heterozygous	Water	4482
+595	DBVPG4410	DBVPG4410 (BQS)	matrix	BQS	1. Wine/European	2	heterozygous	Wine	4540
+596	DBVPG4460	DBVPG4460 (BQT)	matrix	BQT	1. Wine/European	2	homozygous	Wine	4408
+597	DBVPG4651	DBVPG4651 (BRA)	matrix	BRA	1. Wine/European	2	homozygous	Nature	4404
+598	DBVPG4686	DBVPG4686 (BRB)	matrix	BRB	1. Wine/European	2	heterozygous	Wine	4770
+599	DBVPG4695	DBVPG4695 (BRC)	matrix	BRC	1. Wine/European (subclade 1)	2	homozygous	Wine	4410
+600	DBVPG4902	DBVPG4902 (BRD)	matrix	BRD	1. Wine/European	2	heterozygous	Unknown	4864
+601	DBVPG4905	DBVPG4905 (BRE)	matrix	BRE	1. Wine/European	2	homozygous	Wine	4402
+602	DBVPG5760	DBVPG5760 (BRF)	matrix	BRF	1. Wine/European	2	heterozygous	Wine	4795
+603	DBVPG5836	DBVPG5836 (BRG)	matrix	BRG	26. Asian fermentation	3	heterozygous	Soil	6367
+604	DBVPG6223	DBVPG6223 (BRH)	matrix	BRH	1. Wine/European	2	homozygous	Wine	4394
+605	DBVPG6302	DBVPG6302 (BRK)	matrix	BRK	2. Alpechin	2	homozygous	Industrial	4255
+606	DBVPG6350	DBVPG6350 (BRL)	matrix	BRL	M3. Mosaic region 3	1	homozygous	Unknown	2094
+607	DBVPG6590	DBVPG6590 (BRM)	matrix	BRM	7. Mosaic beer	1	homozygous	Distillery	4823
+608	DBVPG6694	DBVPG6694 (BRP)	matrix	BRP	11. Ale beer	4	heterozygous	Beer	7220
+609	DBVPG6695	DBVPG6695 (BRQ)	matrix	BRQ	11. Ale beer	4	heterozygous	Beer	6946
+610	DBVPG6874	DBVPG6874 (BRV)	matrix	BRV	M3. Mosaic region 3	2	heterozygous	Human, clinical	6583
+611	DBVPG6876	DBVPG6876 (BSA)	matrix	BSA	1. Wine/European	2	homozygous	Wine	4495
+612	DBVPG6877	DBVPG6877 (BSB)	matrix	BSB	1. Wine/European	2	homozygous	Wine	4485
+613	DBVPG6878	DBVPG6878 (BSC)	matrix	BSC	1. Wine/European	2	homozygous	Wine	4438
+614	DBVPG6879	DBVPG6879 (BSD)	matrix	BSD	1. Wine/European	2	homozygous	Wine	4547
+615	DBVPG6880	DBVPG6880 (BSE)	matrix	BSE	1. Wine/European	2	homozygous	Wine	4529
+616	DBVPG6295	DBVPG6295 (BSG)	matrix	BSG	1. Wine/European	2	homozygous	Wine	4412
+617	DBVPG6693	DBVPG6693 (BSI)	matrix	BSI	11. Ale beer	4	heterozygous	Beer	6779
+618	D3742	D3742 (BSK)	matrix	BSK	M3. Mosaic region 3	2	heterozygous	Unknown	6585
+619	M57	M57 (BSL)	matrix	BSL	1. Wine/European	2	heterozygous	Wine	5176
+620	SGU89	SGU89 (BSM)	matrix	BSM	1. Wine/European	2	heterozygous	Wine	4788
+621	SG60	SG60 (BSN)	matrix	BSN	1. Wine/European	2	heterozygous	Wine	4787
+622	L-1183	L-1183 (BSP)	matrix	BSP	1. Wine/European	2	homozygous	Wine	4353
+623	L-958	L-958 (BSR)	matrix	BSR	1. Wine/European	2	heterozygous	Wine	5645
+624	L-960	L-960 (BSS)	matrix	BSS	1. Wine/European	2	heterozygous	Wine	5721
+625	L-962	L-962 (BST)	matrix	BST	1. Wine/European	2	homozygous	Wine	4438
+626	NCYC_2798	NCYC_2798 (BTA)	matrix	BTA	M3. Mosaic region 3	3	heterozygous	Human, clinical	7810
+627	77	77 (BTB)	matrix	BTB	M3. Mosaic region 3	3	heterozygous	Bakery	7427
+628	79	79 (BTC)	matrix	BTC	8. Mixed origin	2	heterozygous	Bakery	6732
+629	YS5_E	YS5(E) (BTD)	matrix	BTD	8. Mixed origin	4	heterozygous	Bakery	10170
+630	YS8_E	YS8(E) (BTE)	matrix	BTE	8. Mixed origin	4	heterozygous	Bakery	10179
+631	YS22_E	YS22(E) (BTF)	matrix	BTF	8. Mixed origin	2	heterozygous	Bakery	6823
+632	ZP_567	ZP_567 (BTG)	matrix	BTG	4. Mediterranean oak	2	homozygous	Tree	4265
+633	ZP_577	ZP_577 (BTH)	matrix	BTH	1. Wine/European	2	homozygous	Tree	4422
+634	ZP_611	ZP_611 (BTI)	matrix	BTI	M3. Mosaic region 3	2	homozygous	Tree	5756
+635	L-304	L-304 (BTL)	matrix	BTL	1. Wine/European	2	homozygous	Wine	4459
+636	L-475	L-475 (BTN)	matrix	BTN	1. Wine/European	2	homozygous	Wine	4428
+637	L-1198	L-1198 (BTP)	matrix	BTP	1. Wine/European	2	heterozygous	Wine	5531
+638	L-1201	L-1201 (BTR)	matrix	BTR	1. Wine/European	2	heterozygous	Wine	5603
+639	RIB1005	RIB1005 (BTS)	matrix	BTS	25. Sake	2	heterozygous	Sake	6640
+640	M.9.1	M.9.1 (BTT)	matrix	BTT	3. Brazilian bioethanol	2	heterozygous	Distillery	6309
+641	M.14.1	M.14.1 (BTV)	matrix	BTV	3. Brazilian bioethanol	2	heterozygous	Distillery	6127
+642	RP.10.4	RP.10.4 (BVA)	matrix	BVA	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6243
+643	RP.10.13	RP.10.13 (BVB)	matrix	BVB	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6477
+644	RP.10.14	RP.10.14 (BVC)	matrix	BVC	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6433
+645	SM.9.1.AL1	SM.9.1.AL1 (BVD)	matrix	BVD	3. Brazilian bioethanol	2	homozygous	Bioethanol	5163
+646	SM.9.1.BL7	SM.9.1.BL7 (BVE)	matrix	BVE	3. Brazilian bioethanol	1	homozygous	Bioethanol	4891
+647	SM.9.2.BR3_L	SM.9.2.BR3(L) (BVF)	matrix	BVF	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6491
+648	SM.9.4.BL2	SM.9.4.BL2 (BVG)	matrix	BVG	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6856
+649	SM.9.4.BR1	SM.9.4.BR1 (BVH)	matrix	BVH	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6296
+650	4LBI-3	4LBI-3 (BVK)	matrix	BVK	1. Wine/European	2	homozygous	Wine	4464
+651	SA6-31	SA6-31 (BVM)	matrix	BVM	1. Wine/European	2	homozygous	Wine	4380
+652	B-24	B-24 (BVT)	matrix	BVT	1. Wine/European (subclade 4)	2	heterozygous	Wine	4806
+653	8-15	8-15 (BVV)	matrix	BVV	1. Wine/European (subclade 4)	2	heterozygous	Wine	4824
+654	5-18	5-18 (CAA)	matrix	CAA	1. Wine/European (subclade 4)	2	heterozygous	Wine	4788
+655	11-8	11-8 (CAB)	matrix	CAB	1. Wine/European (subclade 4)	2	heterozygous	Wine	4953
+656	A-12	A-12 (CAC)	matrix	CAC	1. Wine/European (subclade 4)	2	heterozygous	Wine	4821
+657	11-18	11-18 (CAD)	matrix	CAD	1. Wine/European (subclade 4)	2	heterozygous	Wine	4820
+658	B-4	B-4 (CAE)	matrix	CAE	1. Wine/European	2	homozygous	Wine	4445
+659	C-3	C-3 (CAF)	matrix	CAF	1. Wine/European	2	homozygous	Wine	4442
+660	D-1	D-1 (CAH)	matrix	CAH	1. Wine/European	2	heterozygous	Wine	4944
+661	D-4	D-4 (CAI)	matrix	CAI	1. Wine/European	2	heterozygous	Wine	3780
+662	A-16	A-16 (CAK)	matrix	CAK	1. Wine/European	2	heterozygous	Wine	5190
+663	A-19	A-19 (CAL)	matrix	CAL	1. Wine/European	2	heterozygous	Wine	5223
+664	9-7	9-7 (CAM)	matrix	CAM	1. Wine/European (subclade 4)	2	heterozygous	Wine	4854
+665	8-3	8-3 (CAN)	matrix	CAN	1. Wine/European (subclade 4)	2	heterozygous	Wine	4798
+666	11-2	11-2 (CAP)	matrix	CAP	1. Wine/European (subclade 4)	2	heterozygous	Wine	4815
+667	5-2	5-2 (CAQ)	matrix	CAQ	1. Wine/European (subclade 4)	2	heterozygous	Wine	4879
+668	A-9	A-9 (CAR)	matrix	CAR	1. Wine/European (subclade 4)	2	homozygous	Wine	4743
+669	B-17	B-17 (CAS)	matrix	CAS	1. Wine/European (subclade 4)	2	homozygous	Wine	4636
+670	C-12	C-12 (CAT)	matrix	CAT	1. Wine/European (subclade 4)	2	homozygous	Wine	4746
+671	B-13	B-13 (CAV)	matrix	CAV	1. Wine/European (subclade 4)	2	homozygous	Wine	4811
+672	A-14	A-14 (CBA)	matrix	CBA	1. Wine/European	2	heterozygous	Wine	4959
+673	1-9	1-9 (CBB)	matrix	CBB	1. Wine/European (subclade 4)	2	heterozygous	Wine	4869
+674	D-18	D-18 (CBC)	matrix	CBC	1. Wine/European (subclade 4)	2	homozygous	Wine	4815
+675	B-11	B-11 (CBD)	matrix	CBD	1. Wine/European (subclade 4)	2	homozygous	Wine	4817
+676	D-21	D-21 (CBE)	matrix	CBE	1. Wine/European (subclade 4)	2	heterozygous	Wine	4880
+677	SD-15	SD-15 (CBF)	matrix	CBF	8. Mixed origin	4	heterozygous	Bakery	10226
+678	DBVPG1978	DBVPG1978 (CBG)	matrix	CBG	1. Wine/European	2	heterozygous	Wine	4724
+679	DBVPG3051	DBVPG3051 (CBH)	matrix	CBH	1. Wine/European	2	heterozygous	Wine	4485
+680	DBVPG4036	DBVPG4036 (CBI)	matrix	CBI	1. Wine/European (subclade 1)	2	homozygous	Wine	4395
+681	1	1 (CBK)	matrix	CBK	M3. Mosaic region 3	1	homozygous	Insect	2993
+682	2	2 (CBL)	matrix	CBL	M3. Mosaic region 3	2	heterozygous	Insect	6453
+683	3	3 (CBM)	matrix	CBM	M3. Mosaic region 3	2	heterozygous	Insect	6506
+684	NCYC_88	NCYC_88 (CBN)	matrix	CBN	7. Mosaic beer	2	homozygous	Beer	4642
+685	NCYC_1187	NCYC_1187 (CBR)	matrix	CBR	11. Ale beer	4	heterozygous	Beer	7478
+686	CLQCA_20-156	CLQCA_20-156 (CCC)	matrix	CCC	21. Ecuadorean	2	homozygous	Flower	6614
+687	CLQCA_20-184	CLQCA_20-184 (CCD)	matrix	CCD	21. Ecuadorean	2	homozygous	Flower	6651
+688	CLQCA_20-221	CLQCA_20-221 (CCE)	matrix	CCE	21. Ecuadorean	2	homozygous	Flower	6621
+689	CLQCA_20-246	CLQCA_20-246 (CCF)	matrix	CCF	21. Ecuadorean	2	homozygous	Insect	6643
+690	CLQCA_20-259	CLQCA_20-259 (CCG)	matrix	CCG	21. Ecuadorean	2	homozygous	Fruit	6610
+691	CLQCA_20-314	CLQCA_20-314 (CCH)	matrix	CCH	21. Ecuadorean	2	homozygous	Insect	6594
+692	CLQCA_20-248	CLQCA_20-248 (CCI)	matrix	CCI	21. Ecuadorean	2	homozygous	Insect	6592
+693	N19-1C	N19-1C (CCL)	matrix	CCL	4. Mediterranean oak	2	homozygous	Tree	4318
+694	N493-2C	N493-2C (CCM)	matrix	CCM	1. Wine/European (subclade 1)	2	homozygous	Tree	4442
+695	VKM_Y-504_S	VKM_Y-504:S (CCN)	matrix	CCN	18. Far East Asia	2	homozygous	Fruit	5643
+696	IFO_0877_6-1	IFO_0877:6-1 (CCP)	matrix	CCP		2	homozygous	Tree	5669
+697	Ksc2-2B	Ksc2-2B (CCQ)	matrix	CCQ	18. Far East Asia	2	homozygous	Tree	5552
+698	Ksc40-8A	Ksc40-8A (CCR)	matrix	CCR	18. Far East Asia	2	homozygous	Tree	5622
+699	Ksc73-2D	Ksc73-2D (CCS)	matrix	CCS	18. Far East Asia	2	homozygous	Tree	5650
+700	S11F3-6B	S11F3-6B (CCT)	matrix	CCT	24. Asian islands	2	homozygous	Tree	5909
+701	S8BM-30-2D	S8BM-30-2D (CCV)	matrix	CCV	24. Asian islands	2	homozygous	Tree	5939
+702	S8BM-32-4D_a	S8BM-32-4D(a) (CDA)	matrix	CDA	24. Asian islands	1	homozygous	Tree	5934
+703	ATCC_66348-1D	ATCC_66348-1D (CDB)	matrix	CDB		2	homozygous	Soil	5932
+704	N37-1A	N37-1A (CDC)	matrix	CDC	M3. Mosaic region 3	2	homozygous	Tree	5537
+705	N38-4A	N38-4A (CDD)	matrix	CDD	M3. Mosaic region 3	2	homozygous	Tree	5468
+706	N39-7A	N39-7A (CDE)	matrix	CDE	M3. Mosaic region 3	2	homozygous	Tree	5481
+707	N22.00-5D	N22.00-5D (CDF)	matrix	CDF	22. Far East Russian	2	homozygous	Fruit	5730
+708	N3.00-7A	N3.00-7A (CDG)	matrix	CDG	22. Far East Russian	2	homozygous	Wine	5735
+709	N159.01-2B	N159.01-2B (CDH)	matrix	CDH	22. Far East Russian	2	homozygous	Tree	5726
+710	N163.01-5A	N163.01-5A (CDI)	matrix	CDI	22. Far East Russian	2	homozygous	Tree	5726
+711	CCY_21-4-93_6B	CCY_21-4-93:6B (CDK)	matrix	CDK	M3. Mosaic region 3	1	homozygous	Tree	5852
+712	N51-1A	N51-1A (CDL)	matrix	CDL	18. Far East Asia	2	homozygous	Tree	5658
+713	UFRJ_50613-2D_a	UFRJ_50613-2D(a) (CDM)	matrix	CDM	M2. Mosaic region 2	2	homozygous	Water	4982
+714	UCD_61-190-6A	UCD_61-190-6A (CDN)	matrix	CDN		2	homozygous	Insect	6341
+715	N95-5-1A	N95-5-1A (CDP)	matrix	CDP		2	homozygous	Tree	6190
+716	N95-6-1C	N95-6-1C (CDQ)	matrix	CDQ		2	homozygous	Tree	5964
+717	CECT10331_9-1	CECT10331:9-1 (CDR)	matrix	CDR	8. Mixed origin	2	homozygous	Flower	5243
+718	CECT10351-1B	CECT10351-1B (CDS)	matrix	CDS	1. Wine/European	2	homozygous	Fruit	4426
+719	CECT10171-5B	CECT10171-5B (CDT)	matrix	CDT	2. Alpechin	2	homozygous	Insect	4219
+720	DBVPG1616-1D	DBVPG1616-1D (CDV)	matrix	CDV	1. Wine/European	2	homozygous	Soil	4417
+721	DBVPG1617-5A	DBVPG1617-5A (CEA)	matrix	CEA	1. Wine/European	1	homozygous	Soil	4393
+722	DBVPG1619-4B	DBVPG1619-4B (CEB)	matrix	CEB	1. Wine/European	1	homozygous	Soil	4396
+723	DBVPG1620-1A	DBVPG1620-1A (CEC)	matrix	CEC	1. Wine/European	2	homozygous	Soil	4416
+724	DBVPG1621-5A	DBVPG1621-5A (CED)	matrix	CED	1. Wine/European	2	homozygous	Soil	4392
+725	DBVPG1622-8B	DBVPG1622-8B (CEE)	matrix	CEE	1. Wine/European	2	homozygous	Soil	4398
+726	DBVPG1623-2A	DBVPG1623-2A (CEF)	matrix	CEF	1. Wine/European	2	homozygous	Soil	4419
+727	EM14S01-3B	EM14S01-3B (CEG)	matrix	CEG	17. Taiwanese	2	homozygous	Soil	5879
+728	ES2M03-7A	ES2M03-7A (CEH)	matrix	CEH		2	homozygous	Fruit	5791
+729	GE14S01-7B	GE14S01-7B (CEI)	matrix	CEI	17. Taiwanese	2	homozygous	Soil	5903
+730	JCM_2985-4B	JCM_2985-4B (CEK)	matrix	CEK	26. Asian fermentation	2	homozygous	Fermentation	6152
+731	JCM_3529-7B	JCM_3529-7B (CEL)	matrix	CEL	26. Asian fermentation	2	homozygous	Fermentation	6175
+732	CCY_21-4-89_7-3	CCY_21-4-89:7-3 (CEM)	matrix	CEM	M3. Mosaic region 3	1	homozygous	Fermentation	5663
+733	ATCC_38618_2-2	ATCC_38618:2-2 (CEN)	matrix	CEN	M3. Mosaic region 3	2	heterozygous	Fruit	5237
+734	ATCC_52922-1C	ATCC_52922-1C (CEP)	matrix	CEP		2	homozygous	Fermentation	5964
+735	MUCL_30909-2C	MUCL_30909-2C (CEQ)	matrix	CEQ	M3. Mosaic region 3	2	homozygous	Fermentation	6114
+736	N34_2-4_a	N34:2-4(a) (CER)	matrix	CER	6. African beer	2	homozygous	Bakery	4789
+737	N26-1-10_7-5_a	N26-1-10:7-5(a) (CES)	matrix	CES	6. African beer	2	homozygous	Bakery	4792
+738	N134_7-1_a	N134:7-1(a) (CET)	matrix	CET	6. African beer	2	homozygous	Bakery	4795
+739	IFO_0289_4-3_b	IFO_0289:4-3(b) (CEV)	matrix	CEV	26. Asian fermentation	1	homozygous	Distillery	6355
+740	Dji2-2A_a	Dji2-2A(a) (CFA)	matrix	CFA	13. African palm wine	2	homozygous	Palm wine	6413
+741	ho_SB	ho_SB (CFB)	matrix	CFB	1. Wine/European	2	homozygous	Wine	4454
+742	4.5_WLP530	4.5_WLP530 (CFC)	matrix	CFC	11. Ale beer	4	heterozygous	Beer	7650
+743	1.3_Safale_US05	1.3_Safale_US05 (CFD)	matrix	CFD	11. Ale beer	4	heterozygous	Beer	6831
+744	4.9_WLP099	4.9_WLP099 (CFE)	matrix	CFE	1. Wine/European	2	heterozygous	Beer	4880
+745	6.2_WLP570	6.2_WLP570 (CFF)	matrix	CFF	7. Mosaic beer	2	heterozygous	Beer	5749
+746	1.6_Safale_S40	1.6_Safale_S40 (CFG)	matrix	CFG	11. Ale beer	4	heterozygous	Beer	7545
+747	Nottingham_ale_1.8_Lallemand	Nottingham_ale_1.8_Lallemand (CFH)	matrix	CFH	11. Ale beer	4	heterozygous	Beer	7488
+748	2.6_Windsor_British	2.6_Windsor_British (CFI)	matrix	CFI	8. Mixed origin	4	heterozygous	Beer	10616
+749	5.5_WLP090	5.5_WLP090 (CFM)	matrix	CFM	11. Ale beer	4	heterozygous	Beer	6915
+750	3.3_Safale_S-33	3.3_Safale_S-33 (CFN)	matrix	CFN	8. Mixed origin	4	heterozygous	Beer	10626
+751	3.4_Safbrew_T-58	3.4_Safbrew_T-58 (CFP)	matrix	CFP	8. Mixed origin	4	heterozygous	Beer	9854
+752	UCD_40-235	UCD_40-235 (CFQ)	matrix	CFQ	1. Wine/European	2	homozygous	Wine	4474
+753	UCD_40-248	UCD_40-248 (CFR)	matrix	CFR	1. Wine/European	2	homozygous	Wine	4509
+754	UCD_40-255	UCD_40-255 (CFS)	matrix	CFS	1. Wine/European	4	homozygous	Wine	4504
+755	UCD_40-346	UCD_40-346 (CFT)	matrix	CFT	M2. Mosaic region 2	2	heterozygous	Fruit	6217
+756	UCD_40-49	UCD_40-49 (CFV)	matrix	CFV	1. Wine/European	2	homozygous	Fruit	4418
+757	UCD_05-780	UCD_05-780 (CGB)	matrix	CGB	M3. Mosaic region 3	2	homozygous	Insect	5338
+758	UCD_06-645	UCD_06-645 (CGC)	matrix	CGC	11. Ale beer	4	heterozygous	Fruit	7274
+759	UCD_09-448	UCD_09-448 (CGD)	matrix	CGD	2. Alpechin	2	homozygous	Fruit	4404
+760	UCD_11-601	UCD_11-601 (CGE)	matrix	CGE	2. Alpechin	2	homozygous	Fruit	4197
+761	TayTa	TayTa (CGG)	matrix	CGG	26. Asian fermentation	2	heterozygous	Unknown	6334
+762	VNL3	VNL3 (CGH)	matrix	CGH		3	heterozygous	Unknown	6440
+763	Me7	Me7 (CGI)	matrix	CGI	26. Asian fermentation	2	heterozygous	Unknown	6510
+764	Lx2	Lx2 (CGK)	matrix	CGK	26. Asian fermentation	2	heterozygous	Unknown	6437
+765	BMQ557	BMQ557 (CGL)	matrix	CGL	26. Asian fermentation	2	heterozygous	Unknown	6371
+766	SGB1	SGB1 (CGN)	matrix	CGN	26. Asian fermentation	2	heterozygous	Fermentation	6405
+767	SG4	SG4 (CGP)	matrix	CGP	26. Asian fermentation	2	heterozygous	Unknown	6529
+768	RR1a	RR1a (CGQ)	matrix	CGQ	26. Asian fermentation	2	heterozygous	Unknown	6403
+769	VL5	VL5 (CGR)	matrix	CGR	26. Asian fermentation	2	heterozygous	Fermentation	6286
+770	Ca6	Ca6 (CGS)	matrix	CGS	1. Wine/European	2	homozygous	Wine	4510
+771	Lib39	Lib39 (CGT)	matrix	CGT	1. Wine/European (subclade 1)	2	homozygous	Wine	4459
+772	Lib51	Lib51 (CGV)	matrix	CGV	1. Wine/European	2	heterozygous	Wine	4504
+773	Lib52	Lib52 (CHA)	matrix	CHA	1. Wine/European	2	homozygous	Wine	4421
+774	Lib54	Lib54 (CHB)	matrix	CHB	1. Wine/European	2	heterozygous	Wine	4592
+775	Lib61	Lib61 (CHC)	matrix	CHC	1. Wine/European	2	heterozygous	Wine	4550
+776	Lib70	Lib70 (CHD)	matrix	CHD	1. Wine/European	2	heterozygous	Wine	4912
+777	Lib71	Lib71 (CHE)	matrix	CHE	1. Wine/European	2	heterozygous	Wine	4588
+778	Lib73	Lib73 (CHF)	matrix	CHF	1. Wine/European	2	heterozygous	Wine	5290
+779	324-6C	324-6C (CHG)	matrix	CHG	8. Mixed origin	2	heterozygous	Bakery	7335
+780	319-5C	319-5C (CHH)	matrix	CHH	8. Mixed origin	2	heterozygous	Bakery	7381
+781	646-3B	646-3B (CHI)	matrix	CHI	8. Mixed origin	2	heterozygous	Bakery	7441
+782	Win-8B	Win-8B (CHK)	matrix	CHK	8. Mixed origin	2	heterozygous	Beer	7834
+783	SBE-1C	SBE-1C (CHL)	matrix	CHL	8. Mixed origin	2	heterozygous	Bakery	7148
+784	SBD	SBD (CHM)	matrix	CHM	26. Asian fermentation	2	heterozygous	Bakery	6465
+785	B9b-1	B9b-1 (CHN)	matrix	CHN	M3. Mosaic region 3	2	heterozygous	Bakery	7243
+786	B9c-1	B9c-1 (CHP)	matrix	CHP	M3. Mosaic region 3	2	heterozygous	Bakery	7224
+787	B10-1	B10-1 (CHQ)	matrix	CHQ	M3. Mosaic region 3	2	heterozygous	Bakery	7072
+788	SC_29_F._Dromer_IP	SC 29 F. Dromer IP (CHR)	matrix	CHR	8. Mixed origin	2	heterozygous	Human, clinical	7686
+789	SC_32_F._Dromer_IP	SC 32 F. Dromer IP (CHS)	matrix	CHS	M3. Mosaic region 3	2	heterozygous	Human, clinical	6008
+790	SC_33_F._Dromer_IP	SC 33 F. Dromer IP (CHT)	matrix	CHT	M3. Mosaic region 3	2	heterozygous	Human, clinical	6089
+791	SRC_120	SRC 120 (CHV)	matrix	CHV	M1. Mosaic region 1	2	homozygous	Cider	4466
+792	SRC_147	SRC 147 (CIA)	matrix	CIA	1. Wine/European	2	homozygous	Industrial	4405
+793	SRC_213	SRC 213 (CIB)	matrix	CIB	1. Wine/European	2	homozygous	Industrial	4419
+794	Ponton_11	Ponton 11 (CIC)	matrix	CIC	M3. Mosaic region 3	2	heterozygous	Human, clinical	6806
+795	Ponton_12	Ponton 12 (CID)	matrix	CID	M3. Mosaic region 3	2	heterozygous	Human, clinical	6501
+796	Ponton_13	Ponton 13 (CIE)	matrix	CIE	8. Mixed origin	3	heterozygous	Human, clinical	7319
+797	Ponton_14	Ponton 14 (CIF)	matrix	CIF	M3. Mosaic region 3	2	heterozygous	Human, clinical	6838
+798	PB11	PB11 (CIG)	matrix	CIG	M3. Mosaic region 3	2	heterozygous	Human, clinical	6364
+799	PB12	PB12 (CIH)	matrix	CIH	M3. Mosaic region 3	2	heterozygous	Human, clinical	6645
+800	PB13	PB13 (CII)	matrix	CII	M3. Mosaic region 3	2	heterozygous	Human, clinical	6932
+801	PB14	PB14 (CIK)	matrix	CIK	M3. Mosaic region 3	2	heterozygous	Human, clinical	6964
+802	PB15	PB15 (CIL)	matrix	CIL	M3. Mosaic region 3	2	heterozygous	Human, clinical	6737
+803	malade_Hc6553	malade Hc6553 (CIM)	matrix	CIM	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4352
+804	malade_Pac6436	malade Pac6436 (CIN)	matrix	CIN	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4357
+805	malade_6442	malade 6442 (CIP)	matrix	CIP	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4328
+806	malade_6452	malade 6452 (CIQ)	matrix	CIQ	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4330
+807	malade_6441	malade 6441 (CIR)	matrix	CIR	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4344
+808	malade_Elbaz_6766	malade Elbaz 6766 (CIS)	matrix	CIS	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4353
+809	malade_459_Labaume	malade 459 Labaume (CIT)	matrix	CIT	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4357
+810	malade_1124_150017	malade 1124/150017 (CIV)	matrix	CIV	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4339
+811	malade_3285_11-2-4	malade 3285/11-2-4 (CKA)	matrix	CKA	M3. Mosaic region 3	2	heterozygous	Human, clinical	6092
+812	malade_98_1655_125391	malade 98 1655/125391 (CKB)	matrix	CKB	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4353
+813	malade_139287_11_2_1	malade 139287/11_2_1 (CKC)	matrix	CKC	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4363
+814	malade_97_138633_11-2-5	malade 97 138633/11-2-5 (CKD)	matrix	CKD	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4371
+815	malade_141076_11210	malade 141076/11210 (CKE)	matrix	CKE	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4376
+816	malade_150865_1122	malade 150865/1122 (CKF)	matrix	CKF	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4334
+817	UL_G84F88I90	UL G84F88I90 (CKG)	matrix	CKG	1. Wine/European (subclade 3)	2	heterozygous	Fruit	4366
+818	ultra_lev._1127	ultra lev. 1127 (CKH)	matrix	CKH	1. Wine/European (subclade 3)	2	heterozygous	Industrial	4360
+819	perentol	perentol (CKI)	matrix	CKI	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4356
+820	malade_98_3312	malade 98 3312 (CKK)	matrix	CKK	8. Mixed origin	4	heterozygous	Human, clinical	10152
+821	malade_98_3161	malade 98 3161 (CKL)	matrix	CKL	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4360
+822	malade_98_2574	malade 98 2574 (CKM)	matrix	CKM	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4358
+823	malade_98_2601	malade 98 2601 (CKN)	matrix	CKN	M3. Mosaic region 3	2	heterozygous	Human, clinical	7519
+824	malade_Broussais	malade Broussais (CKP)	matrix	CKP	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4352
+825	malade_M2402A_Necker	malade M2402A Necker (CKQ)	matrix	CKQ	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4343
+826	malade_Darkman	malade Darkman (CKR)	matrix	CKR		2	heterozygous	Human, clinical	6281
+827	malade_Berchid	malade Berchid (CKS)	matrix	CKS	8. Mixed origin	4	heterozygous	Human, clinical	9925
+828	malade_Fauot	malade Fauot (CKT)	matrix	CKT	1. Wine/European (subclade 3)	2	heterozygous	Human, clinical	4356
+829	malade_Boisse	malade Boisse (CKV)	matrix	CKV	5. French dairy	2	heterozygous	Human, clinical	7094
+830	malade_Moreau	malade Moreau (CLA)	matrix	CLA	8. Mixed origin	4	heterozygous	Human, clinical	10098
+831	sample_40	sample 40 (CLB)	matrix	CLB	4. Mediterranean oak	2	homozygous	Tree	4251
+832	sample_50	sample 50 (CLC)	matrix	CLC	4. Mediterranean oak	2	homozygous	Tree	4254
+833	sample_33	sample 33 (CLD)	matrix	CLD	4. Mediterranean oak	2	homozygous	Flower	4264
+834	NCYC_2966	NCYC_2966 (CLG)	matrix	CLG	M3. Mosaic region 3	2	heterozygous	Human, clinical	6908
+835	NCYC_2743	NCYC_2743 (CLH)	matrix	CLH	1. Wine/European	2	homozygous	Wine	4434
+836	K5	K5 (CLI)	matrix	CLI	25. Sake	2	heterozygous	Sake	6485
+837	K9	K9 (CLK)	matrix	CLK	25. Sake	2	heterozygous	Sake	6613
+838	K10	K10 (CLL)	matrix	CLL	25. Sake	2	heterozygous	Sake	6568
+839	K13	K13 (CLM)	matrix	CLM	25. Sake	2	heterozygous	Sake	6430
+840	K14	K14 (CLN)	matrix	CLN	25. Sake	2	homozygous	Sake	6334
+841	K15	K15 (CLP)	matrix	CLP	25. Sake	2	heterozygous	Sake	6549
+842	UC5	UC5 (CLQ)	matrix	CLQ	25. Sake	1	homozygous	Sake	6365
+843	RIB1008	RIB1008 (CLR)	matrix	CLR	25. Sake	2	heterozygous	Sake	6519
+844	RIB1010	RIB1010 (CLS)	matrix	CLS	25. Sake	2	heterozygous	Sake	6507
+845	RIB1011	RIB1011 (CLT)	matrix	CLT	25. Sake	2	heterozygous	Sake	6551
+846	RIB1012	RIB1012 (CLV)	matrix	CLV	25. Sake	2	heterozygous	Sake	6605
+847	RIB1014	RIB1014 (CMB)	matrix	CMB	25. Sake	2	heterozygous	Sake	6546
+848	RIB1015	RIB1015 (CMC)	matrix	CMC	25. Sake	2	heterozygous	Sake	6595
+849	RIB1016	RIB1016 (CMD)	matrix	CMD	25. Sake	2	heterozygous	Sake	6677
+850	RIB1017	RIB1017 (CME)	matrix	CME	25. Sake	2	heterozygous	Sake	6573
+851	RIB6001	RIB6001 (CMF)	matrix	CMF	25. Sake	2	heterozygous	Sake	6606
+852	RIB6002	RIB6002 (CMG)	matrix	CMG	M3. Mosaic region 3	3	heterozygous	Sake	8668
+853	RIB6003	RIB6003 (CMH)	matrix	CMH	25. Sake	2	heterozygous	Sake	6607
+854	RIB6004	RIB6004 (CMI)	matrix	CMI	25. Sake	2	heterozygous	Sake	6591
+855	RIB6005	RIB6005 (CMK)	matrix	CMK	25. Sake	2	heterozygous	Sake	6455
+856	RIB6006	RIB6006 (CML)	matrix	CML	25. Sake	2	homozygous	Sake	6404
+857	RIB6007	RIB6007 (CMM)	matrix	CMM	25. Sake	2	heterozygous	Sake	6898
+858	RIB0007	RIB0007 (CMN)	matrix	CMN	25. Sake	2	heterozygous	Sake	6497
+859	YPS615	YPS615 (CMP)	matrix	CMP	21. Ecuadorean	2	homozygous	Tree	6478
+860	YPS617	YPS617 (CMQ)	matrix	CMQ	21. Ecuadorean	2	homozygous	Tree	6542
+861	YPS670	YPS670 (CMS)	matrix	CMS		2	homozygous	Tree	6186
+862	SM.9.4.BR2	SM.9.4.BR2 (CMT)	matrix	CMT	3. Brazilian bioethanol	2	heterozygous	Bioethanol	5724
+863	SM.8.2.C13	SM.8.2.C13 (CNB)	matrix	CNB	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6853
+864	SM8.3.M5	SM8.3.M5 (CNC)	matrix	CNC	M3. Mosaic region 3	2	heterozygous	Bioethanol	6876
+865	SM.8.7.L8	SM.8.7.L8 (CNE)	matrix	CNE	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6759
+866	SM.8.7.L9	SM.8.7.L9 (CNF)	matrix	CNF	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6814
+867	SM.8.7.BR1	SM.8.7.BR1 (CNG)	matrix	CNG	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6179
+868	SM.8.8.BL1	SM.8.8.BL1 (CNH)	matrix	CNH	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6364
+869	SM.8.8.CVR1	SM.8.8.CVR1 (CNI)	matrix	CNI	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6303
+870	SA.1.5.	SA.1.5. (CNK)	matrix	CNK	3. Brazilian bioethanol	2	heterozygous	Bioethanol	5893
+871	SA.9.2.BL3	SA.9.2.BL3 (CNL)	matrix	CNL	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6853
+872	SA.9.3.VR1	SA.9.3.VR1 (CNM)	matrix	CNM	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6214
+873	SA.9.4.VL4	SA.9.4.VL4 (CNN)	matrix	CNN	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6691
+874	SA.9.4.BR2	SA.9.4.BR2 (CNP)	matrix	CNP	3. Brazilian bioethanol	2	heterozygous	Bioethanol	5919
+875	SA.10.1.VL1	SA.10.1.VL1 (CNQ)	matrix	CNQ	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6883
+876	SA.10.1.VR4	SA.10.1.VR4 (CNR)	matrix	CNR	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6109
+877	RP11.4.1	RP11.4.1 (CNS)	matrix	CNS	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6416
+878	RP11.4.11	RP11.4.11 (CNT)	matrix	CNT	3. Brazilian bioethanol	2	heterozygous	Bioethanol	6417
+879	RP11.4.14	RP11.4.14 (CNV)	matrix	CNV	3. Brazilian bioethanol	2	heterozygous	Bioethanol	5812
+880	906	906 (CPA)	matrix	CPA		2	heterozygous	Nature	6234
+881	995	995 (CPB)	matrix	CPB	M1. Mosaic region 1	2	heterozygous	Beer	5398
+882	997	997 (CPC)	matrix	CPC	M3. Mosaic region 3	2	heterozygous	Fruit	7152
+883	1175	1175 (CPD)	matrix	CPD	7. Mosaic beer	2	heterozygous	Beer	5168
+884	1216	1216 (CPE)	matrix	CPE	1. Wine/European	2	homozygous	Unknown	4437
+885	1235	1235 (CPF)	matrix	CPF	1. Wine/European	2	heterozygous	Unknown	4559
+886	1560	1560 (CPG)	matrix	CPG	2. Alpechin	2	homozygous	Nature	4276
+887	LCBG-3D6	LCBG-3D6 (CPI)	matrix	CPI	9. Mexican agave	2	heterozygous	Distillery	5979
+888	LCBG-Mosca3	LCBG-Mosca3 (CPK)	matrix	CPK	9. Mexican agave	2	heterozygous	Distillery	5836
+889	LCBG-4Y3	LCBG-4Y3 (CPL)	matrix	CPL	9. Mexican agave	2	heterozygous	Distillery	6053
+890	LCBG-3D2	LCBG-3D2 (CPM)	matrix	CPM	9. Mexican agave	2	heterozygous	Distillery	5957
+891	LCBG-3Y3	LCBG-3Y3 (CPN)	matrix	CPN	9. Mexican agave	2	heterozygous	Distillery	5994
+892	LCBG-3D4	LCBG-3D4 (CPQ)	matrix	CPQ	9. Mexican agave	2	heterozygous	Distillery	5926
+893	LCBG-3Y8	LCBG-3Y8 (CPR)	matrix	CPR	9. Mexican agave	2	heterozygous	Distillery	6023
+894	FTPW4	FTPW4 (CPS)	matrix	CPS	13. African palm wine	3	heterozygous	Palm wine	7135
+895	FTPW3	FTPW3 (CPT)	matrix	CPT	13. African palm wine	2	heterozygous	Palm wine	6898
+896	FTPW32	FTPW32 (CQA)	matrix	CQA	13. African palm wine	2	heterozygous	Palm wine	6786
+897	FTPW35	FTPW35 (CQB)	matrix	CQB	13. African palm wine	2	heterozygous	Palm wine	6849
+898	MTF2546	MTF2546 (CQC)	matrix	CQC	12. West African cocoa	2	heterozygous	Fermentation	5772
+899	MTF2547	MTF2547 (CQD)	matrix	CQD	12. West African cocoa	2	heterozygous	Fermentation	5766
+900	MTF2548	MTF2548 (CQE)	matrix	CQE	12. West African cocoa	2	heterozygous	Fermentation	6023
+901	MTF2549	MTF2549 (CQF)	matrix	CQF	12. West African cocoa	2	heterozygous	Fermentation	5657
+902	MTF2550	MTF2550 (CQG)	matrix	CQG	12. West African cocoa	2	heterozygous	Fermentation	6491
+903	MTF2551	MTF2551 (CQH)	matrix	CQH	12. West African cocoa	2	heterozygous	Fermentation	6264
+904	MTF2552	MTF2552 (CQI)	matrix	CQI	12. West African cocoa	2	heterozygous	Fermentation	6424
+905	MTF2553	MTF2553 (CQK)	matrix	CQK	12. West African cocoa	2	heterozygous	Fermentation	5647
+906	MTF2554	MTF2554 (CQL)	matrix	CQL	12. West African cocoa	2	heterozygous	Fermentation	6352
+907	MTF2555	MTF2555 (CQM)	matrix	CQM	12. West African cocoa	2	heterozygous	Fermentation	6202
+908	MTF2556	MTF2556 (CQN)	matrix	CQN	12. West African cocoa	2	heterozygous	Fermentation	5846
+909	MTF2557	MTF2557 (CQP)	matrix	CQP	12. West African cocoa	2	heterozygous	Fermentation	5719
+910	RIB1006	RIB1006 (CQQ)	matrix	CQQ	25. Sake	2	heterozygous	Sake	6609
+911	RIB1007	RIB1007 (CQR)	matrix	CQR	25. Sake	2	heterozygous	Sake	6620
+912	CEY647	CEY647 (CQS)	matrix	CQS		2	homozygous	Nature	5725
+913	L-982	L-982 (CQT)	matrix	CQT	1. Wine/European	2	homozygous	Wine	4456
+914	CD7-9Sv2	CD7-9Sv2 (CQV)	matrix	CQV	1. Wine/European	2	homozygous	Wine	4378
+915	RB3-7Sc2	RB3-7Sc2 (CRA)	matrix	CRA	1. Wine/European	2	heterozygous	Wine	4596
+916	SC2-37	SC2-37 (CRB)	matrix	CRB	1. Wine/European	2	homozygous	Wine	4405
+917	Ba-215	Ba-215 (CRC)	matrix	CRC	1. Wine/European	2	homozygous	Wine	4384
+918	FIMA_3	FIMA_3 (CRD)	matrix	CRD	1. Wine/European	2	homozygous	Wine	4451
+919	CLQCA_17-111	CLQCA_17-111 (CRE)	matrix	CRE	M3. Mosaic region 3	3	heterozygous	Insect	8040
+920	L-846	L-846 (CRG)	matrix	CRG	1. Wine/European	2	heterozygous	Wine	4758
+921	L-319	L-319 (CRH)	matrix	CRH	1. Wine/European	2	heterozygous	Wine	4710
+922	AGME_5I	AGME_5I (CRI)	matrix	CRI	1. Wine/European	2	homozygous	Wine	4411
+923	E1-6	E1-6 (CRK)	matrix	CRK	1. Wine/European	2	homozygous	Wine	4380
+924	C-6	C-6 (CRL)	matrix	CRL	1. Wine/European	2	homozygous	Wine	4211
+925	SK1	SK1 (SACE_GAL)	matrix	SACE_GAL	13. African palm wine	2	homozygous	Lab strain	6670
+926	L1528	L1528 (SACE_GAP)	matrix	SACE_GAP	1. Wine/European	2	homozygous	Wine	4348
+927	UWOPS83-787_3	UWOPS83-787_3 (SACE_GAS)	matrix	SACE_GAS		2	homozygous	Nature	5965
+928	UWOPS87-2421	UWOPS87-2421 (SACE_GAT)	matrix	SACE_GAT		2	homozygous	Nature	6287
+929	W303	W303 (SACE_GAV)	matrix	SACE_GAV	M3. Mosaic region 3	2	homozygous	Lab strain	1065
+930	273614N	273614N (SACE_MAA)	matrix	SACE_MAA	M2. Mosaic region 2	2	homozygous	Human, clinical	4946
+931	378604X	378604X (SACE_MAB)	matrix	SACE_MAB	M3. Mosaic region 3	2	homozygous	Human, clinical	4770
+932	UWOPS05_227_2	UWOPS05_227_2 (SACE_MAL)	matrix	SACE_MAL	19. Malaysian	2	homozygous	Insect	5864
+933	YJM189	YJM189 (SACE_YAA)	matrix	SACE_YAA	1. Wine/European	2	homozygous	Distillery	4496
+934	YJM193	YJM193 (SACE_YAB)	matrix	SACE_YAB	7. Mosaic beer	2	homozygous	Distillery	5100
+935	YJM195	YJM195 (SACE_YAC)	matrix	SACE_YAC	13. African palm wine	2	homozygous	Palm wine	6920
+936	YJM244	YJM244 (SACE_YAD)	matrix	SACE_YAD	1. Wine/European	2	homozygous	Human, clinical	4388
+937	YJM248	YJM248 (SACE_YAE)	matrix	SACE_YAE	2. Alpechin	2	homozygous	Human	4285
+938	YJM270	YJM270 (SACE_YAF)	matrix	SACE_YAF	1. Wine/European (subclade 4)	2	homozygous	Wine	4767
+939	YJM271	YJM271 (SACE_YAG)	matrix	SACE_YAG	7. Mosaic beer	2	homozygous	Beer	4830
+940	YJM450	YJM450 (SACE_YAK)	matrix	SACE_YAK	M3. Mosaic region 3	2	homozygous	Human, clinical	5303
+941	YJM451	YJM451 (SACE_YAL)	matrix	SACE_YAL	M3. Mosaic region 3	2	homozygous	Human, clinical	5373
+942	YJM453	YJM453 (SACE_YAM)	matrix	SACE_YAM	1. Wine/European	2	homozygous	Human, clinical	4393
+943	YJM456	YJM456 (SACE_YAN)	matrix	SACE_YAN	M3. Mosaic region 3	2	homozygous	Human, clinical	4729
+944	YJM541	YJM541 (SACE_YAP)	matrix	SACE_YAP	M3. Mosaic region 3	2	homozygous	Human, clinical	5329
+945	YJM554	YJM554 (SACE_YAQ)	matrix	SACE_YAQ	M3. Mosaic region 3	2	homozygous	Human, clinical	5402
+946	YJM555	YJM555 (SACE_YAR)	matrix	SACE_YAR	M3. Mosaic region 3	2	homozygous	Human, clinical	5241
+947	YJM681	YJM681 (SACE_YAT)	matrix	SACE_YAT	M3. Mosaic region 3	2	homozygous	Human, clinical	5214
+948	YJM682	YJM682 (SACE_YAU)	matrix	SACE_YAU	M3. Mosaic region 3	2	homozygous	Human, clinical	5106
+949	YJM683	YJM683 (SACE_YAV)	matrix	SACE_YAV	M3. Mosaic region 3	2	homozygous	Human, clinical	5148
+950	YJM689	YJM689 (SACE_YAW)	matrix	SACE_YAW	M3. Mosaic region 3	2	homozygous	Human, clinical	5089
+951	YJM693	YJM693 (SACE_YAX)	matrix	SACE_YAX		2	homozygous	Human, clinical	5059
+952	YJM969	YJM969 (SACE_YAY)	matrix	SACE_YAY	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4455
+953	YJM972	YJM972 (SACE_YAZ)	matrix	SACE_YAZ	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4495
+954	YJM975	YJM975 (SACE_YBA)	matrix	SACE_YBA	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4476
+955	YJM978	YJM978 (SACE_YBB)	matrix	SACE_YBB	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4499
+956	YJM987	YJM987 (SACE_YBE)	matrix	SACE_YBE	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4348
+957	YJM980	YJM980 (SACE_YBF)	matrix	SACE_YBF	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4472
+958	YJM993	YJM993 (SACE_YBG)	matrix	SACE_YBG	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4469
+959	YJM996	YJM996 (SACE_YBH)	matrix	SACE_YBH	1. Wine/European (subclade 2)	2	homozygous	Human, clinical	4440
+960	YJM1190	YJM1190 (SACE_YBJ)	matrix	SACE_YBJ	M3. Mosaic region 3	2	homozygous	Human, clinical	4458
+961	YJM1199	YJM1199 (SACE_YBK)	matrix	SACE_YBK	M3. Mosaic region 3	2	homozygous	Human, clinical	5481
+962	YJM1202	YJM1202 (SACE_YBL)	matrix	SACE_YBL	M3. Mosaic region 3	2	homozygous	Human, clinical	5379
+963	YJM1208	YJM1208 (SACE_YBM)	matrix	SACE_YBM	M3. Mosaic region 3	2	homozygous	Human, clinical	5167
+964	YJM1242	YJM1242 (SACE_YBN)	matrix	SACE_YBN	1. Wine/European	2	homozygous	Fruit	4371
+965	YJM1244	YJM1244 (SACE_YBO)	matrix	SACE_YBO	1. Wine/European	2	homozygous	Fruit	4436
+966	YJM1248	YJM1248 (SACE_YBP)	matrix	SACE_YBP	13. African palm wine	2	homozygous	Wine	7350
+967	YJM1250	YJM1250 (SACE_YBQ)	matrix	SACE_YBQ		2	homozygous	Nature	4940
+968	YJM1252	YJM1252 (SACE_YBR)	matrix	SACE_YBR	2. Alpechin	2	homozygous	Industrial	4318
+969	YJM1273	YJM1273 (SACE_YBS)	matrix	SACE_YBS	23. North American oak	2	homozygous	Tree	5992
+970	YJM1304	YJM1304 (SACE_YBT)	matrix	SACE_YBT	M3. Mosaic region 3	2	homozygous	Human, clinical	5418
+971	YJM1307	YJM1307 (SACE_YBU)	matrix	SACE_YBU	M3. Mosaic region 3	2	homozygous	Human, clinical	5976
+972	YJM1311	YJM1311 (SACE_YBV)	matrix	SACE_YBV		2	homozygous	Human, clinical	5091
+973	YJM1326	YJM1326 (SACE_YBW)	matrix	SACE_YBW		2	homozygous	Human, clinical	5230
+974	YJM1332	YJM1332 (SACE_YBX)	matrix	SACE_YBX	1. Wine/European	2	homozygous	Wine	4426
+975	YJM1336	YJM1336 (SACE_YBY)	matrix	SACE_YBY	1. Wine/European	2	homozygous	Wine	4428
+976	YJM1338	YJM1338 (SACE_YBZ)	matrix	SACE_YBZ	M3. Mosaic region 3	2	homozygous	Fruit	5291
+977	YJM1341	YJM1341 (SACE_YCA)	matrix	SACE_YCA	1. Wine/European	2	homozygous	Wine	4387
+978	YJM1342	YJM1342 (SACE_YCB)	matrix	SACE_YCB		2	homozygous	Soil	5686
+979	YJM1355	YJM1355 (SACE_YCC)	matrix	SACE_YCC	M2. Mosaic region 2	2	homozygous	Industrial	5063
+980	YJM1356	YJM1356 (SACE_YCD)	matrix	SACE_YCD	1. Wine/European	2	homozygous	Cider	4382
+981	YJM1381	YJM1381 (SACE_YCE)	matrix	SACE_YCE	M3. Mosaic region 3	2	homozygous	Distillery	4909
+982	YJM1383	YJM1383 (SACE_YCF)	matrix	SACE_YCF	M2. Mosaic region 2	2	homozygous	Fruit	4759
+983	YJM1385	YJM1385 (SACE_YCG)	matrix	SACE_YCG		2	homozygous	Industrial	5039
+984	YJM1386	YJM1386 (SACE_YCH)	matrix	SACE_YCH	M3. Mosaic region 3	2	homozygous	Nature	5267
+985	YJM1387	YJM1387 (SACE_YCI)	matrix	SACE_YCI	M1. Mosaic region 1	2	homozygous	Wine	4793
+986	YJM1388	YJM1388 (SACE_YCJ)	matrix	SACE_YCJ	26. Asian fermentation	2	homozygous	Unknown	6161
+987	YJM1389	YJM1389 (SACE_YCK)	matrix	SACE_YCK	26. Asian fermentation	2	homozygous	Industrial	6166
+988	YJM1399	YJM1399 (SACE_YCL)	matrix	SACE_YCL		2	homozygous	Tree	4738
+989	YJM1400	YJM1400 (SACE_YCM)	matrix	SACE_YCM	24. Asian islands	2	homozygous	Fruit	5837
+990	YJM1401	YJM1401 (SACE_YCN)	matrix	SACE_YCN		2	homozygous	Fruit	5638
+991	YJM1402	YJM1402 (SACE_YCO)	matrix	SACE_YCO		2	homozygous	Wine	5536
+992	YJM1415	YJM1415 (SACE_YCP)	matrix	SACE_YCP	1. Wine/European	2	homozygous	Wine	4425
+993	YJM1417	YJM1417 (SACE_YCQ)	matrix	SACE_YCQ	1. Wine/European	2	homozygous	Cider	4476
+994	YJM1418	YJM1418 (SACE_YCR)	matrix	SACE_YCR	18. Far East Asia	2	homozygous	Tree	5652
+995	YJM1419	YJM1419 (SACE_YCS)	matrix	SACE_YCS	M3. Mosaic region 3	2	homozygous	Unknown	5541
+996	YJM1433	YJM1433 (SACE_YCT)	matrix	SACE_YCT	M2. Mosaic region 2	2	homozygous	Wine	4983
+997	YJM1434	YJM1434 (SACE_YCU)	matrix	SACE_YCU	23. North American oak	2	homozygous	Tree	6009
+998	YJM1439	YJM1439 (SACE_YCV)	matrix	SACE_YCV	13. African palm wine	2	homozygous	Beer	7346
+999	YJM1443	YJM1443 (SACE_YCW)	matrix	SACE_YCW		2	homozygous	Fruit	5966
+1000	YJM1444	YJM1444 (SACE_YCX)	matrix	SACE_YCX		2	homozygous	Nature	6298
+1001	YJM1447	YJM1447 (SACE_YCY)	matrix	SACE_YCY	19. Malaysian	2	homozygous	Tree	5161
+1002	YJM1450	YJM1450 (SACE_YCZ)	matrix	SACE_YCZ	M2. Mosaic region 2	2	homozygous	Human, clinical	4946
+1003	YJM1460	YJM1460 (SACE_YDA)	matrix	SACE_YDA	26. Asian fermentation	2	homozygous	Palm wine	6139
+1004	YJM1463	YJM1463 (SACE_YDB)	matrix	SACE_YDB		2	homozygous	Unknown	5075
+1005	YJM1477	YJM1477 (SACE_YDC)	matrix	SACE_YDC	1. Wine/European	2	homozygous	Beer	4433
+1006	YJM1478	YJM1478 (SACE_YDD)	matrix	SACE_YDD	7. Mosaic beer	2	homozygous	Fermentation	4999
+1007	YJM1479	YJM1479 (SACE_YDE)	matrix	SACE_YDE	24. Asian islands	2	homozygous	Palm wine	5835
+1008	YJM1526	YJM1526 (SACE_YDF)	matrix	SACE_YDF	1. Wine/European	2	homozygous	Human, clinical	4427
+1009	YJM1527	YJM1527 (SACE_YDG)	matrix	SACE_YDG	M3. Mosaic region 3	2	homozygous	Fruit	4897
+1010	YJM1549	YJM1549 (SACE_YDH)	matrix	SACE_YDH	M3. Mosaic region 3	2	homozygous	Fermentation	4891
+1011	YJM1573	YJM1573 (SACE_YDI)	matrix	SACE_YDI		2	homozygous	Unknown	6180
+1012	YJM1574	YJM1574 (SACE_YDJ)	matrix	SACE_YDJ	1. Wine/European	2	homozygous	Wine	4632
+1013	YJM1592	YJM1592 (SACE_YDK)	matrix	SACE_YDK	26. Asian fermentation	2	homozygous	Industrial	6280
+1014	YJM1615	YJM1615 (SACE_YDL)	matrix	SACE_YDL	M3. Mosaic region 3	2	homozygous	Human, clinical	5176
+1015	YJM1078	YJM1078 (SACE_YDM)	matrix	SACE_YDM	2. Alpechin	2	homozygous	Human, clinical	4357
+1016	YJM1083	YJM1083 (SACE_YDN)	matrix	SACE_YDN	M3. Mosaic region 3	2	homozygous	Human, clinical	5141
+1017	YJM1129	YJM1129 (SACE_YDO)	matrix	SACE_YDO	1. Wine/European	2	homozygous	Distillery	4398
+1018	2_105	2_105	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/2_105.asm01.collapsed.nuclear_genome.tidy.fa					5086
+1019	74D694	74D694	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/74D694.asm01.HP0.nuclear_genome.tidy.fa					2935
+1020	A20_Citrus	A20_Citrus	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/A20_Citrus.asm01.collapsed.nuclear_genome.tidy.fa					4800
+1021	AGY731	AGY731	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/AGY731.asm01.HP0.nuclear_genome.tidy.fa					6431
+1022	AIS	AIS	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/AIS.asm01.collapsed.nuclear_genome.tidy.fa					4560
+1023	AQG_2a	AQG_2a	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/AQG_2a.asm01.HP0.nuclear_genome.tidy.fa					4614
+1024	BAW6	BAW6	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/BAW6.asm01.HP0.nuclear_genome.tidy.fa					6386
+1025	BC187	BC187	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/BC187.asm01.HP0.nuclear_genome.tidy.fa					4680
+1026	BCE_3a	BCE_3a	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/BCE_3a.asm01.HP0.nuclear_genome.tidy.fa					8123
+1027	BGN_3a	BGN_3a	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/BGN_3a.asm01.HP0.nuclear_genome.tidy.fa					6298
+1028	BJ4	BJ4	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/BJ4.asm01.HP0.nuclear_genome.tidy.fa					5590
+1029	BMC_2a	BMC_2a	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/BMC_2a.asm01.HP0.nuclear_genome.tidy.fa					6297
+1030	CENPK21D	CENPK21D	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/CENPK21D.asm01.HP0.nuclear_genome.tidy.fa					2340
+1031	CENPKL	CENPKL	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/CENPKL.asm01.HP0.nuclear_genome.tidy.fa					2270
+1032	CGH_1	CGH_1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/CGH_1.asm01.collapsed.nuclear_genome.tidy.fa					5755
+1033	CGH_3	CGH_3	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/CGH_3.asm01.collapsed.nuclear_genome.tidy.fa					5689
+1034	CHS_3a	CHS_3a	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/CHS_3a.asm01.HP0.nuclear_genome.tidy.fa					4978
+1035	CICC1445	CICC1445	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/CICC1445.asm01.collapsed.nuclear_genome.tidy.fa					6085
+1036	CQI_4a	CQI_4a	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/CQI_4a.asm01.HP0.nuclear_genome.tidy.fa					5827
+1037	CaliAle	CaliAle	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/CaliAle.asm01.collapsed.nuclear_genome.tidy.fa					5197
+1038	ClassicWitbier	ClassicWitbier	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/ClassicWitbier.asm01.collapsed.nuclear_genome.tidy.fa					5131
+1039	DBVPG6765	DBVPG6765	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/DBVPG6765.asm01.HP0.nuclear_genome.tidy.fa					4449
+1040	DGY1657	DGY1657	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/DGY1657.asm01.HP0.nuclear_genome.tidy.fa					329
+1041	DGY1728	DGY1728	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/DGY1728.asm01.HP0.nuclear_genome.tidy.fa					66
+1042	DGY1734	DGY1734	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/DGY1734.asm01.HP0.nuclear_genome.tidy.fa					211
+1043	DGY1736	DGY1736	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/DGY1736.asm01.HP0.nuclear_genome.tidy.fa					26
+1044	DGY1740	DGY1740	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/DGY1740.asm01.HP0.nuclear_genome.tidy.fa					84
+1045	DGY1744	DGY1744	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/DGY1744.asm01.HP0.nuclear_genome.tidy.fa					52
+1046	DGY1747	DGY1747	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/DGY1747.asm01.HP0.nuclear_genome.tidy.fa					43
+1047	DGY1751	DGY1751	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/DGY1751.asm01.HP0.nuclear_genome.tidy.fa					32
+1048	Dras1	Dras1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Dras1.asm01.collapsed.nuclear_genome.tidy.fa					5445
+1049	EnglishAle2	EnglishAle2	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/EnglishAle2.asm01.collapsed.nuclear_genome.tidy.fa					5120
+1050	GLBRCY223	GLBRCY223	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/GLBRCY223.asm01.HP0.nuclear_genome.tidy.fa					5622
+1051	HJ	HJ	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/HJ.asm01.collapsed.nuclear_genome.tidy.fa					6204
+1052	HLJ1	HLJ1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/HLJ1.asm01.HP0.nuclear_genome.tidy.fa					5504
+1053	HN1	HN1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/HN1.asm01.HP0.nuclear_genome.tidy.fa					5665
+1054	Halvorsgard3	Halvorsgard3	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Halvorsgard3.asm01.collapsed.nuclear_genome.tidy.fa					5501
+1055	I30	I30	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/I30.asm01.HP0.nuclear_genome.tidy.fa					4694
+1056	I329	I329	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/I329.asm01.HP0.nuclear_genome.tidy.fa					4684
+1057	IMDO050523	IMDO050523	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IMDO050523.asm01.collapsed.nuclear_genome.tidy.fa					13
+1058	IMF17	IMF17	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IMF17.asm01.HP0.nuclear_genome.tidy.fa					2287
+1059	IMX2600	IMX2600	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IMX2600.asm01.HP0.nuclear_genome.tidy.fa					2270
+1060	INSC1005	INSC1005	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/INSC1005.asm01.HP0.nuclear_genome.tidy.fa					612
+1061	IR2idA30a	IR2idA30a	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IR2idA30a.asm01.HP0.nuclear_genome.tidy.fa					5601
+1062	IT_CXT_S18	IT_CXT_S18	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_CXT_S18.asm01.HP0.nuclear_genome.tidy.fa					4759
+1063	IT_CXV_S20	IT_CXV_S20	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_CXV_S20.asm01.HP0.nuclear_genome.tidy.fa					4307
+1064	IT_CXW_S21	IT_CXW_S21	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_CXW_S21.asm01.HP0.nuclear_genome.tidy.fa					4444
+1065	IT_CXX_S22	IT_CXX_S22	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_CXX_S22.asm01.HP0.nuclear_genome.tidy.fa					4629
+1066	IT_DBJ_S1	IT_DBJ_S1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_DBJ_S1.asm01.HP0.nuclear_genome.tidy.fa					4740
+1067	IT_DBK_S2	IT_DBK_S2	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_DBK_S2.asm01.HP0.nuclear_genome.tidy.fa					4483
+1068	IT_DBL_S3	IT_DBL_S3	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_DBL_S3.asm01.HP0.nuclear_genome.tidy.fa					4674
+1069	IT_DBM_S4	IT_DBM_S4	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_DBM_S4.asm01.HP0.nuclear_genome.tidy.fa					4640
+1070	IT_DBQ_S8	IT_DBQ_S8	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_DBQ_S8.asm01.HP0.nuclear_genome.tidy.fa					4597
+1071	IT_DBR_S9	IT_DBR_S9	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_DBR_S9.asm01.HP0.nuclear_genome.tidy.fa					4804
+1072	IT_DBU_S12	IT_DBU_S12	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/IT_DBU_S12.asm01.HP0.nuclear_genome.tidy.fa					4430
+1073	JH301	JH301	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/JH301.asm01.collapsed.nuclear_genome.tidy.fa					6049
+1074	JXXY161	JXXY161	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/JXXY161.asm01.HP0.nuclear_genome.tidy.fa					5472
+1075	JeanTalon	JeanTalon	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/JeanTalon.asm01.collapsed.nuclear_genome.tidy.fa					5155
+1076	KCCM51299	KCCM51299	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/KCCM51299.asm01.HP0.nuclear_genome.tidy.fa					6292
+1077	KMLY1_2	KMLY1_2	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/KMLY1_2.asm01.HP0.nuclear_genome.tidy.fa					5993
+1078	KSDYc	KSDYc	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/KSDYc.asm01.collapsed.nuclear_genome.tidy.fa					6635
+1079	KTP	KTP	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/KTP.asm01.HP0.nuclear_genome.tidy.fa					5924
+1080	Kagoshima2	Kagoshima2	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Kagoshima2.asm01.HP0.nuclear_genome.tidy.fa					6369
+1081	L1374	L1374	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/L1374.asm01.HP0.nuclear_genome.tidy.fa					4448
+1082	LL2013_040	LL2013_040	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/LL2013_040.asm01.HP0.nuclear_genome.tidy.fa					6454
+1083	LL2013_054	LL2013_054	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/LL2013_054.asm01.HP0.nuclear_genome.tidy.fa					6688
+1084	LW2591Y	LW2591Y	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/LW2591Y.asm01.HP0.nuclear_genome.tidy.fa					13
+1085	LY0215	LY0215	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/LY0215.asm01.HP0.nuclear_genome.tidy.fa					5744
+1086	LZLJ_A	LZLJ_A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/LZLJ_A.asm01.collapsed.nuclear_genome.tidy.fa					6289
+1087	Marem1	Marem1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Marem1.asm01.collapsed.nuclear_genome.tidy.fa					5351
+1088	Marina1	Marina1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Marina1.asm01.collapsed.nuclear_genome.tidy.fa					4962
+1089	N85	N85	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/N85.asm01.HP0.nuclear_genome.tidy.fa					6216
+1090	PD15A	PD15A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD15A.asm01.HP0.nuclear_genome.tidy.fa					5777
+1091	PD21B	PD21B	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD21B.asm01.HP0.nuclear_genome.tidy.fa					5764
+1092	PD27A	PD27A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD27A.asm01.HP0.nuclear_genome.tidy.fa					5701
+1093	PD28A	PD28A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD28A.asm01.HP0.nuclear_genome.tidy.fa					5799
+1094	PD31A	PD31A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD31A.asm01.HP0.nuclear_genome.tidy.fa					6217
+1095	PD33A	PD33A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD33A.asm01.HP0.nuclear_genome.tidy.fa					6236
+1096	PD35A	PD35A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD35A.asm01.HP0.nuclear_genome.tidy.fa					6161
+1097	PD36A	PD36A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD36A.asm01.HP0.nuclear_genome.tidy.fa					5774
+1098	PD38A	PD38A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD38A.asm01.HP0.nuclear_genome.tidy.fa					6088
+1099	PD40A	PD40A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD40A.asm01.HP0.nuclear_genome.tidy.fa					5715
+1100	PD41A	PD41A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PD41A.asm01.HP0.nuclear_genome.tidy.fa					5769
+1101	PE2_H3	PE2_H3	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PE2_H3.asm01.HP0.nuclear_genome.tidy.fa					5170
+1102	PE2_H4	PE2_H4	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PE2_H4.asm01.HP0.nuclear_genome.tidy.fa					5052
+1103	PY0001	PY0001	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/PY0001.asm01.collapsed.nuclear_genome.tidy.fa					4373
+1104	RG06	RG06	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/RG06.asm01.HP0.nuclear_genome.tidy.fa					5805
+1105	Rakstins1	Rakstins1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Rakstins1.asm01.collapsed.nuclear_genome.tidy.fa					5371
+1106	S10	S10	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/S10.asm01.HP0.nuclear_genome.tidy.fa					5689
+1107	S13	S13	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/S13.asm01.HP0.nuclear_genome.tidy.fa					5730
+1108	S14	S14	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/S14.asm01.HP0.nuclear_genome.tidy.fa					5412
+1109	S16	S16	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/S16.asm01.HP0.nuclear_genome.tidy.fa					5401
+1110	S5	S5	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/S5.asm01.HP0.nuclear_genome.tidy.fa					6162
+1111	S7	S7	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/S7.asm01.HP0.nuclear_genome.tidy.fa					5699
+1112	S799	S799	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/S799.asm01.HP0.nuclear_genome.tidy.fa					7287
+1113	S8	S8	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/S8.asm01.HP0.nuclear_genome.tidy.fa					5762
+1114	SC985	SC985	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/SC985.asm01.collapsed.nuclear_genome.tidy.fa					5648
+1115	SDO2s1	SDO2s1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/SDO2s1.asm01.HP0.nuclear_genome.tidy.fa					6439
+1116	SPA0342	SPA0342	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/SPA0342.asm01.HP0.nuclear_genome.tidy.fa					5567
+1117	SPA0344	SPA0344	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/SPA0344.asm01.HP0.nuclear_genome.tidy.fa					5587
+1118	SR18	SR18	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/SR18.asm01.HP0.nuclear_genome.tidy.fa					6135
+1119	SX2	SX2	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/SX2.asm01.HP0.nuclear_genome.tidy.fa					5660
+1120	SY14	SY14	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/SY14.asm01.HP0.nuclear_genome.tidy.fa					26
+1121	Skare1	Skare1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Skare1.asm01.collapsed.nuclear_genome.tidy.fa					5319
+1122	StordalEbbegarden1	StordalEbbegarden1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/StordalEbbegarden1.asm01.collapsed.nuclear_genome.tidy.fa					5356
+1123	SuomenHiiva	SuomenHiiva	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/SuomenHiiva.asm01.collapsed.nuclear_genome.tidy.fa					4706
+1124	Tinn1	Tinn1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Tinn1.asm01.collapsed.nuclear_genome.tidy.fa					5370
+1125	U1AD1628	U1AD1628	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/U1AD1628.asm01.HP0.nuclear_genome.tidy.fa					2619
+1126	US05	US05	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/US05.asm01.collapsed.nuclear_genome.tidy.fa					5285
+1127	Uberweizen	Uberweizen	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Uberweizen.asm01.collapsed.nuclear_genome.tidy.fa					5176
+1128	Voss1	Voss1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Voss1.asm01.collapsed.nuclear_genome.tidy.fa					5347
+1129	Weizen1	Weizen1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Weizen1.asm01.collapsed.nuclear_genome.tidy.fa					5077
+1130	XI06	XI06	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/XI06.asm01.HP0.nuclear_genome.tidy.fa					6210
+1131	XP	XP	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/XP.asm01.HP0.nuclear_genome.tidy.fa					5869
+1132	XXYS14	XXYS14	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/XXYS14.asm01.HP0.nuclear_genome.tidy.fa					5450
+1133	Y2805	Y2805	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Y2805.asm01.HP0.nuclear_genome.tidy.fa					627
+1134	Y567	Y567	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/Y567.asm01.HP0.nuclear_genome.tidy.fa					5649
+1135	YAF064	YAF064	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/YAF064.asm01.HP0.nuclear_genome.tidy.fa					207
+1136	YAL1	YAL1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/YAL1.asm01.HP0.nuclear_genome.tidy.fa					4675
+1137	YIIc17E5	YIIc17E5	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/YIIc17E5.asm01.HP0.nuclear_genome.tidy.fa					5103
+1138	YJM311	YJM311	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/YJM311.asm01.HP1.nuclear_genome.tidy.fa					5456
+1139	YPS606	YPS606	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/YPS606.asm01.HP0.nuclear_genome.tidy.fa					6275
+1140	ZP568s1	ZP568s1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/ZP568s1.asm01.HP0.nuclear_genome.tidy.fa					4271
+1141	ZP655_1A	ZP655_1A	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/ZP655_1A.asm01.HP0.nuclear_genome.tidy.fa					5880
+1142	biocodex	biocodex	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/biocodex.asm01.HP0.nuclear_genome.tidy.fa					4382
+1143	unique28	unique28	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/genome_references/ScRAPdb_20240610_nuclear_genome/unique28.asm01.HP0.nuclear_genome.tidy.fa					4397
+1144	AWRI1631	AWRI1631	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/AWRI1631/AWRI1631_AWRI_2008_ABSV01000000/AWRI1631_AWRI_2008_ABSV01000000.fsa.gz					1981
+1145	AWRI796	AWRI796	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/AWRI796/AWRI796_AWRI_2010_ADVS01000000/AWRI796_AWRI_2010_ADVS01000000.fsa.gz					4578
+1146	CEN.PK113-7D	CEN.PK113-7D	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/CEN.PK/CEN.PK113-7D/CEN.PK113-7D_Delft_2012_AEHG00000000/CEN.PK113-7D_Delft_2012_AEHG00000000.fsa.gz					2191
+1147	CEN.PK2-1Ca	CEN.PK2-1Ca	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/CEN.PK/CEN.PK2-1Ca/CEN.PK2-1Ca_SGD_2015_JRIV01000000/CEN.PK2-1Ca_SGD_2015_JRIV01000000.fsa.gz					2250
+1148	CLIB215	CLIB215	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/CLIB215/CLIB215_WashU_2010_AEWP01000000/CLIB215_WashU_2010_AEWP01000000.fsa.gz					3066
+1149	CLIB324	CLIB324	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/CLIB324/CLIB324_WashU_2011_AEWM01000000/CLIB324_WashU_2011_AEWM01000000.fsa.gz					568
+1150	D273-10B	D273-10B	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/D273-10B/D273-10B_SGD_2015_JRIY00000000/D273-10B_SGD_2015_JRIY00000000.fsa.gz					2744
+1151	EC1118	EC1118	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/EC1118/EC1118_Genoscope_2009_PRJEA37863/EC1118_Genoscope_2009_PRJEA37863.fsa.gz					4794
+1152	EC9-8	EC9-8	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/EC9-8/EC9-8_ASinica_2011_AGSJ01000000/EC9-8_ASinica_2011_AGSJ01000000.fsa.gz					3704
+1153	FL100	FL100	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/FL100/FL100_SGD_2015_JRIT00000000/FL100_SGD_2015_JRIT00000000.fsa.gz					1935
+1154	FostersB	FostersB	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/FostersB/FostersB_AWRI_2010_AEHH01000000/FostersB_AWRI_2010_AEHH01000000.fsa.gz					3954
+1155	FostersO	FostersO	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/FostersO/FostersO_AWRI_2010_AEEZ01000000/FostersO_AWRI_2010_AEEZ01000000.fsa.gz					4054
+1156	JAY291	JAY291	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/JAY291/JAY291_Duke_2009_ACFL01000000/JAY291_Duke_2009_ACFL01000000.fsa.gz					4978
+1157	JK9-3d	JK9-3d	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/JK9-3d/JK9-3d_SGD_2015_JRIZ00000000/JK9-3d_SGD_2015_JRIZ00000000.fsa.gz					1206
+1158	K11	K11	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/K11/K11_Stanford_2014_JRIJ00000000/K11_Stanford_2014_JRIJ00000000.fsa.gz					6110
+1159	Kyokai7	Kyokai7	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/Kyokai7/Kyokai7_NRIB_2011_BABQ01000000/Kyokai7_NRIB_2011_BABQ01000000.fsa.gz					6510
+1160	LalvinQA23	LalvinQA23	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/LalvinQA23/LalvinQA23_AWRI_2011_ADVV01000000/LalvinQA23_AWRI_2011_ADVV01000000.fsa.gz					3797
+1161	RedStar	RedStar	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/RedStar/RedStar_Stanford_2014_JRIL00000000/RedStar_Stanford_2014_JRIL00000000.fsa.gz					5120
+1162	SEY6210	SEY6210	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/SEY6210/SEY6210_SGD_2015_JRIW00000000/SEY6210_SGD_2015_JRIW00000000.fsa.gz					757
+1163	Sigma1278b	Sigma1278b	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/Sigma1278b/Sigma1278b_MIT_2009_ACVY01000000/Sigma1278b_MIT_2009_ACVY01000000.fsa.gz					3402
+1164	Sigma1278b-10560-6B	Sigma1278b-10560-6B	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/Sigma1278b/Sigma1278b-10560-6B_SGD_JRIQ00000000/Sigma1278b-10560-6B_SGD_2015_JRIQ00000000.fsa.gz					3270
+1165	UWOPS05-217-3	UWOPS05-217-3	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/UWOPS05_217_3/UWOPS05-217-3_Stanford_2014_JRIM00000000/UWOPS05-217-3_Stanford_2014_JRIM00000000.fsa.gz					3764
+1166	VL3	VL3	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/VL3/VL3_AWRI_2011_AEJS01000000/VL3_AWRI_2011_AEJS01000000.fsa.gz					4080
+1167	Vin13	Vin13	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/Vin13/Vin13_AWRI_2010_ADXC01000000/Vin13_AWRI_2010_ADXC01000000.fsa.gz					3790
+1168	YJM789	YJM789	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/YJM789/YJM789_Stanford_2007_AAFW02000000/YJM789_Stanford_2007_AAFW02000000.fsa.gz					5497
+1169	YS9	YS9	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/YS9/YS9_Stanford_2014_JRIB00000000/YS9_Stanford_2014_JRIB00000000.fsa.gz					4522
+1170	ZTW1	ZTW1	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/ZTW1/ZTW1_Zhejiang_2012_AMDD00000000/ZTW1_Zhejiang_2012_AMDD00000000.fsa.gz					5961
+1171	g833-1B	g833-1B	assembly	/mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/dataset/sgd_strains/g833-1B/g833-1B_SGD_2015_JRIH00000000/g833-1B_SGD_2015_JRIH00000000.fsa					5869

@@ -1,6 +1,7 @@
 // The render function only creates the html file with the rmardown
 // Inputs:
 //      template_rmd: rmardown template file used to create the html (file path is defined in config.nextflow)
+//      db_summary_files: strain identity database files (strains, SNP panel, native markers, tool elements) summarized in the "Database used" section
 // Outputs:
 //      "report.html": finalized html report for a specific run
 //      "print_report.log": will contain any error or warning messages produced by rmardown::render
@@ -20,6 +21,7 @@ process Print_report{
     val nb_feat
     path final_tsv_ch
     path coverage_ch
+    path db_summary_files, stageAs: 'db_summary/*' // database files summarized in the report, or a placeholder
     path final_warning_ch
 
     output:
