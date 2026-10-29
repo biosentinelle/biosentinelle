@@ -119,6 +119,27 @@ def centre_variant(ref, alts, max_indel):
     return abs(len(ref) - len(alt)) <= max_indel and max(len(ref), len(alt)) <= SHORT
 
 
+def left_align(sequence, pos, ref, alt):
+    """Left-aligned, parsimonious form of a variant (pos 1-based), so that one
+    indel has one key whichever position its source wrote it at. A SNV comes
+    back unchanged."""
+    if len(ref) == len(alt):
+        return pos, ref, alt
+    while True:
+        changed = False
+        if ref and alt and ref[-1] == alt[-1]:
+            ref, alt, changed = ref[:-1], alt[:-1], True
+        if (not ref or not alt) and pos > 1:
+            pos -= 1
+            base = sequence[pos - 1]
+            ref, alt, changed = base + ref, base + alt, True
+        if not changed:
+            break
+    while len(ref) > 1 and len(alt) > 1 and ref[0] == alt[0]:
+        ref, alt, pos = ref[1:], alt[1:], pos + 1
+    return pos, ref, alt
+
+
 def centred_kmer(haplotype, flank, allele_length, k):
     """The k-mer of a haplotype centred on its allele, which starts at offset
     flank. For a SNV it is the whole haplotype; for an indel allele longer
@@ -253,6 +274,10 @@ def main():
     parser.add_argument("--max-indel", type=int, default=20,
                         help="longest indel, in bases gained or lost, kept as a site; "
                              "0 for SNVs only")
+    parser.add_argument("--trace-strain", metavar="STRAIN",
+                        help="write, for every variant this strain carries, the step "
+                             "that kept or dropped it, to --trace-out")
+    parser.add_argument("--trace-out", default="panel_trace.tsv")
     parser.add_argument("--max-het-neighbours", type=int, default=2)
     parser.add_argument("--max-homopolymer", type=int, default=6)
     parser.add_argument("--min-distinct-bases", type=int, default=3)
@@ -291,6 +316,12 @@ def main():
     if not n_strains:
         sys.exit("no strain has variants")
     max_unknown = int(args.max_unknown_fraction * n_strains)
+    trace, trace_out = None, []
+    if args.trace_strain:
+        trace = next((i for i, row in enumerate(strains)
+                      if row["strain"] == args.trace_strain), None)
+        if trace is None:
+            parser.error("--trace-strain %s is not in the catalogue" % args.trace_strain)
     sys.stderr.write("%d strains: %d from the matrix, %d from their own VCF\n"
                      % (n_strains, len(code_index), len(single_index)))
 
@@ -402,22 +433,45 @@ def main():
 
         # Candidate centres: biallelic SNVs and short indels from the matrix,
         # plus single-strain ones at positions the matrix does not list.
+        # An indel is keyed by its left-aligned form: the matrix and an
+        # assembly VCF can write one event at two positions, which would make
+        # two sites with the same probes, both then lost as a collision.
         centres = {}
         for index, record in enumerate(records.short):
             if centre_variant(record[1], record[2], args.max_indel):
-                centres.setdefault(record[0], []).append(("m", index, record))
+                norm = left_align(sequence, record[0], record[1], record[2][0])
+                centres.setdefault(norm[0], []).append(("m", index, record, norm))
         for strain, recs in single_records.items():
             for record in recs.short:
                 if centre_variant(record[1], record[2], args.max_indel):
-                    centres.setdefault(record[0], []).append(("s", strain, record))
+                    norm = left_align(sequence, record[0], record[1], record[2][0])
+                    centres.setdefault(norm[0], []).append(("s", strain, record, norm))
 
         for pos in sorted(centres):
             entries = centres[pos]
-            alleles_here = {(entry[2][1], entry[2][2][0]) for entry in entries}
+            alleles_here = {(entry[3][1], entry[3][2]) for entry in entries}
             stats["candidates"] += 1
+            traced = trace is not None and any(
+                trace in (genotypes(contig, owner, record) if kind == "m" else record[3])
+                for kind, owner, record, _ in entries)
+
+            def reject(reason):
+                stats[reason] += 1
+                if traced:
+                    trace_out.append((contig, pos, reason))
+
             if len(alleles_here) != 1:
+                if traced:
+                    trace_out.append((contig, pos, "multiallelic"))
                 continue  # two different alternative alleles: not a biallelic site
             ref, alt = alleles_here.pop()
+
+            def same_event(record):
+                if len(record[2]) != 1:
+                    return False
+                if len(record[1]) == len(record[2][0]):
+                    return record[0] == pos and record[1] == ref and record[2][0] == alt
+                return left_align(sequence, record[0], record[1], record[2][0]) == (pos, ref, alt)
             indel = len(ref) != len(alt)
             # The reference segment: the centre allele and flank bases on each
             # side. For a SNV it is the k-mer window itself; for an indel it is
@@ -425,11 +479,11 @@ def main():
             last = pos + len(ref) - 1
             start, end = pos - 1 - flank, last + flank
             if start < 0 or end > len(sequence):
-                stats["edge"] += 1
+                reject("edge")
                 continue
             window = sequence[start:end]
             if window[flank:flank + len(ref)] != ref:
-                stats["ref_mismatch"] += 1
+                reject("ref_mismatch")
                 continue
             ref_probe = centred_kmer(window, flank, len(ref), args.k)
             alt_haplotype = window[:flank] + alt + window[flank + len(ref):]
@@ -437,7 +491,7 @@ def main():
             if "N" in window or any(low_complexity(probe, args.max_homopolymer,
                                                    args.min_distinct_bases)
                                     for probe in (ref_probe, alt_probe)):
-                stats["low_complexity"] += 1
+                reject("low_complexity")
                 continue
             # An indel in a tandem repeat shifts the repeat rather than
             # changing its sequence: the reference probe can then still be
@@ -445,12 +499,12 @@ def main():
             # apart. The alternative probe is checked against the whole
             # reference later, which covers the other direction.
             if indel and (ref_probe in alt_haplotype or revcomp(ref_probe) in alt_haplotype):
-                stats["indel_in_repeat"] += 1
+                reject("indel_in_repeat")
                 continue
 
             # Centre states from the centre records.
             state = {}
-            for kind, owner, record in entries:
+            for kind, owner, record, _ in entries:
                 gts = genotypes(contig, owner, record) if kind == "m" else record[3]
                 for strain, gt in gts.items():
                     alleles, missing = parse_gt(gt)
@@ -464,7 +518,7 @@ def main():
             rare = carriers <= args.rare_max_carriers
             if not rare:
                 if pos - last_common < common_spacing:
-                    stats["thinned_common"] += 1
+                    reject("thinned_common")
                     continue
                 last_common = pos
 
@@ -480,12 +534,12 @@ def main():
             # centre variant itself, from the matrix and from each single strain.
             neighbours = []
             for index, record in records.overlapping(pos - flank, last + flank):
-                if record[0] == pos and record[1] == ref and record[2] == [alt]:
+                if same_event(record):
                     continue
                 neighbours.append((record, genotypes(contig, index, record)))
             for strain, recs in single_records.items():
                 for _, record in recs.overlapping(pos - flank, last + flank):
-                    if record[0] == pos and record[1] == ref and record[2] == [alt]:
+                    if same_event(record):
                         continue
                     neighbours.append((record, record[3]))
 
@@ -521,7 +575,7 @@ def main():
 
             unknown = sum(1 for s in state.values() if s == "U")
             if unknown > max_unknown:
-                stats["too_unknown"] += 1
+                reject("too_unknown")
                 continue
 
             # k-mers: the generic pair, then one per strain haplotype that
@@ -551,23 +605,24 @@ def main():
             if ambiguous:
                 # one strain's haplotype k-mer is another's of the other
                 # allele: the site cannot be read
-                stats["ambiguous"] += 1
+                reject("ambiguous")
                 continue
 
             alt_strains = sorted(s for s, v in state.items() if v == "A")
             het_strains = sorted(s for s, v in state.items() if v == "H")
             unknown_strains = sorted(s for s, v in state.items() if v == "U")
             if not alt_strains and not het_strains:
-                stats["uninformative"] += 1
+                reject("uninformative")
                 continue
             if len(alt_strains) + len(unknown_strains) >= n_strains:
-                stats["uninformative"] += 1
+                reject("uninformative")
                 continue
             sites.append({"chrom": contig, "pos": pos, "ref": ref, "alt": alt,
                           "alt_strains": alt_strains, "het_strains": het_strains,
                           "unknown_strains": unknown_strains, "kmers": kmers,
                           "ref_kmer": canonical(ref_probe), "indel": indel,
-                          "rare": rare, "carriers": len(alt_strains) + len(het_strains)})
+                          "rare": rare, "carriers": len(alt_strains) + len(het_strains),
+                          "traced": traced})
         parsed_cache.clear()
         sys.stderr.write("%s: %d candidate sites so far\n" % (contig, len(sites)))
 
@@ -598,14 +653,25 @@ def main():
         if wanted.get(ref_kmer, 0) != 1 or any(
                 wanted.get(kmer, 0) for kmer in site["kmers"] if kmer != ref_kmer):
             dropped_repeat += 1
+            if site["traced"]:
+                trace_out.append((site["chrom"], site["pos"], "repeat"))
             continue
         for kmer in site["kmers"]:
-            if kmer in owner and owner[kmer] != index:
-                collided.add(owner[kmer])
-                collided.add(index)
-            owner[kmer] = index
+            owner.setdefault(kmer, set()).add(index)
         survivors.append(index)
+    # A short deletion's reference probe is centred on a deleted base, so it
+    # is also the reference probe of a SNV at that base. The SNV is the
+    # cleaner site and is kept; only the indels sharing its k-mer go. Any
+    # other shared k-mer costs every site holding it.
+    for holders in owner.values():
+        if len(holders) < 2:
+            continue
+        snvs = [index for index in holders if not sites[index]["indel"]]
+        collided.update(index for index in holders
+                        if len(snvs) != 1 or sites[index]["indel"])
     survivors = [index for index in survivors if index not in collided]
+    trace_out.extend((sites[i]["chrom"], sites[i]["pos"], "kmer_collision")
+                     for i in collided if sites[i]["traced"])
 
     # ------------------------------------------------------------ selection
     def spread(site):
@@ -627,6 +693,15 @@ def main():
         common = [common[int(i * step)] for i in range(args.common_sites)]
     keep.update(common)
     kept = sorted(keep, key=lambda i: (names.index(sites[i]["chrom"]), sites[i]["pos"]))
+    trace_out.extend((sites[i]["chrom"], sites[i]["pos"],
+                      "kept" if i in keep else "not_selected")
+                     for i in survivors if sites[i]["traced"])
+    if trace is not None:
+        with open(args.trace_out, "w", newline="") as handle:
+            handle.write("chrom\tpos\tfate\n")
+            for row in sorted(trace_out, key=lambda r: (names.index(r[0]) if r[0] in names
+                                                        else -1, r[1])):
+                handle.write("%s\t%d\t%s\n" % row)
 
     # ---------------------------------------------------------------- write
     for path in (args.out_sites, args.out_kmers, args.out_strains):

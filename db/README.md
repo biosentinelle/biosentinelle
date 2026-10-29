@@ -302,6 +302,29 @@ no-call, more than two heterozygous neighbours) is unknown at that site.
 Every k-mer must be absent from the reference genome except the reference
 window itself, which must occur once.
 
+### Indels
+
+Short indels, up to `--max-indel` (20) bases gained or lost, are sites too.
+Each is left-aligned first, so the matrix and an assembly writing one event at
+two positions give one site. The reference and alternative haplotypes are
+written out with the allele between 10 bases on each side, and each probe is
+the k-mer of its haplotype centred on the allele: the junction of a deletion,
+the inserted bases of an insertion. k stays 21, so 35 bp reads still carry the
+probes. An indel that only shifts a tandem repeat leaves the reference probe
+readable in the alternative allele and is dropped.
+
+A short deletion's reference probe is centred on a deleted base, which makes
+it the reference probe of a SNV at that base as well. When a k-mer is shared
+that way, the SNV is kept and the indel dropped; any other shared k-mer drops
+every site holding it.
+
+`--trace-strain` writes, for every variant one strain carries, the step that
+kept or dropped it. For BY4742's 47 variants: 4 kept, 20 carried by more than
+20 strains and thinned as common sites, 13 unknown in more than a tenth of
+the strains, 7 at positions where other strains carry a different
+alternative allele, 2 low complexity. None is lost to indels or collisions:
+what limits BY4742 is how little separates it from the rest of its family.
+
 ### Which sites are kept
 
 Two clonal relatives differ only at variants rare in the population, often
@@ -374,28 +397,37 @@ the reference. Keep k well below the read length.
 
 ## Current yeast panel
 
-Built 2026-10-27 at k=21: **1,172 strains, 261,469 sites, 1,468,139 k-mers**
-(231,469 rare sites, kept per strain, and 30,000 common ones). 1,011 strains
+Built 2026-10-28 at k=21: **1,172 strains, 264,652 sites (251,660 SNVs and
+12,992 indels), 1,485,095 k-mers** (234,652 rare sites, kept per strain, and
+30,000 common ones). 1,011 strains
 come from the 1011 matrix, 154 from assemblies (ScRAPdb and SGD), 7 from reads
 (the S288C family). One pair of strains has identical expected alleles at every
 kept site, IMDO050523 and LW2591Y, two ScRAPdb assemblies.
 
-What the build dropped, of 1,739,311 candidate SNVs: 208,406 common sites
-thinned by distance, 105,813 unknown in more than a tenth of the strains,
-41,870 low complexity, 20,090 whose k-mers are repeated in the reference,
-14,721 uninformative, 360 with a k-mer shared with another site.
+What the build dropped, of 1,896,949 candidate SNVs and indels: 211,528
+common sites thinned by distance, 126,068 unknown in more than a tenth of the
+strains, 61,797 low complexity, 21,672 whose k-mers are repeated in the
+reference, 25,149 uninformative, 5,934 with a k-mer shared with another
+site, 1,934 indels that only shift a repeat, 28 whose strain haplotypes give
+one k-mer to both alleles.
+
+Against the SNV-only build of 2026-10-27 (261,469 sites), the indels add
+specific sites to 338 strains and take some from 115; S288C, BY4741 and
+FY1679 gain one each, BY4742 stays at none. Since the per-strain quota and the
+common sites are shared with indels, most strains carry a few dozen fewer
+sites in all (median 56 fewer).
 
 Read strains, after the agreement between runs (`strains/reads/`):
 
 | strain | runs | variants kept | dropped, runs disagree | panel sites carried |
 | :--- | :--- | :--- | :--- | :--- |
-| S288C | 2 | 155 | 1,198 | 13 |
-| FY4 | 2 | 135 | 146 | 9 |
-| BY4741 | 2 | 146 | 284 | 5 |
+| S288C | 2 | 155 | 1,198 | 15 |
+| FY4 | 2 | 135 | 146 | 10 |
+| BY4741 | 2 | 146 | 284 | 7 |
 | BY4742 | 2 | 46 | 721 | 4 |
-| X2180-1A | 1 | 198 | - | 18 |
-| FY1679 | 1 | 423 | - | 15 |
-| YPH499 | 2 | 4,686 | 897 | 668 |
+| X2180-1A | 1 | 198 | - | 19 |
+| FY1679 | 1 | 423 | - | 18 |
+| YPH499 | 2 | 4,686 | 897 | 636 |
 
 ### Checked against genomes it was not built from
 

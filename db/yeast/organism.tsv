@@ -5,9 +5,9 @@ reference_strain	S288C
 reference_source	SGD R64-1-1, dataset/genome_references/test/S288C_reference_sequence_R64-1-1_20110203.fsa
 tool_db_source	dataset/features_test, yeast integrated individual feature FASTA package v1
 tool_elements	31 unique, 26 scorable, 5 under 100 bp
-panel_built	yes, 2026-10-27
+panel_built	yes, 2026-10-28
 panel_kmer_size	21
-panel_sites	261469
+panel_sites	264652 (251660 SNVs, 12992 indels)
 panel_strains	1172: 1011 from the 1011 Yeast Genomes matrix (Peter et al. 2018), 154 from assemblies (ScRAPdb, SGD), 7 from reads (S288C, FY4, FY1679, BY4741, BY4742, X2180-1A, YPH499); see strains/strains.tsv
 variants_vs_reference	S288C family, after agreement between runs: S288C 155, FY4 135, BY4741 146, BY4742 46, X2180-1A 198, FY1679 423, YPH499 4686
 notes	Each strain carries its own k-mers, rebuilt from its own alleles around every site. Checked on 22 long-read assemblies of strains the panel takes from another source: 15 ranked first, 21 first or within the reported tie set; the miss is a DBVPG6044 stock disagreement between ScRAPdb and the 1011 matrix (db/README.md).
