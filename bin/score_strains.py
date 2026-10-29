@@ -468,49 +468,104 @@ def expected_markers(strain, strain_rows, markers, documented_path, catalogue_pa
     return out
 
 
-def resolve(panel, obs, results, mating_doc, tie_log_ratio, min_separating):
-    """The strain call, from the SNP panel alone.
+def resolve(panel, obs, results, mating, mating_doc, expect_markers, tie_log_ratio,
+            min_separating):
+    """The strain call: the SNP panel first, then, when it hesitates, the
+    mating type and the native markers.
 
-    The call is the first strain of the SNP ranking, however small its lead:
-    close relatives (S288C, FY4, BY4741, BY4742, ...) differ at a few dozen
-    sites or fewer, and those few sites are what separates them. The strains
-    within reach of the best one, fewer than min_separating called sites
-    apart or within tie_log_ratio of its likelihood (about two net
-    mismatches at ln 1000), are listed with the size of the lead, so that a
-    narrow call is seen as such. The mating type and the native markers are
-    never used here: they are measured apart and only said to agree or not
-    with the strain called (check_mating, expected_markers).
+    Close relatives (S288C, FY4, BY4741, BY4742, ...) differ at a few dozen
+    panel sites or none: BY4741 and BY4742 are sister segregants of one cross
+    and differ mainly by MATa met15D0 against MATalpha lys2D0, whole-gene
+    deletions and a mating type that no SNP site sees. A strain is close to
+    the best one when fewer than min_separating called sites separate them,
+    or when its likelihood is within tie_log_ratio of the best (about two net
+    mismatches at ln 1000). With no close strain, the call is the first of
+    the SNP ranking. Otherwise each candidate (the best and the close
+    strains) is compared with the measured mating type and native markers,
+    from its documented genotype or, without one, from the marker alleles of
+    its assembly (expect_markers). A candidate contradicted by any of them is
+    ruled out; among the others, the one agreeing at the most points is
+    called, the SNP ranking breaking the ties. When every candidate is
+    contradicted, or none can be compared, the call stays the first of the
+    SNP ranking.
     """
     best = results[0]
-    close = []
+    candidates = [(best, 0, 0.0)]
     for result in results[1:60]:
         separating = discriminating(panel, obs, best["strain_index"], result["strain_index"])
         gap = best["log_likelihood"] - result["log_likelihood"]
         if separating < min_separating or gap <= tie_log_ratio:
-            close.append({"strain": result["strain_id"], "rank": result["rank"],
-                          "separating_sites": separating,
-                          "mismatching": result["sites_mismatching"],
-                          "log_likelihood_gap": round(gap, 2),
-                          "documented_mating": mating_doc.get(result["strain_id"], "")})
+            candidates.append((result, separating, gap))
+    if len(candidates) == 1:
+        return {"call": best["strain_id"], "method": "snp", "candidates": [],
+                "summary": "%s, first of the SNP ranking, with no other strain close to it"
+                           % best["strain_id"],
+                "explanation": []}
+
+    rows = []
+    for result, separating, gap in candidates:
+        strain = result["strain_id"]
+        mating_row = check_mating(mating, mating_doc, strain)
+        expected = expect_markers(strain)
+        agree, against = [], []
+        if mating_row["agreement"] == "agree":
+            agree.append("mating type %s" % mating_row["measured"])
+        elif mating_row["agreement"] == "disagree":
+            against.append("mating type %s, documented %s"
+                           % (mating_row["measured"], mating_row["documented"]))
+        for gene in expected.get("genes", []):
+            if gene["agree"] is True:
+                agree.append("%s %s" % (gene["gene"], gene["observed"]))
+            elif gene["agree"] is False:
+                allele = gene["expected_allele"]
+                against.append("%s %s, expected %s%s" % (
+                    gene["gene"], gene["observed"], gene["expected"],
+                    " (%s)" % allele if allele and allele not in (gene["gene"].upper(),
+                                                                  "reference") else ""))
+        rows.append({"strain": strain, "rank": result["rank"],
+                     "separating_sites": separating,
+                     "mismatching": result["sites_mismatching"],
+                     "log_likelihood_gap": round(gap, 2),
+                     "documented_mating": mating_doc.get(strain, ""),
+                     "marker_source": expected.get("source", ""),
+                     "agree": agree, "disagree": against})
+
+    kept = sorted((row for row in rows if not row["disagree"]),
+                  key=lambda row: (-len(row["agree"]), row["rank"]))
+    names = ", ".join(row["strain"] for row in rows)
     explanation = []
-    if close:
-        nearest = close[0]
-        # With no separating site, the lead comes from sites where the
-        # second strain is known to differ from the sample and the first one
-        # is unknown, scored by its clade: evidence against the second
-        # strain rather than for the first.
-        indirect = ("" if nearest["separating_sites"] else
-                    ": no site where both genotypes are known separates them, the lead comes "
-                    "from sites where %s is known to carry another allele than the sample and "
-                    "the genotype of %s is unknown" % (nearest["strain"], best["strain_id"]))
-        explanation.append(
-            "%s is called from the SNP panel alone. Its lead is narrow: %s, second, is "
-            "%d called site(s) apart (%d mismatch(es) against %d for %s, log-likelihood "
-            "%.1f lower)%s. %d strain(s) are that close, see the strain ranking below"
-            % (best["strain_id"], nearest["strain"], nearest["separating_sites"],
-               nearest["mismatching"], best["sites_mismatching"], best["strain_id"],
-               nearest["log_likelihood_gap"], indirect, len(close)))
-    return {"call": best["strain_id"], "close": close, "explanation": explanation}
+    if kept and kept[0]["agree"]:
+        call, method = kept[0]["strain"], "snp+markers"
+        tied = [row["strain"] for row in kept[1:] if len(row["agree"]) == len(kept[0]["agree"])]
+        summary = ("the SNP panel does not separate %s; the mating type and the native "
+                   "markers point to %s (%s)" % (names, call, ", ".join(kept[0]["agree"])))
+        if tied:
+            summary += ("; %s agree(s) as well, and %s is called as first of the SNP ranking"
+                        % (", ".join(tied), call))
+            explanation.append("%s and %s are separated neither by the SNP panel nor by the "
+                               "mating type and the native markers" % (call, ", ".join(tied)))
+    else:
+        call, method = best["strain_id"], "snp"
+        if kept:
+            ruled_out = [row["strain"] for row in rows if row["disagree"]]
+            summary = ("the SNP panel does not separate %s%s; %s ha%s no documented mating "
+                       "type or markers to compare with, %s is kept as first of the SNP ranking"
+                       % (names,
+                          ", the mating type or the native markers rule out %s"
+                          % ", ".join(ruled_out) if ruled_out else "",
+                          ", ".join(row["strain"] for row in kept),
+                          "s" if len(kept) == 1 else "ve", call))
+        else:
+            summary = ("the SNP panel does not separate %s, and every one of them contradicts "
+                       "the mating type or the native markers; %s is kept as first of the SNP "
+                       "ranking. The sample may be a derivative of it with another mating type "
+                       "or other markers, or a strain outside the panel" % (names, call))
+        explanation.append(summary)
+    for row in rows:
+        row["outcome"] = ("called" if row["strain"] == call else
+                          "ruled out" if row["disagree"] else "not excluded")
+    return {"call": call, "method": method, "candidates": rows, "summary": summary,
+            "explanation": explanation}
 
 
 def check_mating(mating, mating_doc, strain):
@@ -591,16 +646,16 @@ def main():
     parser.add_argument("--documented", help="documented_genotypes.tsv")
     parser.add_argument("--marker-catalogue",
                         help="marker_alleles.tsv: the marker alleles of each assembly, "
-                             "expected in the strain called when it has no documented "
-                             "genotype")
+                             "expected in a strain that has no documented genotype")
     parser.add_argument("--aliases",
                         help="aliases.tsv: catalogue names of strains the panel names "
                              "otherwise, used to find the expected marker status of the "
                              "best strain")
     parser.add_argument("--tie-log-ratio", type=float, default=math.log(1000),
                         help="strains whose log likelihood is within this of the best "
-                             "are listed as close to the call, which stays the best "
-                             "strain (default ln 1000, about two net mismatching sites)")
+                             "are not separated by the SNP panel and are settled by the "
+                             "mating type and the native markers (default ln 1000, about "
+                             "two net mismatching sites)")
     parser.add_argument("--calls", required=True, help="per-site allele calls TSV")
     parser.add_argument("--tools", help="tool element manifest TSV")
     parser.add_argument("--tool-coverage", help="per-element coverage TSV")
@@ -726,7 +781,7 @@ def main():
             best["discriminating_sites_vs_next"] = separating
             best["runner_up"] = runner_up["strain_id"]
             # Fewer separating sites than the threshold is handled by
-            # resolve(), which lists the strains close to the call.
+            # resolve(), which settles them by mating type and markers.
             if separating >= args.min_discriminating_sites and runner_up["probability"] > 0.01:
                 warnings.append(
                     "%s and %s are not cleanly separated by this panel"
@@ -768,29 +823,31 @@ def main():
     mating = (mating_type(args.mating, args.min_mating_kmers, args.seq_kind) if args.mating
               else {"call": "unknown", "reason": "not measured"})
     mating_doc = documented_mating(args.documented) if args.documented else {}
-    resolution = resolve(panel, obs, results, mating_doc,
+
+    def expect_markers(strain):
+        return (expected_markers(strain, panel.strains, markers, args.documented,
+                                 args.marker_catalogue, args.aliases)
+                if markers.get("markers") else {})
+
+    resolution = resolve(panel, obs, results, mating, mating_doc, expect_markers,
                          args.tie_log_ratio, args.min_discriminating_sites)
     warnings.extend(resolution["explanation"])
 
-    # The mating type, measured apart from the SNPs, set beside the one
-    # documented for the strain they call. It never changes the call.
+    # The mating type set beside the one documented for the strain called.
     mating_check = check_mating(mating, mating_doc, resolution["call"])
     if mating_check["agreement"] == "disagree":
-        warnings.append("mating type disagrees with %s, called from the SNP panel: measured %s, "
+        warnings.append("mating type disagrees with %s, the strain called: measured %s, "
                         "documented %s%s" % (
                             mating_check["strain"], mating_check["measured"],
                             mating_check["documented"],
                             ". " + mating_check["reason"] if mating_check.get("reason") else ""))
 
-    # The markers expected from the first strain of the SNP ranking: a second,
-    # independent reading of the sample, set beside the first.
-    markers_expected = expected_markers(results[0]["strain_id"], panel.strains, markers,
-                                        args.documented, args.marker_catalogue,
-                                        args.aliases) if markers.get("markers") else {}
+    # The markers expected from the strain called, set beside those measured.
+    markers_expected = expect_markers(resolution["call"])
     if markers_expected.get("compared") and \
             markers_expected["agree"] < markers_expected["compared"]:
         warnings.append(
-            "native markers differ from those expected of %s, first in the SNP ranking "
+            "native markers differ from those expected of %s, the strain called "
             "(%s), at %d of %d genes: %s" % (
                 markers_expected["strain"], markers_expected["source"],
                 markers_expected["compared"] - markers_expected["agree"],
@@ -837,9 +894,10 @@ def main():
 
     if best:
         verdict = "UNASSIGNED" if unassigned else resolution["call"]
-        print("%s: %s (SNP panel, p=%.3f, concordance=%.1f%%, %d/%d sites called; "
-              "mating type %s, %s with %s)" %
-              (args.sample, verdict, best["probability"],
+        print("%s: %s (by %s; SNP panel best %s, p=%.3f, concordance=%.1f%%, %d/%d sites "
+              "called; mating type %s, %s with %s)" %
+              (args.sample, verdict, resolution["method"], best["strain_id"],
+               best["probability"],
                100 * best["concordance"], best["sites_called"], len(sites),
                mating.get("call", "unknown"), mating_check["agreement"],
                mating_check["documented"]))

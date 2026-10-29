@@ -162,8 +162,8 @@ HELP = {
                    "It is <b>not</b> the probability that the sample <i>is</i> this strain, nor a "
                    "measure of fit: one extra mismatch divides the odds by about 100, so a strain "
                    "differing by a few sites only already falls to ~0 %. How well the sample fits "
-                   "is the concordance. Strains only a few sites away from the call are listed in "
-                   "the warnings.",
+                   "is the concordance. Strains only a few sites away from the best one are listed in "
+                   "the Decision, with how the mating type and the native markers settle them.",
     "concordance": "<b>Concordance = matching / called.</b> Fraction of the called sites where the "
                    "sample carries the allele expected for this strain. A sample that really is "
                    "this strain gives close to 100 % (only sequencing errors disagree). If the "
@@ -228,8 +228,21 @@ HELP = {
                       "is intact (or a known functional form), inactive when it is lost "
                       "(deletion, frameshift, stop, or a known loss-of-function allele).",
     "conclusion": "Whether the status measured in the sample (status column) is the one expected "
-                  "for the first strain of the SNP ranking: agrees, differs, or not compared when "
-                  "either status is unknown.",
+                  "for the strain called: agrees, differs, or not compared when either status is "
+                  "unknown.",
+    "decided_by": "<b>The SNP panel first.</b> The strain called is the first of the SNP ranking, "
+                  "unless other strains are too close to it: fewer than 200 called sites separate "
+                  "them (min_discriminating_sites), or their log-likelihood is within ln 1000 "
+                  "(about two net mismatches) of the best. Close relatives such as BY4741 and "
+                  "BY4742 differ at a few panel sites or none, but by their mating type and by "
+                  "whole-gene deletions (met15D0 against lys2D0).<br><b>Then, among those close "
+                  "strains, the mating type and the native markers.</b> Each one is compared with "
+                  "the mating type and marker status measured in the sample, from its documented "
+                  "genotype or, without one, from the marker alleles of its assembly. A strain "
+                  "contradicted at any point is ruled out; among the others, the one agreeing at "
+                  "the most points is called, the SNP ranking breaking the ties. If every close "
+                  "strain is contradicted, or none can be compared, the first of the SNP ranking "
+                  "is kept.",
 }
 
 # Element classes, for the per-element popup.
@@ -844,10 +857,58 @@ def verdict(agreement):
     return VERDICT.get(agreement, '<span class="muted">not compared</span>')
 
 
+OUTCOME = {
+    "called": '<span class="status green"><span class="g">&#10003;</span>called</span>',
+    "ruled out": '<span class="status red"><span class="g">&#10007;</span>ruled out</span>',
+    "not excluded": '<span class="muted">not excluded</span>',
+}
+
+
+def render_decided_by(d):
+    """How the strain was called: the SNP panel alone, or the SNP panel then
+    the mating type and the native markers among the strains it does not
+    separate, each listed with what agrees and what contradicts it."""
+    res = d.get("resolution") or {}
+    rows = res.get("candidates") or []
+    if "method" not in res:   # result file older than the two-step call
+        return ""
+    if not rows:
+        text = "SNP panel alone: no other strain close to {}".format(esc(d.get("call")))
+        return '<li><strong>Decided by:</strong> {} {}</li>'.format(
+            text, help_btn("decided_by", "how the strain is decided"))
+    if res.get("method") == "snp+markers":
+        text = ("SNP panel, which does not separate {n} strains, then the mating type and the "
+                "native markers").format(n=len(rows))
+    else:
+        text = ("SNP panel, which does not separate {n} strains; the mating type and the native "
+                "markers do not settle them, the first of the SNP ranking is kept").format(
+            n=len(rows))
+    items = []
+    for row in rows:
+        # A strain ruled out is shown with what rules it out only.
+        points = []
+        if row.get("disagree"):
+            points.append("contradicted by " + esc("; ".join(row["disagree"])))
+        elif row.get("agree"):
+            points.append("agrees on " + esc(", ".join(row["agree"])))
+        if not points:
+            points.append("nothing to compare (no documented genotype)")
+        snp = ("first of the SNP ranking" if not row.get("rank") or row["rank"] == 1 else
+               "SNP rank {}, {} separating site(s)".format(row["rank"],
+                                                          row.get("separating_sites")))
+        items.append('    <li><span class="sid">{s}</span> {o} <span class="muted">({snp})'
+                     '</span>: {p}</li>'.format(s=esc(row.get("strain")),
+                                                o=OUTCOME.get(row.get("outcome"), ""),
+                                                snp=esc(snp), p="; ".join(points)))
+    return ('<li><strong>Decided by:</strong> {t} {h}<ul>\n{i}\n  </ul></li>').format(
+        t=text, h=help_btn("decided_by", "how the strain is decided"), i="\n".join(items))
+
+
 def render_decision(d):
-    """The strain called from the SNP panel, then whether the mating type,
-    each native marker and each foreign tool element agree with it. Nothing
-    else: the evidence is in the sections below."""
+    """The strain called, how it was decided (SNP panel, then mating type and
+    markers among the strains the panel does not separate), then whether the
+    mating type, each native marker and each foreign tool element agree with
+    it. The evidence is in the sections below."""
     if d.get("unassigned") or not d.get("call"):
         return ""
     strain = esc(d.get("call"))
@@ -887,11 +948,13 @@ def render_decision(d):
   <h2>Decision</h2>
   <ul class="decision">
   <li><strong>Strain:</strong> <span class="sid">{strain}</span></li>
+  {decided}
   {mating}
   {markers}
   {tools}
   </ul>
-</section>""".format(strain=strain, mating=mating, markers=markers, tools=tools)
+</section>""".format(strain=strain, decided=render_decided_by(d), mating=mating,
+                    markers=markers, tools=tools)
 
 
 def render_unassigned(d):
