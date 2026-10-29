@@ -382,6 +382,9 @@ def score_tools(elements, coverage, min_breadth_depth):
             "mean_depth": round(mean_depth, 2), "score": score,
             "colour": colour, "present": colour != "red",
             "origin": element.get("origin", "unknown"),
+            "feature_type": element.get("feature_type", ""),
+            "source_plasmid": element.get("source_plasmid", ""),
+            "seen_in": [x for x in element.get("seen_in", "").split(";") if x],
             "host_kmer_fraction": element.get("host_kmer_fraction", ""),
         })
     tools.sort(key=lambda tool: (-tool["score"], tool["name"]))
@@ -532,8 +535,10 @@ def resolve(panel, obs, results, markers, mating, mating_doc, catalogue, tie_log
                 evidence.append("mating type %s as documented" % doc_mat)
             elif mating["call"] == "MATa/alpha" and doc_mat in ("MATa", "MATalpha"):
                 diploid, support = True, support + 1
-                evidence.append("a/alpha diploid, documented %s: a diploid of its "
-                                "background" % doc_mat)
+                evidence.append("sample measured MATa/alpha, %s documented %s (haploid): the "
+                                "sample may be a diploid made from %s, crossed with a strain "
+                                "of the opposite mating type (as BY4743 from BY4741 x BY4742), "
+                                "or a mix of both mating types" % (strain, doc_mat, strain))
             else:
                 hard = True
                 evidence.append("mating type %s, documented %s" % (mating["call"], doc_mat))
@@ -587,7 +592,7 @@ def resolve(panel, obs, results, markers, mating, mating_doc, catalogue, tie_log
         if row["further_inactivated"]:
             changes.append("%s inactivated as well" % ", ".join(row["further_inactivated"]))
         if row["diploid"]:
-            changes.append("as an a/alpha diploid")
+            changes.append("as a MATa/alpha diploid")
         return "%s-derived (%s)" % (row["strain"], "; ".join(changes))
 
     if len(rows) > 1 or candidates and candidates[0]["parent"]:

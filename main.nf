@@ -473,6 +473,14 @@ workflow {
         mating_kmers = file("${db_dir}/mating/mating_kmers.tsv", checkIfExists: true)
         tools_fasta = file("${db_dir}/tools/tools.fasta", checkIfExists: true)
         tools_manifest = file("${db_dir}/tools/tools.tsv", checkIfExists: true)
+        // Reference genome named in the report (e.g. S288C_R64-1-1), from the
+        // database's organism.tsv; the organism folder name when it is absent.
+        organism_tsv = file("${db_dir}/organism.tsv")
+        reference_name = "${organism_dir}"
+        if(organism_tsv.exists()){
+            ref_row = organism_tsv.readLines().collect{ it.split('\t') }.find{ it[0] == 'reference_name' && it.size() > 1 }
+            if(ref_row){ reference_name = ref_row[1] }
+        }
 
         if( ! panel_sites.exists() || ! panel_kmers.exists() || ! panel_strains.exists()){
             warn2 = "\n\nWARNING:\nNO SNP PANEL IN ${db_dir}/panels.\nSTRAIN RANKING IS SKIPPED. RUN build_db.nf FIRST.\n"
@@ -558,7 +566,7 @@ workflow {
                 ToolScore.out.tool_coverage_ch,
                 marker_json_ch,
                 organism_name,
-                "${organism_dir}",
+                reference_name,
                 strain_error_rate,
                 min_concordance,
                 seq_kind

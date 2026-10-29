@@ -39,6 +39,7 @@ import argparse
 import datetime
 import html
 import json
+import re
 import sys
 
 
@@ -127,6 +128,127 @@ def embed_json(obj):
                 .replace(">", "\\u003e")
                 .replace(" ", "\\u2028")
                 .replace(" ", "\\u2029"))
+
+
+# --------------------------------------------------------------------------- #
+# help popups
+# --------------------------------------------------------------------------- #
+
+# Text of the '?' popups, keyed by data-help. Authored here, never derived
+# from the data, so the JS may insert it as markup.
+HELP = {
+    "sample": "Name of the sequencing run analysed, taken from its FASTQ file name.",
+    "organism": "Species of the strain database the sample is compared with.",
+    "reference": "Reference genome the panel positions (CHROM, POS) and the REF alleles refer "
+                 "to. For yeast: S288C, assembly R64-1-1.",
+    "date": "Date and time the sample was scored against the panel.",
+    "panel_sites": "Number of genome positions (SNVs and small indels) at which the panel strains "
+                   "differ from one another. At each one the sample is genotyped by counting the "
+                   "short k-mers that carry the REF allele and those that carry the ALT allele.",
+    "panel_strains": "Number of known strains (laboratory and wild, from public assemblies and "
+                     "read runs) whose genotype at the panel sites is known. The sample is "
+                     "compared with every one of them; the 25 best are listed below.",
+    "mating": "Measured on the sample reads, not taken from the strain: mean count of the k-mers "
+              "specific to the MATa cassette against those specific to MAT&alpha;. Every genome "
+              "carries one silent a (HMR) and one silent &alpha; (HML) copy, plus the active MAT "
+              "copy, so the a fraction a / (a + &alpha;) is about 0.67 in a MATa haploid, 0.33 in "
+              "a MAT&alpha; haploid and 0.5 in a MATa/&alpha; diploid (or in a mix of MATa and "
+              "MAT&alpha; cells). Calls: MATa &ge; 0.58, MATalpha &le; 0.42, MATa/alpha in "
+              "between.",
+    "probability": "<b>Posterior probability</b> of this strain, among the panel strains only. "
+                   "Each strain gets a log-likelihood (LL, see its own ?). The probability is "
+                   "exp(LL &minus; LL<sub>best</sub>), divided by the sum over all panel strains "
+                   "(equal prior for every strain), so the probabilities add up to 100 %.<br>"
+                   "It is <b>not</b> the probability that the sample <i>is</i> this strain, nor a "
+                   "measure of fit: one extra mismatch divides the odds by about 100, so a strain "
+                   "differing by a few sites only already falls to ~0 %. How well the sample fits "
+                   "is the concordance. Strains the SNPs cannot separate are discussed in the "
+                   "<i>Call</i> section.",
+    "concordance": "<b>Concordance = matching / called.</b> Fraction of the called sites where the "
+                   "sample carries the allele expected for this strain. A sample that really is "
+                   "this strain gives close to 100 % (only sequencing errors disagree). If the "
+                   "best strain is below 90 % (min_concordance), the sample is reported as "
+                   "<i>unassigned</i>: this is the closest strain, but not this strain.",
+    "matching": "Called sites where the sample's genotype equals the strain's: REF where the "
+                "strain carries REF, ALT where it carries ALT, H where it is heterozygous.",
+    "mismatching": "Called sites where they differ: ALT where the strain carries REF or the "
+                   "reverse, H where the strain is homozygous, or a homozygous call where the "
+                   "strain is heterozygous (that last kind costs less in the log-likelihood, a "
+                   "spore or a loss of heterozygosity gives it).",
+    "uncovered": "Panel sites not used for this strain: the sample has fewer than 3 k-mer "
+                 "observations there (kmer_min_depth, not sequenced deeply enough), or the "
+                 "strain's own genotype is unknown there (gap in its assembly). "
+                 "Called + uncovered = all panel sites.",
+    "heterozygous": "Sites the sample itself calls H: both alleles seen, the ALT fraction being "
+                    "between 20 % and 80 %. The same number for every strain. Many of them mean a "
+                    "diploid, a cross or a mixed culture.",
+    "called": "Sites where the sample has a call (REF, ALT or H) and the strain's genotype is "
+              "known. Called = matching + mismatching.",
+    "log_likelihood": "<b>LL = matching &times; ln(1 &minus; &epsilon;) + mismatching &times; "
+                      "ln(&epsilon;)</b>, with &epsilon; = 0.01 the per-site error rate "
+                      "(strain_error_rate). A homozygous call where the strain is heterozygous "
+                      "counts ln(0.25) instead of ln(&epsilon;). At sites where the strain's "
+                      "genotype is unknown, the sample's call is scored with its frequency among "
+                      "the strain's clade (or the whole panel).<br>Closer to 0 is better; strains "
+                      "are ranked by it. Each extra mismatch costs about 4.6.",
+    "chrom": "Chromosome of the site, named after the reference genome: chrI to chrXVI, chrM for "
+             "the mitochondrial genome. The RefSeq accession (NC_0011xx) of the reference "
+             "sequence is shown when the mouse is on the name.",
+    "expected": "Genotype of this strain at the site in the panel: REF (reference allele), ALT "
+                "(alternative allele), H (both, heterozygous) or ? (unknown for this strain).",
+    "observed": "Genotype called in the sample from the k-mer counts: ALT when the ALT fraction "
+                "is &ge; 80 %, REF when it is &le; 20 %, H in between, ? when fewer than 3 k-mers "
+                "were seen (not covered).",
+    "depth": "Number of sample k-mers seen at the site, REF and ALT together.",
+    "alt_fraction": "ALT k-mers / (REF + ALT k-mers) at the site: 0 = only REF, 1 = only ALT.",
+    "weight": "Weight of the site in the score. All sites currently weigh 1.",
+    "class": "Function of the element, from its name: selection marker (drug resistance or "
+             "auxotrophy), reporter, epitope tag, degron, recombination site, promoter, "
+             "terminator.",
+    "length": "Length of the element's sequence in the database. Elements under 100 bp are listed "
+              "apart: too short to be scored by coverage.",
+    "breadth": "Fraction of the element's bases covered by at least one sample read, after "
+               "aligning the reads on the tool database (bowtie2). 100 % = the whole element is "
+               "there; partial = a truncated cassette, or only a shared promoter or terminator.",
+    "identity": "Fraction of the aligned bases identical to the element (1 &minus; mismatches / "
+                "aligned length, all reads together). Separates the element itself from a "
+                "diverged relative of it.",
+    "mean_depth": "Average number of reads covering each base of the element. About the genome "
+                  "depth for a single-copy insertion, higher for several copies or a plasmid.",
+    "score": "<b>Score = 100 &times; breadth &times; identity.</b> Both must be high: an element "
+             "fully covered by a diverged sequence, or a perfect but partial one, is not the "
+             "element of the database.",
+    "status": "From the score: present (&ge; 99), partial (90 to 99), absent (&lt; 90).",
+    "element_id": "Unique identifier of the element in the database: its name, two underscores, "
+                  "then the first 6 characters of the SHA-256 fingerprint of its DNA sequence. "
+                  "Two elements with the same name but different sequences get different "
+                  "suffixes; the same sequence found in several plasmids is kept once. Click the "
+                  "? of an element for its details.",
+    "marker_status": "Status of the gene measured in the sample: active when the encoded protein "
+                      "is intact (or a known functional form), inactive when it is lost "
+                      "(deletion, frameshift, stop, or a known loss-of-function allele).",
+    "conclusion": "Whether the status measured in the sample (status column) is the one expected "
+                  "for the first strain of the SNP ranking: agrees, differs, or not compared when "
+                  "either status is unknown.",
+}
+
+# Element classes, for the per-element popup.
+CLASS_HELP = {
+    "selection_marker_drug": "drug-resistance gene used to select transformed cells (kanMX: G418, "
+                             "natMX: nourseothricin, hphMX: hygromycin).",
+    "selection_marker_auxo": "gene restoring growth without a nutrient (HIS3, LEU2, URA3, TRP1, "
+                             "...). Yeast has its own copy, so a hit can be the native gene.",
+    "reporter": "fluorescent protein or enzyme reporting expression or localisation (GFP, "
+                "mCherry, lacZ, ...).",
+    "epitope_tag": "short peptide fused to a protein so that antibodies can detect or purify it "
+                   "(FLAG, HA, Myc, V5, GST, TAP, ...). 5xFLAG = five FLAG tags in a row.",
+    "degron": "sequence making a protein degradable on demand (auxin-inducible degron, ...).",
+    "recombination_site": "target of a recombinase (loxP for Cre, FRT for Flp), used to remove "
+                          "a marker.",
+    "promoter": "promoter of a cassette; it may match the yeast's own copy of that promoter.",
+    "terminator": "terminator of a cassette; it may match the yeast's own copy.",
+    "other": "not classified.",
+}
 
 
 # --------------------------------------------------------------------------- #
@@ -247,13 +369,36 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; font-family:
 tbody tr:nth-child(even) { background: var(--bg-alt); }
 .strain { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; background: var(--bg-raised); }
 .strain.top { border-color: var(--accent); border-width: 2px; }
-button.strain-head {
+.strain-head {
   display: block; width: 100%; text-align: left; cursor: pointer;
   background: transparent; border: 0; color: inherit; font: inherit;
   padding: 10px 12px;
 }
-button.strain-head:hover { background: var(--bg-alt); }
-button.strain-head:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.strain-head[aria-disabled="true"] { cursor: default; }
+.strain-head:hover { background: var(--bg-alt); }
+.strain-head:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+button.help {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.15em; height: 1.15em; padding: 0; margin-left: 2px; vertical-align: 0.1em;
+  border: 1px solid var(--border-strong); border-radius: 50%;
+  background: var(--bg-raised); color: var(--accent);
+  font: 700 0.72rem/1 system-ui, sans-serif; cursor: pointer;
+  text-transform: none; letter-spacing: 0;
+}
+button.help:hover, button.help:focus-visible { background: var(--accent); color: var(--accent-fg); outline: none; }
+.popover {
+  position: absolute; z-index: 20; max-width: min(420px, calc(100vw - 16px));
+  background: var(--bg-raised); color: var(--fg);
+  border: 1px solid var(--border-strong); border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .25);
+  padding: 10px 30px 10px 12px; font-size: 0.86rem; line-height: 1.45;
+  font-weight: 400; text-transform: none; letter-spacing: 0; text-align: left;
+}
+.popover p { margin: 0 0 6px 0; }
+.popover .pop-close {
+  position: absolute; top: 4px; right: 6px; border: 0; background: transparent;
+  color: var(--fg-muted); font-size: 1.1rem; line-height: 1; cursor: pointer;
+}
 .strain-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
 .rank {
   font-family: var(--mono); font-weight: 700;
@@ -279,6 +424,7 @@ select, .pager button {
 .pager button { cursor: pointer; }
 .pager button:disabled { opacity: .45; cursor: default; }
 .pager { display: flex; gap: 8px; align-items: center; font-size: 0.88rem; }
+.scrollx { overflow-x: auto; }
 .tablebox { max-height: 460px; overflow: auto; border: 1px solid var(--border); border-radius: 4px; }
 .status { white-space: nowrap; font-weight: 600; }
 .status .g { font-family: var(--mono); margin-right: 4px; }
@@ -328,17 +474,113 @@ function data() {
   return DATA;
 }
 
-var OBS_LABEL = {
-  'R': 'R (reference allele)',
-  'A': 'A (alternative allele)',
-  'H': 'H (both alleles)',
-  '?': '? (not covered)'
-};
+var OBS_LABEL = {'R': 'REF', 'A': 'ALT', 'H': 'H (REF + ALT)', '?': '? (not covered)'};
+var EXP_LABEL = {'R': 'REF', 'A': 'ALT', 'H': 'H (REF + ALT)', '?': '? (unknown)'};
 
-function obsLabel(v) {
+function alleleLabel(v, labels) {
   if (v === null || v === undefined || v === '') { return '-'; }
   var s = String(v);
-  return OBS_LABEL[s] || s;
+  return labels[s] || s;
+}
+
+// RefSeq accessions of the S288C R64 chromosomes, shown by their usual names.
+var CHROM_NAME = {
+  NC_001133: 'chrI', NC_001134: 'chrII', NC_001135: 'chrIII', NC_001136: 'chrIV',
+  NC_001137: 'chrV', NC_001138: 'chrVI', NC_001139: 'chrVII', NC_001140: 'chrVIII',
+  NC_001141: 'chrIX', NC_001142: 'chrX', NC_001143: 'chrXI', NC_001144: 'chrXII',
+  NC_001145: 'chrXIII', NC_001146: 'chrXIV', NC_001147: 'chrXV', NC_001148: 'chrXVI',
+  NC_001224: 'chrM'
+};
+
+// 'ref|NC_001133|' -> {name: 'chrI', accession: 'NC_001133'}
+function chromName(c) {
+  var s = (c === null || c === undefined) ? '' : String(c);
+  var m = /^(?:ref\|)?([A-Z]{2}_\d+)(?:\.\d+)?\|?$/.exec(s);
+  if (!m) { return {name: s || '-', accession: ''}; }
+  return {name: CHROM_NAME[m[1]] || m[1], accession: m[1]};
+}
+
+// '?' popups: one at a time, closed by its x, Escape or a click elsewhere.
+var HELP = null;
+var POP = null;
+
+function helpText(key) {
+  if (HELP === null) { HELP = JSON.parse(document.getElementById('help-data').textContent); }
+  return HELP[key];
+}
+
+function closeHelp() {
+  if (POP) { POP.box.parentNode.removeChild(POP.box); POP = null; }
+}
+
+function para(parent, label, value) {
+  var p = document.createElement('p');
+  if (label) {
+    var b = document.createElement('b');
+    b.textContent = label + ': ';
+    p.appendChild(b);
+  }
+  p.appendChild(document.createTextNode(value));
+  parent.appendChild(p);
+}
+
+// Details of one tool element, from the data (text only, never markup).
+function fillElement(body, eid) {
+  var tools = data().tools || [], t = null, i;
+  for (i = 0; i < tools.length; i++) { if (tools[i].element_id === eid) { t = tools[i]; break; } }
+  var cut = eid.lastIndexOf('__');
+  var name = cut > 0 ? eid.slice(0, cut) : eid, hash = cut > 0 ? eid.slice(cut + 2) : '';
+  para(body, eid, '"' + name + '" is the name of the element in the annotation of the plasmid it ' +
+       'comes from' + (hash ? '; "' + hash + '" is the start of the SHA-256 fingerprint of its DNA ' +
+       'sequence, which tells apart elements of the same name with different sequences.' : '.'));
+  if (!t) { return; }
+  var classes = helpText('__classes__') || {};
+  var cls = t.element_class || 'other';
+  para(body, 'Class', cls + (classes[cls] ? ': ' + classes[cls] : ''));
+  para(body, 'Sequence', fmtNum(t.length_bp, 0) + ' bp' +
+       (t.feature_type ? ', annotated as ' + t.feature_type : ''));
+  if (t.source_plasmid) {
+    var also = (t.seen_in || []).filter(function (p) { return p !== t.source_plasmid; });
+    para(body, 'Taken from plasmid', t.source_plasmid +
+         (also.length ? '; same sequence also in ' + also.join(', ') : ''));
+  }
+  if (t.origin === 'native') {
+    para(body, 'Origin', 'native: this sequence is also in the yeast genome, so it can be ' +
+         'found in any strain, with or without a cassette.');
+  } else if (t.origin === 'foreign') {
+    para(body, 'Origin', 'foreign: absent from the yeast genome, so a hit means a construct.');
+  }
+}
+
+function openHelp(btn) {
+  var again = POP && POP.btn === btn;
+  closeHelp();
+  if (again) { return; }
+  var box = document.createElement('div');
+  box.className = 'popover';
+  box.setAttribute('role', 'dialog');
+  var x = document.createElement('button');
+  x.type = 'button';
+  x.className = 'pop-close';
+  x.setAttribute('aria-label', 'close');
+  x.textContent = '×';
+  x.addEventListener('click', function (e) { e.stopPropagation(); closeHelp(); btn.focus(); });
+  box.appendChild(x);
+  var body = document.createElement('div');
+  var key = btn.getAttribute('data-help');
+  if (key === 'element') {
+    fillElement(body, btn.getAttribute('data-eid') || '');
+  } else {
+    body.innerHTML = helpText(key) || 'No explanation available.';  // authored text, not data
+  }
+  box.appendChild(body);
+  document.body.appendChild(box);
+  var r = btn.getBoundingClientRect();
+  var width = document.documentElement.clientWidth;
+  var left = Math.max(8, Math.min(r.left, width - box.offsetWidth - 8));
+  box.style.left = (window.pageXOffset + left) + 'px';
+  box.style.top = (window.pageYOffset + r.bottom + 6) + 'px';
+  POP = {box: box, btn: btn};
 }
 
 function fmtNum(v, digits) {
@@ -407,12 +649,15 @@ function renderPage(si) {
     var s = sites[st.idx[j]];
     var tr = document.createElement('tr');
     tr.appendChild(txt('td', s.site_id));
-    tr.appendChild(txt('td', s.chrom));
+    var chrom = chromName(s.chrom);
+    var ctd = txt('td', chrom.name);
+    if (chrom.accession) { ctd.title = 'RefSeq ' + chrom.accession; }
+    tr.appendChild(ctd);
     tr.appendChild(txt('td', s.pos, 'n'));
     tr.appendChild(txt('td', s.ref));
     tr.appendChild(txt('td', s.alt));
-    tr.appendChild(txt('td', s.expected));
-    tr.appendChild(txt('td', obsLabel(s.observed)));
+    tr.appendChild(txt('td', alleleLabel(s.expected, EXP_LABEL)));
+    tr.appendChild(txt('td', alleleLabel(s.observed, OBS_LABEL)));
     tr.appendChild(txt('td', fmtNum(s.depth, 0), 'n'));
     tr.appendChild(txt('td', fmtNum(s.alt_fraction, 3), 'n'));
     tr.appendChild(txt('td', fmtNum(s.weight, 2), 'n'));
@@ -479,14 +724,33 @@ function filterTools(cls) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  var heads = document.querySelectorAll('button.strain-head[data-si]');
+  var heads = document.querySelectorAll('.strain-head[data-si]');
   for (var i = 0; i < heads.length; i++) {
     (function (btn) {
       var si = Number(btn.getAttribute('data-si'));
       if (btn.getAttribute('data-sites') === '0') { return; }
       btn.addEventListener('click', function () { toggleStrain(si); });
+      btn.addEventListener('keydown', function (e) {
+        if (e.target === btn && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          toggleStrain(si);
+        }
+      });
     })(heads[i]);
   }
+  var helps = document.querySelectorAll('button.help');
+  for (var h = 0; h < helps.length; h++) {
+    (function (b) {
+      // Not passed on to the strain row, which would open or close.
+      b.addEventListener('click', function (e) { e.stopPropagation(); openHelp(b); });
+    })(helps[h]);
+  }
+  document.addEventListener('click', function (e) {
+    if (POP && !POP.box.contains(e.target)) { closeHelp(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && POP) { var b = POP.btn; closeHelp(); b.focus(); }
+  });
   var sels = document.querySelectorAll('select[data-filter-si]');
   for (var j = 0; j < sels.length; j++) {
     (function (sel) {
@@ -512,29 +776,59 @@ document.addEventListener('DOMContentLoaded', function () {
 # HTML sections
 # --------------------------------------------------------------------------- #
 
+def fmt_date(value):
+    """ISO timestamp as 'YYYY-MM-DD HH:MM'; anything else as given."""
+    try:
+        return datetime.datetime.fromisoformat(str(value)).strftime("%Y-%m-%d %H:%M")
+    except (TypeError, ValueError, AttributeError):
+        return value
+
+
+# RefSeq accessions of the S288C R64 chromosomes, by their usual names (the
+# same table as CHROM_NAME in the JS).
+CHROM_NAME = dict(("NC_0011%02d" % (33 + i), "chr" + roman) for i, roman in enumerate(
+    "I II III IV V VI VII VIII IX X XI XII XIII XIV XV XVI".split()))
+CHROM_NAME["NC_001224"] = "chrM"
+
+
+def chrom_names(text):
+    """'ref|NC_001137|:115949' -> 'chrV:115949' in free text."""
+    return re.sub(r"(?:ref\|)?\b([A-Z]{2}_\d+)(?:\.\d+)?\|?",
+                  lambda m: CHROM_NAME.get(m.group(1), m.group(0)), str(text))
+
+
+def help_btn(key, label):
+    """Small '?' button opening the explanation HELP[key] in a popup."""
+    return ('<button type="button" class="help" data-help="{k}" '
+            'aria-label="Explain {l}" title="Explain {l}">?</button>').format(
+        k=esc(key), l=esc(label))
+
+
 def render_header(d, title):
     panel = d.get("panel") or {}
     rows = [
-        ("Organism", d.get("organism")),
-        ("Reference", d.get("reference")),
-        ("Generated", d.get("generated")),
-        ("Panel sites", num(panel.get("n_sites"))),
-        ("Panel strains", num(panel.get("n_strains"))),
-        ("Mating type", (d.get("mating_type") or {}).get("call")),
+        ("Organism", d.get("organism"), "organism"),
+        ("Reference genome", d.get("reference"), "reference"),
+        ("Date", fmt_date(d.get("generated")), "date"),
+        ("SNP sites in the panel", num(panel.get("n_sites")), "panel_sites"),
+        ("Strains in the panel", num(panel.get("n_strains")), "panel_strains"),
+        ("Mating type of the sample", (d.get("mating_type") or {}).get("call"), "mating"),
     ]
     items = "\n".join(
-        "      <div><dt>{}</dt><dd>{}</dd></div>".format(esc(k), esc(v) if v not in (None, "") else "n/a")
-        for k, v in rows
+        "      <div><dt>{} {}</dt><dd>{}</dd></div>".format(
+            esc(k), help_btn(h, k.lower()), esc(v) if v not in (None, "") else "n/a")
+        for k, v, h in rows
     )
     return """<header class="page">
   <div class="wrap">
     <h1>{title}</h1>
-    <div>Sample <span class="sample">{sample}</span></div>
+    <div>Submitted sample <span class="sample">{sample}</span> {help}</div>
     <dl class="meta">
 {items}
     </dl>
   </div>
-</header>""".format(title=esc(title), sample=esc(d.get("sample") or "unknown"), items=items)
+</header>""".format(title=esc(title), sample=esc(d.get("sample") or "unknown"), items=items,
+                    help=help_btn("sample", "the submitted sample"))
 
 
 def render_call(d):
@@ -593,7 +887,7 @@ def render_warnings(d):
     warns = d.get("warnings") or []
     if not warns:
         return ""
-    items = "\n".join("    <li>{}</li>".format(esc(w)) for w in warns)
+    items = "\n".join("    <li>{}</li>".format(esc(chrom_names(w))) for w in warns)
     return """<div class="warnings" role="note">
   <h2>Warnings ({n})</h2>
   <ul>
@@ -619,31 +913,38 @@ def render_strains(d):
         n_sites = len(sites)
         prob = clamp01(s.get("probability"))
         top = " top" if s.get("rank") == 1 else ""
-        disabled = ' disabled aria-disabled="true"' if n_sites == 0 else ""
+        disabled = ' aria-disabled="true"' if n_sites == 0 else ""
         chev = "▶" if n_sites else "—"
 
+        # A div acting as the toggle, not a <button>: it holds the '?' help
+        # buttons, and a button cannot contain another one.
         head = """  <h3 style="margin:0">
-    <button class="strain-head" id="head-{si}" type="button" data-si="{si}" data-sites="{n}"
-            aria-expanded="false" aria-controls="detail-{si}"{dis}>
+    <div class="strain-head" id="head-{si}" role="button" tabindex="0" data-si="{si}" data-sites="{n}"
+         aria-expanded="false" aria-controls="detail-{si}"{dis}>
       <span class="strain-row">
         <span class="chev" id="chev-{si}" aria-hidden="true">{chev}</span>
         <span class="rank">rank {rank}</span>
         <span class="sid">{sid}</span>
-        <span class="prob">{p}</span>
+        <span class="prob">{p} {h_prob}</span>
         <span class="bar" role="img" aria-label="posterior probability {p}"><i style="width:{w:.2f}%"></i></span>
-        <span class="prob">concordance {conc}</span>
+        <span class="prob">concordance {conc} {h_conc}</span>
       </span>
       <span class="counts">
-        <span>matching <b>{m}</b></span>
-        <span>mismatching <b>{mm}</b></span>
-        <span>uncovered <b>{un}</b></span>
-        <span>heterozygous <b>{het}</b></span>
-        <span>called <b>{cal}</b></span>
-        <span>log-likelihood <b>{ll}</b></span>
+        <span>matching <b>{m}</b> {h_m}</span>
+        <span>mismatching <b>{mm}</b> {h_mm}</span>
+        <span>uncovered <b>{un}</b> {h_un}</span>
+        <span>heterozygous <b>{het}</b> {h_het}</span>
+        <span>called <b>{cal}</b> {h_cal}</span>
+        <span>log-likelihood <b>{ll}</b> {h_ll}</span>
         <span>{drill}</span>
       </span>
-    </button>
+    </div>
   </h3>""".format(
+            h_prob=help_btn("probability", "the probability"),
+            h_conc=help_btn("concordance", "the concordance"),
+            h_m=help_btn("matching", "matching"), h_mm=help_btn("mismatching", "mismatching"),
+            h_un=help_btn("uncovered", "uncovered"), h_het=help_btn("heterozygous", "heterozygous"),
+            h_cal=help_btn("called", "called"), h_ll=help_btn("log_likelihood", "the log-likelihood"),
             si=si, n=n_sites, dis=disabled, chev=chev,
             rank=esc(s.get("rank")), sid=esc(s.get("strain_id") or "?"),
             p=pct(s.get("probability")), w=prob * 100.0,
@@ -675,9 +976,9 @@ def render_strains(d):
     <div class="tablebox">
       <table>
         <thead><tr>
-          <th>site_id</th><th>chrom</th><th class="n">pos</th><th>ref</th><th>alt</th>
-          <th>expected</th><th>observed</th><th class="n">depth</th>
-          <th class="n">alt_fraction</th><th class="n">weight</th><th>state</th>
+          <th>site_id</th><th>chrom {h_chrom}</th><th class="n">pos</th><th>ref</th><th>alt</th>
+          <th>expected {h_exp}</th><th>observed {h_obs}</th><th class="n">depth {h_depth}</th>
+          <th class="n">alt_fraction {h_af}</th><th class="n">weight {h_w}</th><th>state</th>
         </tr></thead>
         <tbody id="sbody-{si}"></tbody>
       </table>
@@ -687,6 +988,9 @@ def render_strains(d):
                 m=num(s.get("sites_matching")), mm=num(s.get("sites_mismatching")),
                 un=num(s.get("sites_uncovered")), het=num(s.get("sites_het")),
                 cal=num(s.get("sites_called")),
+                h_chrom=help_btn("chrom", "CHROM"), h_exp=help_btn("expected", "expected"),
+                h_obs=help_btn("observed", "observed"), h_depth=help_btn("depth", "depth"),
+                h_af=help_btn("alt_fraction", "alt_fraction"), h_w=help_btn("weight", "weight"),
             )
         else:
             detail = ""
@@ -716,7 +1020,8 @@ def tool_row(t):
         <td class="n">{depth}</td>
         <td class="n">{score}</td>
         <td class="status {c}"><span class="g" aria-hidden="true">{glyph}</span>{label}</td>
-        <td><code>{eid}</code></td>
+        <td style="white-space:nowrap"><code>{eid}</code> <button type="button" class="help" data-help="element" data-eid="{eid}"
+            aria-label="Explain {eid}" title="Explain {eid}">?</button></td>
       </tr>""".format(
         ec=esc(t.get("element_class") or "unclassified"),
         name=esc(t.get("name") or "?"),
@@ -731,9 +1036,13 @@ def tool_row(t):
     )
 
 
-TOOL_HEAD = """      <tr><th>name</th><th>class</th><th class="n">length (bp)</th>
-        <th class="n">breadth</th><th class="n">identity</th><th class="n">mean depth</th>
-        <th class="n">score</th><th>status</th><th>element_id</th></tr>"""
+TOOL_HEAD = """      <tr><th>name</th><th>class {}</th><th class="n">length (bp) {}</th>
+        <th class="n">breadth {}</th><th class="n">identity {}</th><th class="n">mean depth {}</th>
+        <th class="n">score {}</th><th>status {}</th><th>element_id {}</th></tr>""".format(
+    help_btn("class", "class"), help_btn("length", "length"), help_btn("breadth", "breadth"),
+    help_btn("identity", "identity"), help_btn("mean_depth", "mean depth"),
+    help_btn("score", "the score"), help_btn("status", "status"),
+    help_btn("element_id", "element_id"))
 
 
 def render_tools(d):
@@ -777,14 +1086,14 @@ def render_tools(d):
     options = "\n".join(
         '      <option value="{v}">{v}</option>'.format(v=esc(c)) for c in classes)
 
-    main_tbl = """  <table>
+    main_tbl = """  <div class="scrollx"><table>
     <thead>
 {head}
     </thead>
     <tbody>
 {rows}
     </tbody>
-  </table>""".format(head=TOOL_HEAD,
+  </table></div>""".format(head=TOOL_HEAD,
                      rows="\n".join(tool_row(t) for t in sorted(
                          scorable,
                          key=lambda t: (str(t.get("element_class") or "~"),
@@ -795,14 +1104,14 @@ def render_tools(d):
   <p class="short-note">Elements shorter than 100 bp (<code>scorable = "short"</code>) cannot be scored
   reliably by breadth of coverage; they are listed separately and are <strong>not</strong> included in the
   green / orange / red counts above.</p>
-  <table>
+  <div class="scrollx"><table>
     <thead>
 {head}
     </thead>
     <tbody>
 {rows}
     </tbody>
-  </table>""".format(n=len(short), head=TOOL_HEAD,
+  </table></div>""".format(n=len(short), head=TOOL_HEAD,
                      rows="\n".join(tool_row(t) for t in short))
     else:
         short_tbl = ""
@@ -838,18 +1147,20 @@ MARKER_STATUS = {
 
 
 def expected_cell(e):
-    """Expected status of one gene in the first strain of the SNP ranking,
-    and whether the sample agrees with it."""
+    """Expected status of one gene in the first strain of the SNP ranking."""
     if not e or e.get("expected") == "unknown":
         return '<td class="muted">unknown</td>'
     colour, glyph, label = MARKER_STATUS.get(e["expected"], ("orange", "&#9650;", e["expected"]))
-    verdict = {True: '<br><span class="status green"><span class="g">&#10003;</span>agrees</span>',
-               False: '<br><span class="status red"><span class="g">&#10007;</span>differs</span>',
-               None: '<br><span class="muted">not compared</span>'}[e.get("agree")]
     return ('<td><span class="status {c}"><span class="g">{g}</span>{label}</span>'
-            '<br><span class="muted">{allele}</span>{verdict}</td>').format(
-        c=colour, g=glyph, label=esc(label), allele=esc(e.get("expected_allele")),
-        verdict=verdict)
+            '<br><span class="muted">{allele}</span></td>').format(
+        c=colour, g=glyph, label=esc(label), allele=esc(e.get("expected_allele")))
+
+
+def conclusion_cell(e):
+    """Whether the sample agrees with the expected status of one gene."""
+    return {True: '<td><span class="status green"><span class="g">&#10003;</span>agrees</span></td>',
+            False: '<td><span class="status red"><span class="g">&#10007;</span>differs</span></td>',
+            None: '<td class="muted">not compared</td>'}[(e or {}).get("agree")]
 
 
 def marker_row(m, expected=None):
@@ -869,19 +1180,21 @@ def marker_row(m, expected=None):
                                                    alleles[1].get("effect"),
                                                    alleles[1].get("protein_change")))
     return """      <tr><td><strong>{gene}</strong><br><span class="muted">{sid}</span></td>
-        <td><span class="status {c}"><span class="g">{g}</span>{label}</span></td>
         {expected}
         <td>{effect}<br><span class="muted">{pchange}</span></td>
         <td><code>{changes}</code></td>
         <td>{known}</td>
-        <td>{detail}</td></tr>""".format(
+        <td>{detail}</td>
+        <td><span class="status {c}"><span class="g">{g}</span>{label}</span></td>
+        {conclusion}</tr>""".format(
         gene=esc(m.get("gene")), sid=esc(m.get("systematic_id")), c=colour, g=glyph,
         expected=expected_cell(expected) if expected is not None else "",
+        conclusion=conclusion_cell(expected) if expected is not None else "",
         label=esc(label), effect=esc((first.get("effect") or "").replace("_", " ")),
         pchange=esc(first.get("protein_change") or ""), changes=esc(change_text or "none"),
         known=esc(", ".join(first.get("known_as") or []) or
                   ("%d catalogued strains" % first["carriers"] if first.get("carriers") else "")),
-        detail="<br>".join(esc(x) for x in detail if x))
+        detail="<br>".join(esc(chrom_names(x)) for x in detail if x))
 
 
 def render_markers(d):
@@ -902,6 +1215,7 @@ def render_markers(d):
     expected_by_gene = {g["gene"]: g for g in ex.get("genes") or []}
     if ex:
         expected_head = "<th>expected in {}</th>".format(esc(ex.get("strain")))
+        conclusion_head = "<th>conclusion {}</th>".format(help_btn("conclusion", "the conclusion"))
         expected_note = """  <p><strong>Expected from the SNP ranking:</strong> the status each marker should have in
   <strong>{s}</strong>, first strain of the SNP ranking ({src}). {summary}</p>""".format(
             s=esc(ex.get("strain")), src=esc(ex.get("source")),
@@ -909,7 +1223,7 @@ def render_markers(d):
                 a=ex.get("agree"), c=ex.get("compared")) if ex.get("compared")
                      else "No marker could be compared."))
     else:
-        expected_head, expected_note = "", ""
+        expected_head, expected_note, conclusion_head = "", "", ""
     return """<section id="markers">
   <h2>Native marker genes</h2>
   <p class="note">The strain's own selection markers, judged by the protein each one encodes. A
@@ -919,8 +1233,8 @@ def render_markers(d):
   <p><strong>Genotype:</strong> <code>{genotype}</code></p>
 {expected_note}
   <table>
-    <thead><tr><th>gene</th><th>status</th>{expected_head}<th>effect</th><th>coding changes</th>
-      <th>known as</th><th>evidence</th></tr></thead>
+    <thead><tr><th>gene</th>{expected_head}<th>effect</th><th>coding changes</th>
+      <th>known as</th><th>evidence</th><th>status {status_help}</th>{conclusion_head}</tr></thead>
     <tbody>
 {rows}
     </tbody>
@@ -935,6 +1249,8 @@ def render_markers(d):
   </ul>
 </section>""".format(n=esc(mk.get("catalogue_assemblies")), genotype=esc(mk.get("genotype")),
                      expected_note=expected_note, expected_head=expected_head,
+                     conclusion_head=conclusion_head,
+                     status_help=help_btn("marker_status", "the marker status"),
                      rows="\n".join(marker_row(m, expected_by_gene.get(m.get("gene"), {})
                                                if ex else None) for m in markers),
                      matches=match_items or "    <li>none documented</li>", limits=limits)
@@ -945,7 +1261,8 @@ def render_markers(d):
 # --------------------------------------------------------------------------- #
 
 def render(d, title):
-    now = datetime.datetime.now().replace(microsecond=0).isoformat()
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    help_data = dict(HELP, __classes__=CLASS_HELP)
     parts = [
         "<!DOCTYPE html>",
         '<html lang="en">',
@@ -969,6 +1286,7 @@ def render(d, title):
         "</footer>".format(esc(now)),
         "</div>",
         '<script type="application/json" id="report-data">{}</script>'.format(embed_json(d)),
+        '<script type="application/json" id="help-data">{}</script>'.format(embed_json(help_data)),
         "<script>{}</script>".format(JS),
         "</body>",
         "</html>",
