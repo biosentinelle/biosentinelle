@@ -163,7 +163,7 @@ HELP = {
                    "measure of fit: one extra mismatch divides the odds by about 100, so a strain "
                    "differing by a few sites only already falls to ~0 %. How well the sample fits "
                    "is the concordance. Strains only a few sites away from the call are listed in "
-                   "the <i>Call</i> section.",
+                   "the warnings.",
     "concordance": "<b>Concordance = matching / called.</b> Fraction of the called sites where the "
                    "sample carries the allele expected for this strain. A sample that really is "
                    "this strain gives close to 100 % (only sequencing errors disagree). If the "
@@ -445,6 +445,9 @@ select, .pager button {
 }
 .tile .v { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tile .k { font-size: 0.82rem; color: var(--fg-muted); text-transform: uppercase; letter-spacing: .03em; }
+.decision { margin: 6px 0; padding-left: 22px; }
+.decision > li { margin: 3px 0; }
+.decision ul { margin: 2px 0; padding-left: 20px; }
 .legend { border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; background: var(--bg-alt); font-size: 0.88rem; }
 .legend ul { margin: 4px 0 0 0; padding-left: 20px; }
 .short-note { font-size: 0.87rem; color: var(--fg-muted); margin: 4px 0 8px 0; }
@@ -831,60 +834,64 @@ def render_header(d, title):
                     help=help_btn("sample", "the submitted sample"))
 
 
-def render_call(d):
-    """The SNP call, then the mating type and the native markers, each measured
-    apart and only said to agree or not with the strain called."""
+VERDICT = {
+    "agree": '<span class="status green"><span class="g">&#10003;</span>agree</span>',
+    "disagree": '<span class="status red"><span class="g">&#10007;</span>disagree</span>',
+}
+
+
+def verdict(agreement):
+    return VERDICT.get(agreement, '<span class="muted">not compared</span>')
+
+
+def render_decision(d):
+    """The strain called from the SNP panel, then whether the mating type,
+    each native marker and each foreign tool element agree with it. Nothing
+    else: the evidence is in the sections below."""
     if d.get("unassigned") or not d.get("call"):
         return ""
-    res = d.get("resolution") or {}
-    mating = d.get("mating_type") or {}
+    strain = esc(d.get("call"))
     check = d.get("mating_check") or {}
-    ex = d.get("markers_expected") or {}
-    close = res.get("close") or []
-    lead = ""
-    if close:
-        rows = "\n".join(
-            "      <tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
-                esc(r.get("strain")), esc(r.get("separating_sites")), esc(r.get("mismatching")),
-                esc(r.get("log_likelihood_gap")), esc(r.get("documented_mating") or "n/a"))
-            for r in close)
-        lead = """<p>Narrow lead: these strains come close to the call, which rests on the few sites
-  that separate them.</p>
-  <table>
-    <thead><tr><th>Strain</th><th>Sites separating it from {call}</th><th>Mismatching sites</th><th>Log-likelihood below {call}</th><th>Documented mating type</th></tr></thead>
-    <tbody>
-{rows}
-    </tbody>
-  </table>""".format(call=esc(d.get("call")), rows=rows)
-    if mating.get("call") and mating.get("call") != "unknown":
-        measured = ("<strong>{}</strong> (mean count {} per MATa k-mer, {} per MAT&alpha; k-mer, "
-                    "a fraction {})").format(
-            esc(mating["call"]), esc(mating.get("mean_count_a")),
-            esc(mating.get("mean_count_alpha")), esc(mating.get("a_fraction")))
+    mating = '<li><strong>Mating type:</strong> {m} {v}</li>'.format(
+        m=esc(check.get("measured") or (d.get("mating_type") or {}).get("call") or "unknown"),
+        v=verdict(check.get("agreement")))
+    genes = (d.get("markers_expected") or {}).get("genes") or []
+    markers = ""
+    if genes:
+        markers = '<li><strong>Markers:</strong><ul>\n{}\n  </ul></li>'.format("\n".join(
+            '    <li>{g} {o} {v}</li>'.format(
+                g=esc(g.get("gene")), o=esc(g.get("observed") or ""),
+                v=verdict("agree" if g.get("agree") is True else
+                          "disagree" if g.get("agree") is False else None))
+            for g in genes))
+    tool_check = d.get("tool_check")
+    if tool_check is None:   # result file older than tool_check
+        elements = [{"name": t.get("name"), "status": COLOUR_LABEL[colour_of(t)],
+                     "agreement": None}
+                    for t in d.get("tools") or []
+                    if t.get("origin") != "native" and (t.get("scorable") or "yes") == "yes"
+                    and colour_of(t) == "green"]
+        documented = False
     else:
-        measured = "<strong>unknown</strong>{}".format(
-            ": " + esc(mating["reason"]) if mating.get("reason") else "")
-    mating_line = ("<p><strong>Mating type: {agree}.</strong> Measured {measured}; documented "
-                   "for {strain}: {doc}.{why}</p>").format(
-        agree=esc(check.get("agreement", "not compared")), measured=measured,
-        strain=esc(check.get("strain") or d.get("call")),
-        doc=esc(check.get("documented", "not documented")),
-        why=" " + esc(check["reason"]) + "." if check.get("reason") else "")
-    marker_line = ""
-    if ex.get("compared"):
-        marker_line = ("<p><strong>Native markers: {agree}.</strong> {a} of {c} agree with "
-                       "those expected of {strain} ({src}); see the marker section.</p>").format(
-            agree="agree" if ex["agree"] == ex["compared"] else "disagree",
-            a=esc(ex["agree"]), c=esc(ex["compared"]), strain=esc(ex.get("strain")),
-            src=esc(ex.get("source")))
-    return """<section id="call">
-  <h2>Call from the SNP panel: {call}</h2>
-  {lead}
-  <p class="note">Mating type and native markers are measured independently of the SNPs. They
-  do not change the call; each one says whether it agrees with the strain called.</p>
+        elements = tool_check.get("elements") or []
+        documented = tool_check.get("documented")
+    if elements:
+        tools = '<li><strong>Tools:</strong><ul>\n{}\n  </ul></li>'.format("\n".join(
+            '    <li>{n} {s} {v}</li>'.format(n=esc(e.get("name")), s=esc(e.get("status")),
+                                          v=verdict(e.get("agreement")))
+            for e in elements))
+    else:
+        tools = '<li><strong>Tools:</strong> no foreign element found {}</li>'.format(
+            verdict("agree" if documented else None))
+    return """<section id="decision">
+  <h2>Decision</h2>
+  <ul class="decision">
+  <li><strong>Strain:</strong> <span class="sid">{strain}</span></li>
   {mating}
   {markers}
-</section>""".format(call=esc(d.get("call")), lead=lead, mating=mating_line, markers=marker_line)
+  {tools}
+  </ul>
+</section>""".format(strain=strain, mating=mating, markers=markers, tools=tools)
 
 
 def render_unassigned(d):
@@ -1293,7 +1300,7 @@ def render(d, title):
         render_header(d, title),
         '<div class="wrap">',
         render_unassigned(d),
-        render_call(d),
+        render_decision(d),
         render_warnings(d),
         render_strains(d),
         render_markers(d),

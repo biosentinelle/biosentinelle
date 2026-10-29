@@ -506,7 +506,7 @@ def resolve(panel, obs, results, mating_doc, tie_log_ratio, min_separating):
         explanation.append(
             "%s is called from the SNP panel alone. Its lead is narrow: %s, second, is "
             "%d called site(s) apart (%d mismatch(es) against %d for %s, log-likelihood "
-            "%.1f lower)%s. %d strain(s) are that close, listed in the call section"
+            "%.1f lower)%s. %d strain(s) are that close, see the strain ranking below"
             % (best["strain_id"], nearest["strain"], nearest["separating_sites"],
                nearest["mismatching"], best["sites_mismatching"], best["strain_id"],
                nearest["log_likelihood_gap"], indirect, len(close)))
@@ -531,6 +531,38 @@ def check_mating(mating, mating_doc, strain):
         if measured == "MATa/alpha":
             out["reason"] = ("the sample reads as a/alpha: a diploid (as BY4743 from BY4741 x "
                              "BY4742), a mix of both mating types, or another strain")
+    return out
+
+
+def check_tools(tools, documented_path, strain):
+    """Foreign tool elements found in the sample against the documented
+    genotype of the strain called: an element present (green) agrees when the
+    genotype inserts it (kanMX in his3D1::kanMX), one inserted but not present
+    disagrees, one present but not inserted disagrees. Only what follows '::'
+    is an insertion: ura3D0 is a deletion, not a URA3 cassette. Native
+    elements (a yeast promoter, TRP1) are left out: every strain carries
+    them. Not compared when the strain has no documented genotype."""
+    genotype = ""
+    if documented_path:
+        genotype = next((row["documented_genotype"] for row in load_tsv(documented_path)
+                         if row["strain"] == strain), "")
+    inserted = " ".join(token.split("::", 1)[1] for token in genotype.lower().split()
+                        if "::" in token)
+    out = {"strain": strain, "documented": bool(genotype), "elements": []}
+    for tool in tools:
+        if tool["origin"] == "native" or tool["scorable"] != "yes":
+            continue
+        found = tool["colour"] == "green"
+        expected = bool(inserted) and tool["name"].lower() in inserted
+        if not found and not expected:
+            continue
+        if not genotype:
+            agreement = "not compared"
+        else:
+            agreement = "agree" if found == expected else "disagree"
+        out["elements"].append({"name": tool["name"], "element_id": tool["element_id"],
+                                "status": "present" if found else "absent",
+                                "expected": expected, "agreement": agreement})
     return out
 
 
@@ -777,6 +809,7 @@ def main():
         "resolution": resolution,
         "mating_type": mating,
         "mating_check": mating_check,
+        "tool_check": check_tools(tools, args.documented, resolution["call"]),
         "unassigned": unassigned,
         "unassigned_reason": reason,
         "coverage": {"median_depth_called": median_depth,
