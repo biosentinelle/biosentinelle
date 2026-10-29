@@ -21,6 +21,7 @@ process StrainScore {
     val reference_name
     val error_rate
     val min_concordance
+    val seq_kind
 
     output:
     path "strain_id.json", emit: strain_json_ch
@@ -48,6 +49,7 @@ process StrainScore {
         --reference "${reference_name}" \\
         --error-rate ${error_rate} \\
         --min-concordance ${min_concordance} \\
+        --seq-kind ${seq_kind} \\
         --out strain_id.json |& tee -a strain_score_report.txt
     """
 }

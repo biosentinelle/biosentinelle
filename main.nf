@@ -560,7 +560,8 @@ workflow {
                 organism_name,
                 "${organism_dir}",
                 strain_error_rate,
-                min_concordance
+                min_concordance,
+                seq_kind
             )
             copyLogFile('strain_score_report.log', StrainScore.out.strain_score_log_ch, out_path)
 

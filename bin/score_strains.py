@@ -293,12 +293,18 @@ def score_strains(panel, calls, error_rate, max_detail_sites, detail_top):
     return results, obs
 
 
-def mating_type(path, min_kmers_seen):
+def mating_type(path, min_kmers_seen, seq_kind="reads"):
     """Mating type from the Ya and Yalpha k-mer counts.
 
     Per k-mer mean count, a / (a + alpha): about 2/3 for MATa, 1/3 for
     MATalpha and 1/2 for a MATa/MATalpha diploid, because the silent HMR
     and HML copies add one a and one alpha cassette to every genome.
+
+    In an assembly the mean count is the number of cassette copies. A
+    short-read assembly often collapses MAT, HML and HMR, which are nearly
+    identical, into one a and one alpha contig: 1 : 1 would then read as a
+    diploid. Fewer than the three cassettes of a haploid genome means the
+    mating type cannot be read.
     """
     rows = {row["class"]: row for row in load_tsv(path)}
     a, alpha = rows.get("MATa"), rows.get("MATalpha")
@@ -310,6 +316,13 @@ def mating_type(path, min_kmers_seen):
     out = {"mean_count_a": round(mean_a, 2), "mean_count_alpha": round(mean_alpha, 2)}
     if seen < min_kmers_seen or mean_a + mean_alpha == 0:
         out.update({"call": "unknown", "reason": "too few mating-type k-mers seen"})
+        return out
+    copies_a, copies_alpha = int(round(mean_a)), int(round(mean_alpha))
+    if seq_kind == "assembly" and copies_a + copies_alpha < 3:
+        out.update({"call": "unknown",
+                    "reason": "the assembly holds %d a and %d alpha cassette(s), fewer than the "
+                              "three (MAT, HML, HMR) of a complete genome: the cassettes are "
+                              "collapsed or missing" % (copies_a, copies_alpha)})
         return out
     ratio = mean_a / (mean_a + mean_alpha)
     out["a_fraction"] = round(ratio, 3)
@@ -683,6 +696,8 @@ def main():
     parser.add_argument("--out-ranking", help="TSV ranking of every panel strain")
     parser.add_argument("--min-mating-kmers", type=int, default=100,
                         help="k-mers of each mating type that must be seen to call it")
+    parser.add_argument("--seq-kind", choices=("reads", "assembly"), default="reads",
+                        help="reads or assembly: an assembly is checked for collapsed cassettes")
     args = parser.parse_args()
 
     if not 0.0 < args.error_rate < 0.5:
@@ -801,7 +816,7 @@ def main():
     if markers.get("markers"):
         warnings.extend(marker_warnings(markers))
 
-    mating = (mating_type(args.mating, args.min_mating_kmers) if args.mating
+    mating = (mating_type(args.mating, args.min_mating_kmers, args.seq_kind) if args.mating
               else {"call": "unknown", "reason": "not measured"})
     resolution = resolve(panel, obs, results, markers, mating,
                          documented_mating(args.documented) if args.documented else {},

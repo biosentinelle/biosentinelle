@@ -558,6 +558,9 @@ def render_call(d):
                        "MAT&alpha;, 0.5 for a/&alpha;).</p>").format(
             esc(mating["call"]), esc(mating.get("mean_count_a")),
             esc(mating.get("mean_count_alpha")), esc(mating.get("a_fraction")))
+    elif mating.get("reason"):
+        mating_line = "<p>Mating type <strong>unknown</strong>: {}.</p>".format(
+            esc(mating["reason"]))
     table = ""
     if len(res.get("tied") or []) > 1:
         table = """<table>
