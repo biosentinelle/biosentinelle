@@ -1,0 +1,903 @@
+[33mNextflow 26.10.3 is available - Please consider updating your version to it(B[m
+
+ N E X T F L O W   ~  version 24.10.4
+
+Launching `main.nf` [friendly_hopper] DSL2 - revision: 83021b9c9a
+
+
+
+INITIATION TIME: 2026-10-23T18:15:48.228624+02:00
+
+
+RESULT DIRECTORY: /mnt/c/Users/gmillot/Documents/Git_projects/biosentinelle/results/biosentinelle_1792772147
+
+
+WARNING:
+CURRENTLY FOR Saccharomyces cerevisiae.
+
+
+
+[-        ] WorkflowParam    -
+[-        ] Split_fasta_ref  -
+[-        ] Split_fasta_feat -
+
+[-        ] WorkflowParam    -
+[-        ] Split_fasta_ref  -
+[-        ] Split_fasta_feat -
+[-        ] Split_fasta_sex  -
+[-        ] Bowtie2_ref      -
+[-        ] Bowtie2_feat     -
+[-        ] Bowtie2_sex      -
+[-        ] Q20_ref          -
+[-        ] Q20_feat         -
+[-        ] Q20_sex          -
+
+[-        ] WorkflowParam      -
+[-        ] Split_fasta_ref    -
+[-        ] Split_fasta_feat   -
+[-        ] Split_fasta_sex    -
+[-        ] Bowtie2_ref        -
+[-        ] Bowtie2_feat       -
+[-        ] Bowtie2_sex        -
+[-        ] Q20_ref            -
+[-        ] Q20_feat           -
+[-        ] Q20_sex            -
+[-        ] Coverage_feat      -
+[-        ] Plot_coverage_feat -
+[-        ] Coverage_sex       -
+[-        ] Plot_coverage_sex  -
+[-        ] VariantCall_ref    -
+[-        ] VariantCall_sex    -
+[-        ] VariantCount       -
+[-        ] Print_var_count    -
+
+[-        ] WorkflowParam      -
+[-        ] Split_fasta_ref    -
+[-        ] Split_fasta_feat   -
+[-        ] Split_fasta_sex    -
+[-        ] Bowtie2_ref        -
+[-        ] Bowtie2_feat       -
+[-        ] Bowtie2_sex        -
+[-        ] Q20_ref            -
+[-        ] Q20_feat           -
+[-        ] Q20_sex            -
+[-        ] Coverage_feat      -
+[-        ] Plot_coverage_feat -
+[-        ] Coverage_sex       -
+[-        ] Plot_coverage_sex  -
+[-        ] VariantCall_ref    -
+[-        ] VariantCall_sex    -
+[-        ] VariantCount       -
+[-        ] Print_var_count    -
+[-        ] KmerScan           -
+[-        ] Bowtie2_tools      -
+Plus 4 more processes waiting for tasks…
+
+[-        ] WorkflowParam      | 0 of 1
+[-        ] Split_fasta_ref    -
+[-        ] Split_fasta_feat   -
+[-        ] Split_fasta_sex    -
+[-        ] Bowtie2_ref        | 0 of 1
+[-        ] Bowtie2_feat       -
+[-        ] Bowtie2_sex        -
+[-        ] Q20_ref            -
+[-        ] Q20_feat           -
+[-        ] Q20_sex            -
+[-        ] Coverage_feat      -
+[-        ] Plot_coverage_feat -
+[-        ] Coverage_sex       -
+[-        ] Plot_coverage_sex  -
+[-        ] VariantCall_ref    -
+[-        ] VariantCall_sex    -
+[-        ] VariantCount       -
+[-        ] Print_var_count    -
+[17/1e3eb6] KmerScan           | 1 of 1, cached: 1
+[-        ] Bowtie2_tools      -
+[-        ] Backup             | 0 of 1
+Plus 6 more processes waiting for tasks…
+
+executor >  local (4)
+[fd/7304cf] WorkflowParam      | 0 of 1
+[-        ] Split_fasta_ref    -
+[-        ] Split_fasta_feat   -
+[-        ] Split_fasta_sex    -
+[09/64c6f0] Bowtie2_ref (1)    | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)   | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)    | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)        | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)       | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)        | 2 of 2, cached: 2 ✔
+[-        ] Coverage_feat      -
+[-        ] Plot_coverage_feat -
+[-        ] Coverage_sex       -
+[-        ] Plot_coverage_sex  -
+[-        ] VariantCall_ref    -
+[-        ] VariantCall_sex    -
+[-        ] VariantCount       -
+[-        ] Print_var_count    -
+[17/1e3eb6] KmerScan           | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools      | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth          | 1 of 1, cached: 1 ✔
+[11/fd895a] Print_warnings (1) | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup             | 0 of 1
+Plus 4 more processes waiting for tasks…
+
+executor >  local (5)
+[fd/7304cf] WorkflowParam       | 0 of 1
+[-        ] Split_fasta_ref     -
+[-        ] Split_fasta_feat    -
+[-        ] Split_fasta_sex     -
+[09/64c6f0] Bowtie2_ref (1)     | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)    | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)     | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)         | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)        | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)         | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)   | 2 of 2, cached: 2
+[-        ] Plot_coverage_feat  -
+[70/977f56] Coverage_sex (1)    | 2 of 2, cached: 2 ✔
+[-        ] Plot_coverage_sex   -
+[7b/8ddaaa] VariantCall_ref (1) | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2) | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)    | 1 of 1, cached: 1
+[-        ] Print_var_count     -
+[17/1e3eb6] KmerScan            | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools       | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth           | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore           | 0 of 1
+[11/fd895a] Print_warnings (1)  | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup              | 0 of 1
+Plus 3 more processes waiting for tasks…
+
+executor >  local (7)
+[fd/7304cf] WorkflowParam          | 0 of 1
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 0 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 0 of 1
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 0 of 1
+Plus 3 more processes waiting for tasks…
+
+executor >  local (7)
+[fd/7304cf] WorkflowParam          | 0 of 1
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 0 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 0 of 1
+Plus 3 more processes waiting for tasks…
+
+executor >  local (8)
+[fd/7304cf] WorkflowParam          | 0 of 1
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 0 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 0 of 1
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 0 of 1
+Plus 2 more processes waiting for tasks…
+
+executor >  local (8)
+[fd/7304cf] WorkflowParam          | 0 of 1
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 0 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 0 of 1
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 0 of 1 ✔
+Plus 2 more processes waiting for tasks…
+
+executor >  local (8)
+[fd/7304cf] WorkflowParam          | 0 of 1
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 0 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 0 of 1
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 2 more processes waiting for tasks…
+
+executor >  local (8)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 0 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 0 of 1
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 2 more processes waiting for tasks…
+
+executor >  local (8)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 0 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[-        ] StrainReport           | 0 of 1
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (9)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 0 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 0 of 1
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (9)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 0 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (9)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[9d/3cfcb6] Plot_coverage_sex (1)  | 1 of 2
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (9)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[9d/3cfcb6] Plot_coverage_sex (1)  | 1 of 2 ✔
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (9)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 2 of 3, cached: 2
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[99/dfb717] Q20_feat (2)           | 2 of 2, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (10)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[a1/86cd16] Q20_feat (3)           | 2 of 3, cached: 2
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[c9/9e527f] Coverage_feat (2)      | 2 of 2, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (11)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 2 of 3, cached: 2
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (11)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[58/61095c] Plot_coverage_feat (1) | 2 of 2, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (12)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 2 of 3, cached: 2
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (12)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 1 of 2, cached: 1
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[88/82dd33] Q20_ref (1)            | 1 of 1, cached: 1
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (13)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 2 of 2, cached: 1 ✔
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[60/b2813f] Q20_ref (2)            | 1 of 2, cached: 1
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (13)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 2 of 2, cached: 1 ✔
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[60/b2813f] Q20_ref (2)            | 2 of 2, cached: 1 ✔
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[7b/8ddaaa] VariantCall_ref (1)    | 1 of 1, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (14)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 2 of 2, cached: 1 ✔
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[60/b2813f] Q20_ref (2)            | 2 of 2, cached: 1 ✔
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[2f/c34cd5] VariantCall_ref (2)    | 1 of 2, cached: 1
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[a5/42612d] VariantCount (1)       | 1 of 1, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (15)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 2 of 2, cached: 1 ✔
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[60/b2813f] Q20_ref (2)            | 2 of 2, cached: 1 ✔
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[2f/c34cd5] VariantCall_ref (2)    | 2 of 2, cached: 1 ✔
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[30/0e1253] VariantCount (2)       | 1 of 2, cached: 1
+[-        ] Print_var_count        -
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (16)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 2 of 2, cached: 1 ✔
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[60/b2813f] Q20_ref (2)            | 2 of 2, cached: 1 ✔
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[2f/c34cd5] VariantCall_ref (2)    | 2 of 2, cached: 1 ✔
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[30/0e1253] VariantCount (2)       | 2 of 2, cached: 1 ✔
+[07/093086] Print_var_count (1)    | 0 of 1
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (16)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 2 of 2, cached: 1 ✔
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[60/b2813f] Q20_ref (2)            | 2 of 2, cached: 1 ✔
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[2f/c34cd5] VariantCall_ref (2)    | 2 of 2, cached: 1 ✔
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[30/0e1253] VariantCount (2)       | 2 of 2, cached: 1 ✔
+[07/093086] Print_var_count (1)    | 0 of 1
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Plus 1 more processes waiting for tasks…
+
+executor >  local (17)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 2 of 2, cached: 1 ✔
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[60/b2813f] Q20_ref (2)            | 2 of 2, cached: 1 ✔
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[2f/c34cd5] VariantCall_ref (2)    | 2 of 2, cached: 1 ✔
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[30/0e1253] VariantCount (2)       | 2 of 2, cached: 1 ✔
+[07/093086] Print_var_count (1)    | 1 of 1 ✔
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[25/cd3391] Print_report (1)       | 0 of 1
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+
+executor >  local (17)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 2 of 2, cached: 1 ✔
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[60/b2813f] Q20_ref (2)            | 2 of 2, cached: 1 ✔
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[2f/c34cd5] VariantCall_ref (2)    | 2 of 2, cached: 1 ✔
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[30/0e1253] VariantCount (2)       | 2 of 2, cached: 1 ✔
+[07/093086] Print_var_count (1)    | 1 of 1 ✔
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[25/cd3391] Print_report (1)       | 1 of 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+
+executor >  local (17)
+[fd/7304cf] WorkflowParam          | 1 of 1 ✔
+[-        ] Split_fasta_ref        -
+[-        ] Split_fasta_feat       -
+[-        ] Split_fasta_sex        -
+[09/64c6f0] Bowtie2_ref (1)        | 2 of 2, cached: 1 ✔
+[d3/b72346] Bowtie2_feat (1)       | 3 of 3, cached: 2 ✔
+[2d/e82922] Bowtie2_sex (1)        | 2 of 2, cached: 2 ✔
+[60/b2813f] Q20_ref (2)            | 2 of 2, cached: 1 ✔
+[a1/86cd16] Q20_feat (3)           | 3 of 3, cached: 2 ✔
+[c5/268d82] Q20_sex (2)            | 2 of 2, cached: 2 ✔
+[03/89f174] Coverage_feat (3)      | 3 of 3, cached: 2 ✔
+[0a/69db4e] Plot_coverage_feat (3) | 3 of 3, cached: 2 ✔
+[70/977f56] Coverage_sex (1)       | 2 of 2, cached: 2 ✔
+[94/23c624] Plot_coverage_sex (2)  | 2 of 2 ✔
+[2f/c34cd5] VariantCall_ref (2)    | 2 of 2, cached: 1 ✔
+[66/30464e] VariantCall_sex (2)    | 2 of 2, cached: 2 ✔
+[30/0e1253] VariantCount (2)       | 2 of 2, cached: 1 ✔
+[07/093086] Print_var_count (1)    | 1 of 1 ✔
+[17/1e3eb6] KmerScan               | 1 of 1, cached: 1 ✔
+[7f/72c2fe] Bowtie2_tools          | 1 of 1, cached: 1 ✔
+[fa/96eba7] ToolDepth              | 1 of 1, cached: 1 ✔
+[fa/809211] ToolScore              | 1 of 1 ✔
+[af/2f11c4] StrainScore            | 1 of 1 ✔
+[29/94f21d] StrainReport           | 1 of 1 ✔
+[11/fd895a] Print_warnings (1)     | 1 of 1, cached: 1 ✔
+[25/cd3391] Print_report (1)       | 1 of 1 ✔
+[0e/9ba16d] Backup                 | 1 of 1 ✔
+Completed at: 23-Oct-2026 18:26:38
+Duration    : 10m 50s
+CPU hours   : 11.4 (73.6% cached)
+Succeeded   : 17
+Cached      : 24
+
+
