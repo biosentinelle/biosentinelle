@@ -110,7 +110,14 @@ def colour_of(tool):
 
 # Status glyphs: colour is never the only cue -- each status also carries a
 # distinct shape/glyph and a spelled-out text label.
-COLOUR_GLYPH = {"green": "●", "orange": "▲", "red": "■"}
+_SVG = ('<svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" '
+        'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" '
+        'aria-hidden="true">{}</svg>')
+COLOUR_GLYPH = {
+    "green": _SVG.format('<circle cx="12" cy="12" r="10"/><path d="M8 12.5l3 3 5-6"/>'),
+    "orange": _SVG.format('<path d="M12 3L2 20h20L12 3z"/><path d="M12 10v5M12 17.5v.5"/>'),
+    "red": _SVG.format('<circle cx="12" cy="12" r="10"/><path d="M9 9l6 6M15 9l-6 6"/>'),
+}
 COLOUR_LABEL = {"green": "present", "orange": "partial", "red": "absent"}
 
 
@@ -440,6 +447,7 @@ select, .pager button {
 .tablebox { max-height: 460px; overflow: auto; border: 1px solid var(--border); border-radius: 4px; }
 .status { white-space: nowrap; font-weight: 600; }
 .status .g { font-family: var(--mono); margin-right: 4px; }
+.ico { vertical-align: -0.14em; }
 .status.green { color: var(--green); }
 .status.orange { color: var(--orange); }
 .status.red { color: var(--red); }
@@ -567,6 +575,31 @@ function fillElement(body, eid) {
   }
 }
 
+// Characteristics of one panel strain, with links to look it up (text and links only).
+function fillStrain(body, si) {
+  var s = (data().strains || [])[si] || {}, id = s.strain_id || '', i, a;
+  para(body, 'Strain', (s.display_name && s.display_name !== id) ? s.display_name + ' (' + id + ')' : id);
+  var rows = [['Clade', s.clade], ['Origin', s.origin], ['Ploidy', s.ploidy],
+              ['Zygosity', s.zygosity], ['Sequence source', s.source_type]];
+  for (i = 0; i < rows.length; i++) { if (rows[i][1]) { para(body, rows[i][0], rows[i][1]); } }
+  var p = document.createElement('p'), links = [['SGD', 'https://www.yeastgenome.org/search?q=' +
+        encodeURIComponent(id)], ['PubMed', 'https://pubmed.ncbi.nlm.nih.gov/?term=' +
+        encodeURIComponent('"' + (s.display_name || id) + '" yeast')]];
+  var runs = String(s.source || '').split(',').filter(function (r) { return /^[SED]RR\d+$/.test(r); });
+  for (i = 0; i < runs.length; i++) {
+    links.push([runs[i] + ' (ENA)', 'https://www.ebi.ac.uk/ena/browser/view/' + runs[i]]);
+  }
+  p.appendChild(document.createTextNode('Links: '));
+  for (i = 0; i < links.length; i++) {
+    a = document.createElement('a');
+    a.href = links[i][1]; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.textContent = links[i][0];
+    if (i) { p.appendChild(document.createTextNode(' · ')); }
+    p.appendChild(a);
+  }
+  body.appendChild(p);
+}
+
 function openHelp(btn) {
   var again = POP && POP.btn === btn;
   closeHelp();
@@ -585,6 +618,8 @@ function openHelp(btn) {
   var key = btn.getAttribute('data-help');
   if (key === 'element') {
     fillElement(body, btn.getAttribute('data-eid') || '');
+  } else if (key === 'strain') {
+    fillStrain(body, +btn.getAttribute('data-si'));
   } else {
     body.innerHTML = helpText(key) || 'No explanation available.';  // authored text, not data
   }
@@ -1017,7 +1052,7 @@ def render_strains(d):
       <span class="strain-row">
         <span class="chev" id="chev-{si}" aria-hidden="true">{chev}</span>
         <span class="rank">rank {rank}</span>
-        <span class="sid">{sid}</span>
+        <span class="sid">{sid}</span> {h_strain}
         <span class="prob">concordance {conc} {h_conc}</span>
         <span class="prob">PP {p} {h_prob}</span>
         <span class="bar" role="img" aria-label="posterior probability {p}"><i style="width:{w:.2f}%"></i></span>
@@ -1033,6 +1068,8 @@ def render_strains(d):
       </span>
     </div>
   </h3>""".format(
+            h_strain=('<button type="button" class="help" data-help="strain" data-si="{si}" '
+                      'aria-label="Explain strain" title="Explain strain">?</button>').format(si=si),
             h_prob=help_btn("probability", "the probability"),
             h_conc=help_btn("concordance", "the concordance"),
             h_m=help_btn("matching", "matching"), h_mm=help_btn("mismatching", "mismatching"),
@@ -1119,7 +1156,8 @@ def render_sex(d):
     rows = [("Mating type of the sample " + help_btn("mating", "the mating type"),
              esc(mating.get("call") or "unknown"))]
     if mating.get("a_fraction") is not None:
-        rows.append(("a fraction a / (a + &alpha;)", esc(num(mating["a_fraction"]))))
+        rows.append(("<span style=\"text-transform:none\">a fraction a / (a + &alpha;)</span>",
+                     esc(num(mating["a_fraction"]))))
     if mating.get("reason"):
         rows.append(("Reason", esc(mating["reason"])))
     if check.get("agreement") in ("agree", "disagree"):
@@ -1144,7 +1182,7 @@ def tool_row(t):
         <td class="n">{ident}</td>
         <td class="n">{depth}</td>
         <td class="n">{score}</td>
-        <td class="status {c}"><span class="g" aria-hidden="true">{glyph}</span>{label}</td>
+        <td class="status {c}"><span class="g">{glyph}</span>{label}</td>
         <td style="white-space:nowrap"><code>{eid}</code> <button type="button" class="help" data-help="element" data-eid="{eid}"
             aria-label="Explain {eid}" title="Explain {eid}">?</button></td>
       </tr>""".format(
@@ -1183,16 +1221,16 @@ def render_tools(d):
 
     legend = """  <div class="legend">
     <strong>Colour / status legend</strong> &mdash; the status is never signalled by hue alone:
-    each level also carries a glyph and a written label.
+    each level also carries an icon and a written label.
     <ul>
-      <li><span class="status green"><span class="g">&#9679;</span>present</span>
-        &mdash; round glyph, green: score &ge; 99 (element present)</li>
-      <li><span class="status orange"><span class="g">&#9650;</span>partial</span>
-        &mdash; triangular glyph, orange: 90 &le; score &lt; 99 (partial or diverged)</li>
-      <li><span class="status red"><span class="g">&#9632;</span>absent</span>
-        &mdash; square glyph, red: score &lt; 90 (absent or too little evidence)</li>
+      <li><span class="status green"><span class="g">{g}</span>present</span>
+        &mdash; check icon, green: score &ge; 99 (element present)</li>
+      <li><span class="status orange"><span class="g">{o}</span>partial</span>
+        &mdash; warning icon, orange: 90 &le; score &lt; 99 (partial or diverged)</li>
+      <li><span class="status red"><span class="g">{r}</span>absent</span>
+        &mdash; cross icon, red: score &lt; 90 (absent or too little evidence)</li>
     </ul>
-  </div>"""
+  </div>""".format(g=COLOUR_GLYPH["green"], o=COLOUR_GLYPH["orange"], r=COLOUR_GLYPH["red"])
 
     if not tools:
         return """<section id="tools">
@@ -1352,7 +1390,7 @@ def render_markers(d):
   gene can be fully covered and still inactive (a point mutation such as <code>ura3-1</code>), or
   carry many SNPs and still be active (a natural form). Loss of function is called from the
   sequence; a missense form is called only when the allele catalogue of {n} assemblies knows it.</p>
-  <p><strong>Genotype:</strong> <code>{genotype}</code></p>
+  <p><strong>Genotype identified:</strong> <code>{genotype}</code></p>
 {expected_note}
   <table>
     <thead><tr><th>gene</th>{expected_head}<th>effect</th><th>coding changes</th>

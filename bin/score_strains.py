@@ -238,6 +238,8 @@ def score_strains(panel, calls, error_rate, max_detail_sites, detail_top):
             "strain_index": strain, "strain_id": info["strain"],
             "display_name": info.get("display_name", info["strain"]),
             "clade": info.get("clade", ""), "source_type": info.get("source_type", ""),
+            "origin": info.get("origin", ""), "ploidy": info.get("ploidy", ""),
+            "zygosity": info.get("zygosity", ""), "source": info.get("source", ""),
             "log_likelihood": (matching * log_match + (mismatching - partial) * log_mismatch
                                + partial * log_partial + unknown_term),
             "concordance": round(matching / float(sites_called), 4) if sites_called else 0.0,
