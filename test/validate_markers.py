@@ -13,7 +13,7 @@ It needs the ScRAPdb assemblies and a bowtie2 index of the reference, so it
 is not part of the offline smoke test:
 
     python3 test/validate_markers.py \\
-        --assembly-dir dataset/genome_references/ScRAPdb_20240610_nuclear_genome \\
+        --assembly-dir ../biosentinelle_db/dataset/genome_references/ScRAPdb_20240610_nuclear_genome \\
         --index <bowtie2 index prefix> --reference <reference FASTA> \\
         --run 'apptainer exec -B /mnt/c <bowtie2 image>' --workdir <dir>
 
