@@ -34,7 +34,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "bin"))
 from marker_effects import read_fasta, revcomp  # noqa: E402
 
-DB = os.path.join(ROOT, "db", "yeast", "markers")
+DB_ROOT = os.path.join(os.path.dirname(ROOT), "biosentinelle_db", "db")  # biosentinelle_db cloned next to biosentinelle
+DB = os.path.join(DB_ROOT, "yeast", "markers")
 
 
 def load_tsv(path):
@@ -121,8 +122,8 @@ def main():
                         "--depth", os.path.join(work, "markers.depth"),
                         "--sam", os.path.join(work, "markers.sam"),
                         "--repeats", os.path.join(DB, "marker_repeats.tsv"),
-                        "--tools", os.path.join(ROOT, "db", "yeast", "tools", "tools.fasta"),
-                        "--tools-manifest", os.path.join(ROOT, "db", "yeast", "tools", "tools.tsv"),
+                        "--tools", os.path.join(DB_ROOT, "yeast", "tools", "tools.fasta"),
+                        "--tools-manifest", os.path.join(DB_ROOT, "yeast", "tools", "tools.tsv"),
                         "--out", os.path.join(work, "markers.json")],
                        check=True, stderr=subprocess.DEVNULL)
         with open(os.path.join(work, "markers.json")) as handle:

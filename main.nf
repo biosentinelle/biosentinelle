@@ -483,7 +483,7 @@ workflow {
         }
 
         if( ! panel_sites.exists() || ! panel_kmers.exists() || ! panel_strains.exists()){
-            warn2 = "\n\nWARNING:\nNO SNP PANEL IN ${db_dir}/panels.\nSTRAIN RANKING IS SKIPPED. RUN build_db.nf FIRST.\n"
+            warn2 = "\n\nWARNING:\nNO SNP PANEL IN ${db_dir}/panels.\nSTRAIN RANKING IS SKIPPED. CHECK db_path (A CLONE OF biosentinelle_db) OR RUN ITS build_db.nf FIRST.\n"
             print(warn2)
             warning_ch = warning_ch.mix(Channel.value(warn2))
         }else{

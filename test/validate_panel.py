@@ -10,7 +10,7 @@ matrix instead (short reads, another laboratory, another caller), so reads
 from the assembly against the panel's matrix strain is an independent check
 of both the panel and the matrix conversion.
 
-    python3 test/validate_panel.py --cases cases.tsv --panel-dir db/yeast/panels \\
+    python3 test/validate_panel.py --cases cases.tsv --panel-dir ../biosentinelle_db/db/yeast/panels \\
         --workdir <scratch> --threads 8
 
 cases.tsv: expected_strain, assembly path. Reads are 100 bp at 20x unless set

@@ -33,6 +33,8 @@ import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BIN = os.path.join(ROOT, "bin")
+# build_population_panel.py lives in biosentinelle_db, cloned next to biosentinelle
+DB_BIN = os.path.join(os.path.dirname(ROOT), "biosentinelle_db", "bin")
 GENOME_LEN = 120000
 CONTIG = "chrTest"
 READ_LEN = 150
@@ -40,7 +42,8 @@ COMPLEMENT = str.maketrans("ACGT", "TGCA")
 
 
 def run(script, args, work):
-    command = [sys.executable, os.path.join(BIN, script)] + args
+    script_dir = BIN if os.path.exists(os.path.join(BIN, script)) else DB_BIN
+    command = [sys.executable, os.path.join(script_dir, script)] + args
     result = subprocess.run(command, capture_output=True, text=True, cwd=work)
     if result.returncode != 0:
         print("FAILED: %s\n%s\n%s" % (script, result.stdout, result.stderr))

@@ -39,10 +39,10 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 <br><br>
 ## WARNINGS
 
-- Currently dedicated to *Saccharomyces cerevisiae*: only the yeast database (`db/yeast`) is provided. Another organism needs its own database, built with *build_db.nf* (see [STRAIN IDENTITY DATABASE](#strain-identity-database)).
+- Currently dedicated to *Saccharomyces cerevisiae*: only the yeast database (`db/yeast` of [biosentinelle_db](https://github.com/biosentinelle/biosentinelle_db)) is provided. Another organism needs its own database, built with the *build_db.nf* file of biosentinelle_db (see [STRAIN IDENTITY DATABASE](#strain-identity-database)).
 - The strain probability is a posterior over the strains of the database, which are assumed to be exhaustive. It is not the probability that the sample *is* that strain. The concordance (fraction of the expected alleles found) is the measure of fit. See the [OUTPUT](#output) section.
 - A single sample per run. All the files of the `fastq_path` folder are analyzed together as one sample.
-- Laboratory stocks drift: a few mismatching sites between a sample and its documented strain are expected (see *db/README.md*).
+- Laboratory stocks drift: a few mismatching sites between a sample and its documented strain are expected (see *db/README.md* of biosentinelle_db).
 
 <br><br>
 ## CONTENT
@@ -50,11 +50,9 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 | Files and folder | Description |
 | :--- | :--- |
 | **main.nf** | File that can be executed using a linux terminal, a MacOS terminal or Windows 10 WSL2. Analysis of a sample. |
-| **nextflow.config** | Parameter settings for the *main.nf* and *build_db.nf* files. Users have to open this file, set the desired settings and save these modifications before execution. Of note, this configuration file is systematically saved in the *reports* folder (see [below](#output)) during each execution, to save the parameter settings. |
-| **build_db.nf** | Builds the strain panel of the strain identity database (*db/\<organism\>/panels*), once per organism. Not required to analyze a sample with the provided yeast database. See [STRAIN IDENTITY DATABASE](#strain-identity-database). |
-| **db folder** | Strain identity database, one subfolder per organism (*db/yeast*). See *db/README.md* for its full description. |
-| **bin folder** | Contains the scripts (Python, R, Rmarkdown) required by the *main.nf* and *build_db.nf* files. |
-| **modules folder** | Contains the Nextflow processes required by the *main.nf* and *build_db.nf* files. |
+| **nextflow.config** | Parameter settings for the *main.nf* file. Users have to open this file, set the desired settings and save these modifications before execution. Of note, this configuration file is systematically saved in the *reports* folder (see [below](#output)) during each execution, to save the parameter settings. |
+| **bin folder** | Contains the scripts (Python, R, Rmarkdown) required by the *main.nf* file. |
+| **modules folder** | Contains the Nextflow processes required by the *main.nf* file. |
 | **conf folder** | Contains the parameter checks of the *main.nf* file. |
 | **test folder** | Validation scripts of the database and of the strain identity branch (*smoke_test_strain_id.py*, *validate_markers.py*, *validate_panel.py*). |
 | **logo.png** | Logo of the project. |
@@ -64,7 +62,7 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 <br><br>
 ## HOW IT WORKS
 
-No assembly is made. The sample sequences are compared with a strain identity database (*db/\<organism\>*, built once by *build_db.nf* from a reference genome and the sequences of 1,172 *S. cerevisiae* strains), through three independent kinds of evidence:
+No assembly is made. The sample sequences are compared with a strain identity database (*db/\<organism\>* of [biosentinelle_db](https://github.com/biosentinelle/biosentinelle_db), built once by its *build_db.nf* from a reference genome and the sequences of 1,172 *S. cerevisiae* strains), through three independent kinds of evidence:
 
 | Evidence | How | Reference genome used at run time? |
 | :--- | :--- | :--- |
@@ -88,7 +86,7 @@ In addition, the historical part of the pipeline aligns the reads (bowtie2) agai
 | `ref_path` | Genome(s) used for the variant counts (*variant_counts.tsv*). A file or a folder of files, or a .zip archive. A single multi-sequence FASTA file is split into one file per sequence. |
 | `features_path` | Feature sequences (cassettes, genes, ...) used for the coverage plots and the *coverage_feat.tsv* file. Same format as `ref_path`. |
 | `sex_path` | Mating type sequences (MATa, MATalpha) used for the coverage plots and the *coverage_sex.tsv* file. Same format as `ref_path`. |
-| `db_path`, `organism_dir` | Strain identity database used: *\<db_path\>/\<organism_dir\>* (*db/yeast* by default). |
+| `db_path`, `organism_dir` | Strain identity database used: *\<db_path\>/\<organism_dir\>* (*../biosentinelle_db/db/yeast* by default, i.e., biosentinelle_db cloned next to biosentinelle). |
 | `panel_reference` | Reference genome of the database (S288C R64-1-1 for yeast), used to genotype the native marker genes. |
 
 See the *nextflow.config* file for the other parameters (`strain_id_on`, `kmer_min_depth`, `marker_min_depth`, `strain_error_rate`, `min_concordance`, `kmer_max_bases`, `shred_max_length`, `shred_length`, `ylab`, ...), each one described there.
@@ -114,7 +112,7 @@ The reference, feature and mating type sequences (`ref_path`, `features_path`, `
 <br><br>
 ## STRAIN IDENTITY DATABASE
 
-The yeast database is provided in *db/yeast* and is only read by *main.nf*: nothing has to be built to analyze a sample. It contains:
+The database is in the separate repository [biosentinelle_db](https://github.com/biosentinelle/biosentinelle_db), which also holds *build_db.nf*, the workflow that builds it. The yeast database is provided in its *db/yeast* folder and is only read by *main.nf*: nothing has to be built to analyze a sample. Clone it next to biosentinelle (see [Prerequisite](#1-prerequisite)), or set `db_path` to its *db* folder. It contains:
 
 | Folder | Content |
 | :--- | :--- |
@@ -125,13 +123,7 @@ The yeast database is provided in *db/yeast* and is only read by *main.nf*: noth
 | *markers* | Native marker gene loci (*marker_loci.tsv*, *.bed*, *.fasta*), allele catalogue (*marker_alleles.tsv*), documented genotypes of laboratory strains (*documented_genotypes.tsv*) and repeats masked in the flanks (*marker_repeats.tsv*). |
 | *tools* | Laboratory tool element sequences (*tools.fasta*) and their description (*tools.tsv*). |
 
-The way each part was made, the sources, the choice of k and the validation of the yeast panel are described in [db/README.md](db/README.md), together with the commands to rebuild them. The strain panel is rebuilt with:
-
-<pre>
-nextflow run build_db.nf -c nextflow.config
-</pre>
-
-using the "Database construction" parameters of the *nextflow.config* file (`strain_table`, `population_matrix`, `reads_dir`, `reads_min_depth`, `panel_reference`, `panel_kmer_size`, `panel_options`). Warning: changing `panel_reference` or `panel_kmer_size` invalidates the whole database.
+The way each part was made, the sources, the choice of k and the validation of the yeast panel are described in the *db/README.md* file of biosentinelle_db, together with the commands to rebuild them. Warning: `panel_reference` must be the reference genome the database was built on.
 
 <br><br>
 ## HOW TO RUN
@@ -143,6 +135,12 @@ Installation of:<br>
 [Graphviz](https://www.graphviz.org/download/), `sudo apt install graphviz` for Linux ubuntu.<br>
 [Apptainer](https://gael-millot.github.io/protocols/docs/Protocol%20135-rev0%20APPTAINER.html#_Toc160091693).<br>
 <br>
+
+Clone the strain identity database next to biosentinelle (default `db_path` of the *nextflow.config* file):
+
+<pre>
+git clone https://github.com/biosentinelle/biosentinelle_db.git
+</pre>
 
 Set the `apptainer_local_images` (local run) or `apptainer_cluster_images` (cluster run) parameter of the *nextflow.config* file to a folder where the apptainer images are stored. Images absent from this folder are pulled from Docker Hub at the first run.
 
@@ -274,7 +272,7 @@ chmod 755 bin/*.*
 ```
 WARNING:
 NO SNP PANEL IN .../db/yeast/panels.
-STRAIN RANKING IS SKIPPED. RUN build_db.nf FIRST.
+STRAIN RANKING IS SKIPPED. CHECK db_path (A CLONE OF biosentinelle_db) OR RUN ITS build_db.nf FIRST.
 ```
 
 The *panel_sites.tsv.gz*, *panel_kmers.tsv.gz* or *panel_strains.tsv* file is missing in *\<db_path\>/\<organism_dir\>/panels*. Check the `db_path` and `organism_dir` parameters of the *nextflow.config* file, or build the panel (see [STRAIN IDENTITY DATABASE](#strain-identity-database)). No *strain_identity_report.html* file is produced in that case.
