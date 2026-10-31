@@ -161,6 +161,14 @@ HELP = {
               "a MAT&alpha; haploid and 0.5 in a MATa/&alpha; diploid (or in a mix of MATa and "
               "MAT&alpha; cells). Calls: MATa &ge; 0.58, MATalpha &le; 0.42, MATa/alpha in "
               "between.",
+    "a_fraction": "<b>Fraction a / (a + &alpha;)</b>: share of the sample's mating-type k-mers "
+                  "that come from the a cassette. a = mean count, in the sample reads, of the "
+                  "k-mers specific to the MATa cassette; &alpha; = same for the MAT&alpha; "
+                  "cassette. Every genome carries one silent a (HMR) and one silent &alpha; (HML) "
+                  "copy plus the active MAT copy, hence about 0.67 in a MATa haploid (2 a, "
+                  "1 &alpha;), 0.33 in a MAT&alpha; haploid (1 a, 2 &alpha;) and 0.5 in a "
+                  "MATa/&alpha; diploid or a mix of both. Calls: MATa &ge; 0.58, MATalpha &le; "
+                  "0.42, MATa/alpha in between.",
     "probability": "<b>Posterior probability</b> of this strain, among the panel strains only. "
                    "Each strain gets a log-likelihood (LL, see its own ?). The probability is "
                    "exp(LL &minus; LL<sub>best</sub>), divided by the sum over all panel strains "
@@ -468,6 +476,12 @@ select, .pager button {
 .decision { margin: 6px 0; padding-left: 22px; }
 .decision > li { margin: 3px 0; }
 .decision ul { margin: 2px 0; padding-left: 20px; }
+.documented { list-style: none; padding-left: 0; }
+.documented > li { margin: 0 0 10px 0; }
+.marker-grid {
+  display: grid; grid-template-columns: max-content max-content max-content;
+  column-gap: 14px; row-gap: 2px; margin: 2px 0;
+}
 .legend { border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; background: var(--bg-alt); font-size: 0.88rem; }
 .legend ul { margin: 4px 0 0 0; padding-left: 20px; }
 .short-note { font-size: 0.87rem; color: var(--fg-muted); margin: 4px 0 8px 0; }
@@ -971,10 +985,10 @@ def marker_token(record):
 
 
 def marker_state(status, record):
-    """Genotype of one marker, red when inactive, green when active."""
-    colour, glyph, label = MARKER_STATUS.get(status, ("orange", "&#9650;", status or "?"))
-    return '<span class="status {c}"><span class="g">{g}</span><code>{t}</code> {l}</span>'.format(
-        c=colour, g=glyph, t=esc(marker_token(record) or status or ""), l=esc(label))
+    """Genotype of one marker and its status, in plain text."""
+    label = MARKER_STATUS.get(status, (None, None, status or "?"))[2]
+    return '<code>{t}</code> {l}'.format(t=esc(marker_token(record) or status or ""),
+                                          l=esc(label))
 
 
 def render_decision(d):
@@ -998,9 +1012,10 @@ def render_decision(d):
     markers = ""
     if genes:
         records = {m.get("gene"): m for m in (d.get("markers") or {}).get("markers") or []}
-        markers = ('<li><strong>Markers:</strong> {h}<ul>\n{}\n  </ul></li>').format(
+        # One row per marker, "URA3:" then genotype and verdict in aligned columns.
+        markers = ('<li><strong>Markers:</strong> {h}<div class="marker-grid">\n{}\n  </div></li>').format(
             "\n".join(
-                '    <li>{g} {o} {v}</li>'.format(
+                '    <span>{g}:</span><span>{o}</span><span>{v}</span>'.format(
                     g=esc(g.get("gene")),
                     o=marker_state(g.get("observed"), records.get(g.get("gene"))),
                     v=verdict("agree" if g.get("agree") is True else
@@ -1200,7 +1215,8 @@ def render_sex(d):
     rows = [("Mating type of the sample " + help_btn("mating", "the mating type"),
              esc(mating.get("call") or "unknown"))]
     if mating.get("a_fraction") is not None:
-        rows.append(("<span style=\"text-transform:none\">a fraction a / (a + &alpha;)</span>",
+        rows.append(("<span style=\"text-transform:none\">Fraction a / (a + &alpha;)</span> " +
+                     help_btn("a_fraction", "the fraction a / (a + alpha)"),
                      esc(num(mating["a_fraction"]))))
     if mating.get("reason"):
         rows.append(("Reason", esc(mating["reason"])))
@@ -1275,15 +1291,14 @@ def render_tools(d):
     )
 
     legend = """  <div class="legend">
-    <strong>Colour / status legend</strong> &mdash; the status is never signalled by hue alone:
-    each level also carries an icon and a written label.
+    <strong>Colour / status legend</strong>
     <ul>
       <li><span class="status green"><span class="g">{g}</span>present</span>
-        &mdash; check icon, green: score &ge; 99 (element present)</li>
+        &mdash; score &ge; 99 (element present)</li>
       <li><span class="status orange"><span class="g">{o}</span>partial</span>
-        &mdash; warning icon, orange: 90 &le; score &lt; 99 (partial or diverged)</li>
+        &mdash; 90 &le; score &lt; 99 (partial or diverged)</li>
       <li><span class="status red"><span class="g">{r}</span>absent</span>
-        &mdash; cross icon, red: score &lt; 90 (absent or too little evidence)</li>
+        &mdash; score &lt; 90 (absent or too little evidence)</li>
     </ul>
   </div>""".format(g=COLOUR_GLYPH["green"], o=COLOUR_GLYPH["orange"], r=COLOUR_GLYPH["red"])
 
@@ -1412,17 +1427,41 @@ def marker_row(m, expected=None):
         detail="<br>".join(esc(chrom_names(x)) for x in detail if x))
 
 
+def documented_match(m, n_markers):
+    """One documented strain against the sample: every marker with its
+    documented allele, then the counts."""
+    genes = m.get("genes")
+    if genes is None:   # result file older than the per-gene list
+        rows = "".join('    <span>{}</span><span></span><span></span>\n'.format(esc(x))
+                       for x in m.get("differences") or [])
+    else:
+        cells = []
+        for g in genes:
+            if g.get("agree") is not None:
+                value = "<code>{}</code>".format(esc(g.get("documented")))
+                v = verdict("agree" if g["agree"] else "disagree")
+            elif g.get("documented") is None:
+                value, v = "heterozygous", '<span class="muted">not compared</span>'
+            else:
+                value, v = "not detected", ""
+            cells.append('    <span>{g}:</span><span>{a}</span><span>{v}</span>\n'.format(
+                g=esc(g.get("gene")), a=value, v=v))
+        rows = "".join(cells)
+    return """    <li><strong>{s}</strong>
+  <div class="marker-grid">
+{rows}  </div>
+  {s}: {c} of {t} markers identified,<br>{a} of {c} markers agree.</li>""".format(
+        s=esc(m["strain"]), rows=rows, a=m["agree"], c=m["compared"],
+        t=m.get("total") or n_markers)
+
+
 def render_markers(d):
     mk = d.get("markers") or {}
     markers = mk.get("markers") or []
     if not markers:
         return ""
     matches = [m for m in (mk.get("documented_genotype_matches") or [])][:4]
-    match_items = "\n".join(
-        "    <li><strong>{s}</strong>: {a} of {c} markers agree{d}</li>".format(
-            s=esc(m["strain"]), a=m["agree"], c=m["compared"],
-            d=esc(" (" + "; ".join(m["differences"]) + ")") if m["differences"] else "")
-        for m in matches)
+    match_items = "\n".join(documented_match(m, len(markers)) for m in matches)
     limits = "\n".join("    <li>{}</li>".format(esc(x)) for x in mk.get("limits") or [])
     # Expected status per gene in the first strain of the SNP ranking. The two
     # readings are kept side by side, neither one corrects the other.
@@ -1441,30 +1480,30 @@ def render_markers(d):
         expected_head, expected_note, conclusion_head = "", "", ""
     return """<section id="markers">
   <h2>Native marker genes</h2>
-  <p class="note">The strain's own selection markers, judged by the protein each one encodes. Loss
-  of function is defined according to the detection of the variation in the EFFECT column.
-  (Allele catalogue: {n} assemblies.)</p>
+  <p class="note">Loss of function is defined according to the detection of the variation in the
+  EFFECT column.</p>
   <p><strong>Genotype identified:</strong> <code>{genotype}</code></p>
 {expected_note}
   <table>
-    <thead><tr><th>gene</th>{expected_head}<th>effect</th><th>coding changes</th>
+    <thead><tr><th>gene</th>{expected_head}<th>effect {effect_help}</th><th>coding changes</th>
       <th>evidence</th><th>status {status_help}</th>{conclusion_head}</tr></thead>
     <tbody>
 {rows}
     </tbody>
   </table>
   <h3>Documented genotypes</h3>
-  <ul>
+  <ul class="documented">
 {matches}
   </ul>
   <h3>Limits</h3>
   <ul>
 {limits}
   </ul>
-</section>""".format(n=esc(mk.get("catalogue_assemblies")), genotype=esc(mk.get("genotype")),
+</section>""".format(genotype=esc(mk.get("genotype")),
                      expected_note=expected_note, expected_head=expected_head,
                      conclusion_head=conclusion_head,
                      status_help=help_btn("marker_status", "the marker status"),
+                     effect_help=help_btn("marker_effect", "the effect"),
                      rows="\n".join(marker_row(m, expected_by_gene.get(m.get("gene"), {})
                                                if ex else None) for m in markers),
                      matches=match_items or "    <li>none documented</li>", limits=limits)
@@ -1477,6 +1516,16 @@ def render_markers(d):
 def render(d, title):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     help_data = dict(HELP, __classes__=CLASS_HELP)
+    help_data["marker_effect"] = (
+        "<b>Effect of the sample's allele on the encoded protein</b>, from the changes found in "
+        "the reads at the gene (coding changes column): whole ORF deleted, frameshift, stop "
+        "gained, start lost, insertion, missense, or none. The protein the sample encodes is "
+        "then looked up in an allele catalogue built from {n} genome assemblies of known "
+        "strains: a form documented as a laboratory mutant allele is named (ura3-1, ...), a form "
+        "carried by active strains is a neutral polymorphism, and a frameshift, stop, start loss "
+        "or deletion is a loss of function even when not catalogued. The status column follows "
+        "from this effect.").format(
+        n=esc((d.get("markers") or {}).get("catalogue_assemblies") or "several"))
     ex = d.get("markers_expected") or {}
     if ex:
         strain = esc(ex.get("strain") or d.get("call"))
@@ -1485,7 +1534,7 @@ def render(d, title):
                             for g in ex.get("genes") or [])
         help_data["markers_agree"] = (
             "<b>agree / disagree according to {s}.</b> The status measured in the sample "
-            "(active in green, inactive in red) is compared with the status expected in {s} "
+            "(active or inactive) is compared with the status expected in {s} "
             "({src}). Expected: {a}. Not compared when either status is unknown.").format(
             s=strain, src=esc(ex.get("source")), a=alleles)
     parts = [

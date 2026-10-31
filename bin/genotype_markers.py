@@ -768,22 +768,27 @@ def main():
     # not protein forms, and "uncertain" or "mixed" calls are left out.
     matches = []
     for strain, alleles in documented.items():
-        agree, compared, differ = 0, 0, []
+        agree, compared, differ, genes = 0, 0, [], []
         for r in results:
+            # Every marker is listed, compared or not, for the report.
+            allele = alleles.get(r["gene"], r["gene"].upper())
+            gene = {"gene": r["gene"], "documented": allele, "observed": r["status"],
+                    "agree": None}
+            genes.append(gene)
             if r["status"] not in ("active", "inactive"):
                 continue
-            allele = alleles.get(r["gene"], r["gene"].upper())
             if allele is None:
                 continue
             expected = "active" if allele == r["gene"].upper() else "inactive"
             compared += 1
+            gene["agree"] = expected == r["status"]
             if expected == r["status"]:
                 agree += 1
             else:
                 differ.append("%s %s, documented %s" % (r["gene"], r["status"], allele))
         if compared:
             matches.append({"strain": strain, "agree": agree, "compared": compared,
-                            "differences": differ})
+                            "total": len(results), "differences": differ, "genes": genes})
     matches.sort(key=lambda m: (-m["agree"], m["strain"]))
 
     def genotype_token(record):
