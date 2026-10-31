@@ -573,6 +573,20 @@ function fillElement(body, eid) {
   } else if (t.origin === 'foreign') {
     para(body, 'Origin', 'foreign: absent from the yeast genome, so a hit means a construct.');
   }
+  var mk = (data().markers || {}).markers || [];
+  for (i = 0; i < mk.length; i++) {
+    if (String(t.name || name).toUpperCase() === String(mk[i].gene).toUpperCase()) {
+      para(body, 'Versus the marker gene', 'this element carries the name of the native marker ' +
+           mk[i].gene + ', which is judged in the Native marker genes section from the genomic ' +
+           'copy (reads on the chromosome locus). The element is the copy carried by the ' +
+           'plasmid (' + (t.source_plasmid || 'unknown') + '), told apart by its own sequence ' +
+           '(the fingerprint after the two underscores) and by its origin: ' +
+           (t.origin === 'foreign' ? 'foreign here, its sequence differs from the genomic gene, ' +
+            'so a hit means a construct, not the strain\'s own marker.' :
+            'native, its sequence is the genomic one, so a hit alone does not prove a construct.'));
+      break;
+    }
+  }
 }
 
 // Characteristics of one panel strain, with links to look it up (text and links only).
@@ -936,6 +950,33 @@ def render_decided_by(d):
         t=text, h=help_btn("decided_by", "how the strain is decided"), i="\n".join(items))
 
 
+def marker_token(record):
+    """Genotype name of one marker as the call prints it: URA3 when active,
+    ura3-1 (or ura3[stop gained]) when inactive."""
+    if not record:
+        return ""
+    if record.get("status") == "no_data":
+        return "{}(?)".format(record.get("gene"))
+    alleles = record.get("alleles") or [{}]
+    allele = alleles[0]
+    if record.get("status") == "active":
+        return str(record.get("gene")).upper()
+    if record.get("status") == "inactive":
+        known = allele.get("known_as")
+        if known:
+            return "/".join(sorted({k.split(" ")[0] for k in known}))
+        return "{}[{}]".format(str(record.get("gene")).lower(),
+                               (allele.get("effect") or "").replace("_", " "))
+    return "{}({})".format(str(record.get("gene")).lower(), record.get("status"))
+
+
+def marker_state(status, record):
+    """Genotype of one marker, red when inactive, green when active."""
+    colour, glyph, label = MARKER_STATUS.get(status, ("orange", "&#9650;", status or "?"))
+    return '<span class="status {c}"><span class="g">{g}</span><code>{t}</code> {l}</span>'.format(
+        c=colour, g=glyph, t=esc(marker_token(record) or status or ""), l=esc(label))
+
+
 def render_decision(d):
     """The strain called, how it was decided (SNP panel, then mating type and
     markers among the strains the panel does not separate), then whether the
@@ -956,12 +997,16 @@ def render_decision(d):
     genes = (d.get("markers_expected") or {}).get("genes") or []
     markers = ""
     if genes:
-        markers = '<li><strong>Markers:</strong><ul>\n{}\n  </ul></li>'.format("\n".join(
-            '    <li>{g} {o} {v}</li>'.format(
-                g=esc(g.get("gene")), o=esc(g.get("observed") or ""),
-                v=verdict("agree" if g.get("agree") is True else
-                          "disagree" if g.get("agree") is False else None))
-            for g in genes))
+        records = {m.get("gene"): m for m in (d.get("markers") or {}).get("markers") or []}
+        markers = ('<li><strong>Markers:</strong> {h}<ul>\n{}\n  </ul></li>').format(
+            "\n".join(
+                '    <li>{g} {o} {v}</li>'.format(
+                    g=esc(g.get("gene")),
+                    o=marker_state(g.get("observed"), records.get(g.get("gene"))),
+                    v=verdict("agree" if g.get("agree") is True else
+                              "disagree" if g.get("agree") is False else None))
+                for g in genes),
+            h=help_btn("markers_agree", "how the markers are compared"))
     tool_check = d.get("tool_check")
     if tool_check is None:   # result file older than tool_check
         elements = [{"name": t.get("name"), "status": COLOUR_LABEL[colour_of(t)],
@@ -975,12 +1020,11 @@ def render_decision(d):
         documented = tool_check.get("documented")
     if elements:
         tools = '<li><strong>Tools:</strong><ul>\n{}\n  </ul></li>'.format("\n".join(
-            '    <li>{n} {s} {v}</li>'.format(n=esc(e.get("name")), s=esc(e.get("status")),
-                                          v=verdict(e.get("agreement")))
+            '    <li>{n} <span class="muted">{s}</span></li>'.format(
+                n=esc(e.get("name")), s=esc(e.get("status")))
             for e in elements))
     else:
-        tools = '<li><strong>Tools:</strong> no foreign element found {}</li>'.format(
-            verdict("agree" if documented else None))
+        tools = '<li><strong>Tools:</strong> no foreign element found</li>'
     return """<section id="decision">
   <h2>Decision</h2>
   <ul class="decision">
@@ -1211,6 +1255,17 @@ TOOL_HEAD = """      <tr><th>name</th><th>class {}</th><th class="n">length (bp)
 def render_tools(d):
     tools = d.get("tools") or []
     summary = d.get("tool_summary") or {}
+    # A native element named like a marker gene (URA3, TRP1...) is the genomic
+    # gene itself, judged in the Native marker genes section: not listed here.
+    marker_genes = {str(m.get("gene")).upper()
+                    for m in (d.get("markers") or {}).get("markers") or []}
+    kept = [t for t in tools
+            if not (t.get("origin") == "native"
+                    and str(t.get("name") or "").upper() in marker_genes)]
+    if len(kept) != len(tools):
+        summary = {c: sum(1 for t in kept if (t.get("scorable") or "yes") != "short"
+                          and colour_of(t) == c) for c in ("green", "orange", "red")}
+        tools = kept
 
     tiles = "\n".join(
         """    <div class="tile"><div class="k"><span class="pill {c}">{glyph} {label}</span></div>
@@ -1386,10 +1441,9 @@ def render_markers(d):
         expected_head, expected_note, conclusion_head = "", "", ""
     return """<section id="markers">
   <h2>Native marker genes</h2>
-  <p class="note">The strain's own selection markers, judged by the protein each one encodes. A
-  gene can be fully covered and still inactive (a point mutation such as <code>ura3-1</code>), or
-  carry many SNPs and still be active (a natural form). Loss of function is called from the
-  sequence; a missense form is called only when the allele catalogue of {n} assemblies knows it.</p>
+  <p class="note">The strain's own selection markers, judged by the protein each one encodes. Loss
+  of function is defined according to the detection of the variation in the EFFECT column.
+  (Allele catalogue: {n} assemblies.)</p>
   <p><strong>Genotype identified:</strong> <code>{genotype}</code></p>
 {expected_note}
   <table>
@@ -1423,6 +1477,17 @@ def render_markers(d):
 def render(d, title):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     help_data = dict(HELP, __classes__=CLASS_HELP)
+    ex = d.get("markers_expected") or {}
+    if ex:
+        strain = esc(ex.get("strain") or d.get("call"))
+        alleles = ", ".join("{} ({})".format(esc(g.get("gene")),
+                                             esc(g.get("expected_allele") or g.get("expected")))
+                            for g in ex.get("genes") or [])
+        help_data["markers_agree"] = (
+            "<b>agree / disagree according to {s}.</b> The status measured in the sample "
+            "(active in green, inactive in red) is compared with the status expected in {s} "
+            "({src}). Expected: {a}. Not compared when either status is unknown.").format(
+            s=strain, src=esc(ex.get("source")), a=alleles)
     parts = [
         "<!DOCTYPE html>",
         '<html lang="en">',
