@@ -516,6 +516,8 @@ def main():
     parser.add_argument("--min-mapq", type=int, default=20)
     parser.add_argument("--out", required=True, help="JSON output")
     parser.add_argument("--tsv", help="one line per gene")
+    parser.add_argument("--mito", help="mito_status.json from mito_status.py, carried into the "
+                                       "output as 'mitochondria'")
     args = parser.parse_args()
 
     loci = load_tsv(args.loci)
@@ -818,6 +820,9 @@ def main():
         "documented_genotype_matches": matches,
         "catalogue_assemblies": len(set(r["assembly"] for r in catalogue)),
     }
+    if args.mito:
+        with open(args.mito) as handle:
+            report["mitochondria"] = json.load(handle)
     with open(args.out, "w") as handle:
         json.dump(report, handle, indent=1)
     if args.tsv:

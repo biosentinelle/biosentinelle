@@ -636,6 +636,11 @@ def marker_warnings(markers):
         out.append("native marker(s) %s could not be called as active or inactive; see the "
                    "marker section for why" % ", ".join(unsure))
     out.extend("native markers: %s" % limit for limit in markers.get("limits", []))
+    mito = markers.get("mitochondria") or {}
+    if mito.get("status") in ("rho-", "rho0", "uncertain"):
+        out.append("mitochondrial genome %s, growth on glycerol: %s; %s"
+                   % (mito["status"], mito.get("glycerol"), mito.get("reason")))
+    out.extend("mitochondrial genome: %s" % note for note in mito.get("notes", []))
     return out
 
 
