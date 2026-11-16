@@ -29,7 +29,7 @@ import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BIN = os.path.join(ROOT, "bin")
-GENES = os.path.join(os.path.dirname(ROOT), "biosentinelle_db", "db", "yeast", "mito",
+GENES = os.path.join(os.path.dirname(ROOT), "biosentinelle_yeast_db", "db", "yeast", "mito",
                      "mito_genes.tsv")
 MITO_LEN = 85779
 NUCLEAR = [("ref|NC_001133|", 230218), ("ref|NC_001134|", 813184)]

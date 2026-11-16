@@ -16,7 +16,7 @@ any other, so the loss goes unnoticed until the strain is put on glycerol:
 
 The reads are aligned to the whole reference genome, mtDNA included, and the
 depth is read over the exons of the genes needed for respiration
-(biosentinelle_db bin/build_mito_genes.py). Exons only: the group I and II
+(biosentinelle_yeast_db bin/build_mito_genes.py). Exons only: the group I and II
 introns of COX1, COB and the 21S rRNA are optional and strains differ in which
 they carry, so a missing intron is not a rho- deletion.
 

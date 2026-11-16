@@ -13,7 +13,7 @@ It needs the ScRAPdb assemblies and a bowtie2 index of the reference, so it
 is not part of the offline smoke test:
 
     python3 test/validate_markers.py \\
-        --assembly-dir ../biosentinelle_db/dataset/genome_references/ScRAPdb_20240610_nuclear_genome \\
+        --assembly-dir ../biosentinelle_yeast_db/dataset/genome_references/ScRAPdb_20240610_nuclear_genome \\
         --index <bowtie2 index prefix> --reference <reference FASTA> \\
         --run 'apptainer exec -B /mnt/c <bowtie2 image>' --workdir <dir>
 
@@ -34,7 +34,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "bin"))
 from marker_effects import read_fasta, revcomp  # noqa: E402
 
-DB_ROOT = os.path.join(os.path.dirname(ROOT), "biosentinelle_db", "db")  # biosentinelle_db cloned next to biosentinelle
+DB_ROOT = os.path.join(os.path.dirname(ROOT), "biosentinelle_yeast_db", "db")  # biosentinelle_yeast_db cloned next to biosentinelle
 DB = os.path.join(DB_ROOT, "yeast", "markers")
 
 
