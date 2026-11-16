@@ -56,6 +56,9 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 | **modules folder** | Contains the Nextflow processes required by the *main.nf* file. |
 | **conf folder** | Contains the parameter checks of the *main.nf* file. |
 | **test folder** | Validation scripts of the database and of the strain identity branch (*smoke_test_strain_id.py*, *validate_markers.py*, *validate_panel.py*). |
+| **galaxy folder** | Galaxy tool running the whole pipeline in a single Galaxy job, whose form recapitulates *nextflow.config*, and planemo scripts to run it in a local Galaxy (see [galaxy/README.md](galaxy/README.md)). |
+| **.shed.yml** | Description of the Tool Shed repository of the Galaxy tool. |
+| **web folder** | Public web page (Shiny form generated from *nextflow.config*) and submission daemon to Galaxy, with its Dockerfile, built by *.gitlab-ci.yml* (see [web/README.md](web/README.md)). |
 | **logo.png** | Logo of the project. |
 | **Licence.txt** | Licence of the release. |
 
@@ -114,7 +117,7 @@ The reference, feature and mating type sequences (`ref_path`, `features_path`, `
 <br><br>
 ## STRAIN IDENTITY DATABASE
 
-The database is in the separate repository [biosentinelle_yeast_db](https://github.com/biosentinelle/biosentinelle_yeast_db), which also holds *build_db.nf*, the workflow that builds it. The yeast database is provided in its *db/yeast* folder and is only read by *main.nf*: nothing has to be built to analyze a sample. Clone it next to biosentinelle (see [Prerequisite](#1-prerequisite)), or set `db_path` to its *db* folder. It contains:
+The database is in the separate repository [biosentinelle_yeast_db](https://github.com/biosentinelle/biosentinelle_yeast_db), which also holds *build_db.nf*, the workflow that builds it. The yeast database is provided in its *db/yeast* folder and is only read by *main.nf*: nothing has to be built to analyze a sample. On galaxy.pasteur.fr, it is installed on the server by the Galaxy administrators (see [galaxy/README.md](galaxy/README.md)). It contains:
 
 | Folder | Content |
 | :--- | :--- |
@@ -130,180 +133,48 @@ The way each part was made, the sources, the choice of k and the validation of t
 <br><br>
 ## HOW TO RUN
 
-### 1. Prerequisite
+### 1. Connection
 
-Installation of:<br>
-[nextflow DSL2](https://gael-millot.github.io/protocols/docs/Protocol%20152-rev0%20DSL2.html#_Toc208504071). Please, use the version indicated above.<br>
-[Graphviz](https://www.graphviz.org/download/), `sudo apt install graphviz` for Linux ubuntu.<br>
-[Apptainer](https://gael-millot.github.io/protocols/docs/Protocol%20135-rev0%20APPTAINER.html#_Toc160091693).<br>
-<br>
-
-Clone the strain identity database next to biosentinelle (default `db_path` of the *nextflow.config* file):
-
-<pre>
-git clone https://github.com/biosentinelle/biosentinelle_yeast_db.git
-</pre>
-
-Set the `apptainer_local_images` (local run) or `apptainer_cluster_images` (cluster run) parameter of the *nextflow.config* file to a folder where the apptainer images are stored. Images absent from this folder are pulled from Docker Hub at the first run.
-
-<br>
-
-### 2. Local running (personal computer)
-
-#### 2.1. *main.nf* file in the personal computer
-
-- Mount a server if required:
-
-<pre>
-DRIVE="Z" # change the letter to fit the correct drive
-sudo mkdir /mnt/share
-sudo mount -t drvfs $DRIVE: /mnt/share
-</pre>
-
-Warning: if no mounting, it is possible that nextflow does nothing, or displays a message like:
-<pre>
-Launching `main.nf` [loving_morse] - revision: d5aabe528b
-/mnt/share/Users
-</pre>
-
-- Run the following command from where the *main.nf* and *nextflow.config* files are (example: \\wsl$\Ubuntu-20.04\home\gael):
-
-<pre>
-nextflow run main.nf -c nextflow.config # or nextflow run main.nf
-</pre>
-
-with -c to specify the name of the config file used.
+- Open [https://galaxy.pasteur.fr](https://galaxy.pasteur.fr) in a web browser and log in with your Institut Pasteur account.
+- Type *biosentinelle* in the search field of the *Tools* panel (left), then click on the tool: its form opens in the central panel.
 
 <br><br>
-#### 2.2. *main.nf* file in the public github repository
+### 2. Parameters
 
-Run the following command from where you want the results:
-
-<pre>
-nextflow run biosentinelle/biosentinelle -r main
-</pre>
-
-<br><br>
-
-### 3. Distant running (example with the Pasteur cluster)
-
-#### 3.1. Pre-execution
-
-Set `system_exec = 'slurm'` (and `slurm_queue`, `slurm_qos` if required) in the *nextflow.config* file.
-
-Go into the directory where the main.nf and nextflow.config files are.
-Copy-paste this code:
-
-<pre>
-EXEC_PATH=$(pwd) # where the bin folder of biosentinelle is located (by default, the same path as for the main.nf file)
-export CONF_BEFORE=/opt/gensoft/exe # on maestro
-
-export JAVA_CONF=java/13.0.2
-export JAVA_CONF_AFTER=bin/java # on maestro
-export APP_CONF=apptainer/1.3.5
-export APP_CONF_AFTER=bin/apptainer # on maestro
-export GIT_CONF=git/2.39.1
-export GIT_CONF_AFTER=bin/git # on maestro
-export GRAPHVIZ_CONF=graphviz/2.42.3
-export GRAPHVIZ_CONF_AFTER=bin/graphviz # on maestro
-export GRAALVM_CONF=graalvm/ce-java23-23.0.1 # required for nextflow
-export GRAALVM_CONF_AFTER=bin/graalvm # on maestro
-export NEXTFLOW_CONF=nextflow/24.10.3
-export NEXTFLOW_CONF_AFTER=bin/nextflow # on maestro
-
-MODULES="${CONF_BEFORE}/${JAVA_CONF}/${JAVA_CONF_AFTER},${CONF_BEFORE}/${APP_CONF}/${APP_CONF_AFTER},${CONF_BEFORE}/${GIT_CONF}/${GIT_CONF_AFTER},${CONF_BEFORE}/${GRAPHVIZ_CONF}/${GRAPHVIZ_CONF_AFTER},${CONF_BEFORE}/${GRAALVM_CONF}/${GRAALVM_CONF_AFTER},${CONF_BEFORE}/${NEXTFLOW_CONF}/${NEXTFLOW_CONF_AFTER}"
-cd ${EXEC_PATH}
-chmod -R 755 ${EXEC_PATH}/bin/*.* # nextflow needs x authorization for all files and subfolder files
-module load ${JAVA_CONF} ${APP_CONF} ${GIT_CONF} ${GRAPHVIZ_CONF} ${GRAALVM_CONF}
-module load ${NEXTFLOW_CONF}
-</pre>
+- Click on *Upload* (left) and add the sequence files of the sample (see [INPUT](#input)): *Choose local file*, or *Paste/Fetch data* for URLs, then *Start*. They appear in the history (right panel). Check their datatype (e.g., *fastqsanger.gz*), to change with the *Edit attributes* icon (pencil) if wrong.
+- The form recapitulates the *nextflow.config* file: same sections, one field per parameter, with the name of the parameter in parentheses and its description below.
+- *Sample sequences (fastq_path)*:
+    - *Sequence file(s)*: one or several files of the sample, in any accepted format, the mates being paired by the _1/_2 or _R1/_R2 suffix of their names.
+    - *Paired-end reads*: forward and reverse files, or a paired collection.
+    - *Run accession*: SRR..., ERR... or DRR..., downloaded during the run. This requires an internet access of the Galaxy computing nodes: otherwise, import the reads into the history first (e.g., with the *Faster Download and Extract Reads in FASTQ* tool, if available) and use *Sequence file(s)*.
+    - *Sample name*: optional, name of the sample in the reports (default: name of the first file).
+- *Kind of sequences (seq_kind)*: reads or assembly. *Molecule (seq_molecule)*: DNA or RNA.
+- *Sample handling and reference sequences* (optional): genomes of the variant counts (ref_path), features (features_path) and mating type sequences (sex_path) of *report.html*: those of the pipeline by default, or your own files.
+- *Strain identity* (optional): thresholds of the strain call. The strain identity database (yeast, 1,172 strains) is installed on the server.
+- *Outputs*: optional additional datasets (see [Results](#4-results) below).
+- *Parameter file* (optional): JSON file `{"parameter": "value"}` whose values replace those of the form, e.g., to reuse a set of parameters.
+- The execution parameters are set by Galaxy.
+- Optional: *Email notification* (bottom of the form, if available), to receive an e-mail at the end of the run.
+- Click on *Run Tool*.
 
 <br><br>
+### 3. Run follow-up
 
-#### 3.2. *main.nf* file in a cluster folder
-
-Run from where the *main.nf* and *nextflow.config* files are (which has been set thanks to the EXEC_PATH variable above):
-
-<pre>
-HOME_INI=$HOME
-HOME="${HELIXHOME}/biosentinelle/" # $HOME changed to allow the creation of .nextflow into /$HELIXHOME/biosentinelle/, for instance. See NFX_HOME in the nextflow software script
-nextflow run main.nf -c nextflow.config -resume --modules ${MODULES} # --modules ${MODULES} in order to have all the used module versions recorded into the report file, -resume to continue a potential job that has already been submitted
-HOME=$HOME_INI
-</pre>
+- The datasets of the run appear at the top of the history: grey (queued), yellow (running), green (finished) or red (error).
+- From a few minutes for an assembly to about an hour for a whole-genome sequencing run, plus the waiting time of the job on the Maestro cluster.
+- Click on a dataset, then on *Dataset Details* (i icon): parameters of the run and nextflow messages (*Tool Standard Output* and *Tool Standard Error*).
+- Red dataset: click on it to read the error message. *Error* icon (bug): report to the Galaxy administrators (or post an issue [here](https://github.com/biosentinelle/biosentinelle/issues)). *Run Job Again* icon: form with the same parameters, to rerun.
+- Warnings of the run at the end of *report.html* (e.g., NO SNP PANEL or NO NATIVE MARKER DATABASE: database of the server incomplete, to report to the Galaxy administrators).
 
 <br><br>
+### 4. Results
 
-#### 3.3. *main.nf* file in the public github repository
-
-Modify the first line of the code below, in order to call the desired version of biosentinelle (branch or tag, see [here](https://github.com/biosentinelle/biosentinelle/tags)), and run (results will be where the EXEC_PATH variable has been set above):
-
-<pre>
-VERSION="main"
-HOME_INI=$HOME
-HOME="${HELIXHOME}/biosentinelle/" # $HOME changed to allow the creation of .nextflow into /$HELIXHOME/biosentinelle/, for instance. See NFX_HOME in the nextflow software script
-nextflow run biosentinelle/biosentinelle -r $VERSION -c $HOME/nextflow.config --modules ${MODULES}
-HOME=$HOME_INI
-</pre>
-
-<br><br>
-### 4. Error messages and solutions
-
-#### Message 1
-```
-Unknown error accessing project `biosentinelle/biosentinelle` -- Repository may be corrupted: /pasteur/sonic/homes/gmillot/.nextflow/assets/biosentinelle/biosentinelle
-```
-
-Purge using:
-<pre>
-rm -rf /pasteur/sonic/homes/gmillot/.nextflow/assets/biosentinelle*
-</pre>
-
-#### Message 2
-
-```
-permission denied
-```
-
-Use chmod to change the user rights. Example linked to files in the bin folder: 
-```
-chmod 755 bin/*.*
-```
-
-#### Message 3
-
-```
-WARNING:
-NO SNP PANEL IN .../db/yeast/panels.
-STRAIN RANKING IS SKIPPED. CHECK db_path (A CLONE OF biosentinelle_yeast_db) OR RUN ITS build_db.nf FIRST.
-```
-
-The *panel_sites.tsv.gz*, *panel_kmers.tsv.gz* or *panel_strains.tsv* file is missing in *\<db_path\>/\<organism_dir\>/panels*. Check the `db_path` and `organism_dir` parameters of the *nextflow.config* file, or build the panel (see [STRAIN IDENTITY DATABASE](#strain-identity-database)). No *strain_identity_report.html* file is produced in that case.
-
-#### Message 4
-
-```
-WARNING:
-NO NATIVE MARKER DATABASE IN .../db/yeast/markers, OR panel_reference NOT FOUND.
-NATIVE MARKER GENOTYPING IS SKIPPED.
-```
-
-Check that the `panel_reference` parameter of the *nextflow.config* file points to the reference genome of the database (S288C R64-1-1 for yeast).
-
-#### Message 5
-
-```
-ERROR ~ Error executing process > 'Print_report (1)'
-...
-Command error:
-  Quitting from lines ... (biosentinelle_template.rmd)
-```
-
-If obtained using `nextflow run main.nf -resume`, then rerun the same command once. Sometimes, nextflow shows difficulties to build the report.html file with `-resume`. If the problem persists, try `nextflow run main.nf`. If the problem still occurs, please send an issue [here](https://github.com/biosentinelle/biosentinelle/issues).
-
-#### Error using -resume
-
-Do not hesitate to rerun once the same command to reobtain the same error message. Indeed, sometimes nextflow has difficulties to reassemble all the cached files and reruning solves the problem.
-
+- *strain identity report* dataset, *View* icon (eye): main result, *strain_identity_report.html* (decision, warnings, strain ranking, tool elements, native marker genes, mitochondrial genome, see [OUTPUT](#output)).
+- *report and result folder* dataset:
+    - *View* icon (eye): *report.html* (coverage, variant counts, database used) in the central panel, with working links to the tables and reports.
+    - *Download* icon (floppy disk, after clicking on the dataset): zip file of the whole result folder (see [OUTPUT](#output)), saved where the web browser proposes.
+- Optional datasets (*Outputs* section of the form): *tables* (.tsv files as a collection, for other Galaxy tools) and *result folder (zip)*.
+- The datasets stay in the history: *Delete* icon (bin) when no longer needed.
 
 <br><br>
 ## OUTPUT
