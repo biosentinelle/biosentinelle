@@ -529,11 +529,23 @@ workflow {
                 warning_ch = warning_ch.mix(Channel.value(warn3))
                 marker_json_ch = Channel.of('{}').collectFile(name: 'no_markers.json')
             }else{
+                // mtDNA status (rho, growth on glycerol): skipped, with a warning,
+                // when the database predates mito/mito_genes.tsv.
+                mito_genes_file = file("${db_dir}/mito/mito_genes.tsv", checkIfExists: false)
+                if(mito_genes_file.exists()){
+                    mito_genes = Channel.value(mito_genes_file)
+                }else{
+                    warn4 = "\n\nWARNING:\nNO ${db_dir}/mito/mito_genes.tsv.\nTHE MITOCHONDRIAL GENOME (RHO, GROWTH ON GLYCEROL) IS NOT ASSESSED.\n"
+                    print(warn4)
+                    warning_ch = warning_ch.mix(Channel.value(warn4))
+                    mito_genes = Channel.of('').collectFile(name: 'NO_MITO').first()
+                }
                 MarkerAlign(
                     fastq_name,
                     align_ch,
                     marker_reference,
-                    file("${db_dir}/markers/marker_loci.bed", checkIfExists: true)
+                    file("${db_dir}/markers/marker_loci.bed", checkIfExists: true),
+                    mito_genes
                 )
                 copyLogFile('marker_align_report.log', MarkerAlign.out.marker_align_log_ch, out_path)
 
@@ -547,7 +559,11 @@ workflow {
                     file("${db_dir}/markers/marker_repeats.tsv", checkIfExists: true),
                     tools_fasta,
                     tools_manifest,
-                    marker_min_depth_used
+                    marker_min_depth_used,
+                    MarkerAlign.out.mito_evidence_ch,
+                    mito_genes,
+                    seq_kind,
+                    seq_molecule
                 )
                 copyLogFile('marker_genotype_report.log', MarkerGenotype.out.marker_genotype_log_ch, out_path)
                 marker_json_ch = MarkerGenotype.out.marker_json_ch

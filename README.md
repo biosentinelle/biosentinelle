@@ -32,7 +32,8 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 
 - the most probable strain among the strains of a database (1,172 *Saccharomyces cerevisiae* strains for the yeast database), or "unassigned" if none fits well enough,
 - the mating type (MATa, MATalpha or MATa/alpha),
-- the genotype of the native auxotrophic and counter-selection marker genes (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1),
+- the genotype of the native auxotrophic and counter-selection marker genes (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5),
+- the status of the mitochondrial genome (rho+, rho- or rho0), hence whether the strain is expected to grow on glycerol,
 - the laboratory tool elements present (plasmids, cassettes, drug resistance markers, tags, promoters, ...),
 - coverage and variant counts against user-provided genomes, features and mating type sequences.
 
@@ -67,7 +68,8 @@ No assembly is made. The sample sequences are compared with a strain identity da
 | Evidence | How | Reference genome used at run time? |
 | :--- | :--- | :--- |
 | **Strain SNP and indel panel** | Alignment-free. For each panel site, the database holds the k-mers of each allele. The sample sequences are streamed once and the k-mers of each allele are counted, giving one allele per site where the depth is at least `kmer_min_depth`. The same is done for the mating type (MATa / MATalpha) k-mers. | No |
-| **Native marker genes** (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1) | The reads are aligned with bowtie2 against the whole reference genome (`panel_reference`), so that reads from paralogs and repeats get a low mapping quality. The allele of each marker is read from the alignment (substitutions and small indels from the pileup, deletions from the depth, insertions from soft-clipped reads) and compared with the alleles catalogued in the database, judged by the protein it encodes. | Yes |
+| **Native marker genes** (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5) | The reads are aligned with bowtie2 against the whole reference genome (`panel_reference`), so that reads from paralogs and repeats get a low mapping quality. The allele of each marker is read from the alignment (substitutions and small indels from the pileup, deletions from the depth, insertions from soft-clipped reads) and compared with the alleles catalogued in the database, judged by the protein it encodes. | Yes |
+| **Mitochondrial genome, growth on glycerol** | From the same alignment, the depth over the exons of the mitochondrial genes needed for respiration (database *mito/mito_genes.tsv*), against the nuclear depth: rho+ (every gene covered, growth on glycerol expected), rho- (whole genes missing), rho0 (no mtDNA), uncertain (genes covered in part). Optional introns are not counted, point mutations (mit-) and nuclear respiratory mutations are not seen. In *marker_genotype.json* under `mitochondria`, in the Decision of the report (Glycerol) and in its own section. | Yes |
 | **Lab tool elements** (plasmids, cassettes, drug resistance markers, ...) | The reads are aligned with bowtie2 against the tool sequences of the database. Each element is scored by breadth of coverage and identity. | No, only the tool sequences |
 
 The panel strains are then ranked by likelihood. If the best strain matches less than `min_concordance` of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain, which is what flags a strain absent from the database. The result is the *strain_identity_report.html* file.
@@ -444,7 +446,7 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
     <tr>
         <th align="left">- marker_genotype.tsv</th>
         <td>
-            Genotype of each native marker gene (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1), from the reads aligned on the whole reference genome (<code>panel_reference</code>). One row per gene. For a heterozygous gene, only the first allele is shown here (both are in <i>marker_genotype.json</i>).
+            Genotype of each native marker gene (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5), from the reads aligned on the whole reference genome (<code>panel_reference</code>). One row per gene. For a heterozygous gene, only the first allele is shown here (both are in <i>marker_genotype.json</i>).
             <ul>
                 <li>gene: marker gene.</li>
                 <li>status: active (functional protein), inactive (loss of function), uncertain (protein form not recognized, never called active or inactive on a guess), mixed (two alleles of different status, heterozygous) or no_data (the marker loci are covered below the <code>marker_min_depth</code> parameter of the <i>nextflow.config</i> file).</li>

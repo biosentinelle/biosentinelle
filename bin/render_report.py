@@ -238,6 +238,15 @@ HELP = {
                   "Two elements with the same name but different sequences get different "
                   "suffixes; the same sequence found in several plasmids is kept once. Click the "
                   "? of an element for its details.",
+    "mito": "Growth on glycerol needs respiration, hence a mitochondrial genome (mtDNA) that "
+            "still encodes the respiratory chain. The reads aligned to the mtDNA of the reference "
+            "are counted over the exons of the genes needed for respiration (COX1, COX2, COX3, "
+            "COB, ATP6, ATP8, OLI1, VAR1, the two rRNAs, RPM1 and the tRNAs); the optional introns "
+            "are left out, since strains differ in which they carry. <b>rho+</b>: every gene "
+            "covered, growth on glycerol expected. <b>rho-</b>: whole genes missing, the mtDNA is "
+            "reduced to a fragment, no growth. <b>rho0</b>: no mtDNA, no growth. "
+            "<b>uncertain</b>: every gene there but some only in part. A point mutation in a "
+            "mitochondrial gene (mit-) or a nuclear respiratory mutation (pet) is not seen.",
     "marker_status": "Status of the gene measured in the sample: active when the encoded protein "
                       "is intact (or a known functional form), inactive when it is lost "
                       "(deletion, frameshift, stop, or a known loss-of-function allele).",
@@ -1022,6 +1031,9 @@ def render_decision(d):
                               "disagree" if g.get("agree") is False else None))
                 for g in genes),
             h=help_btn("markers_agree", "how the markers are compared"))
+    mito = (d.get("markers") or {}).get("mitochondria")
+    glycerol = ('<li><strong>Glycerol:</strong> {} {}</li>'.format(
+        mito_state(mito), help_btn("mito", "the mtDNA status")) if mito else "")
     tool_check = d.get("tool_check")
     if tool_check is None:   # result file older than tool_check
         elements = [{"name": t.get("name"), "status": COLOUR_LABEL[colour_of(t)],
@@ -1047,10 +1059,11 @@ def render_decision(d):
   {decided}
   {mating}
   {markers}
+  {glycerol}
   {tools}
   </ul>
 </section>""".format(strain=strain, decided=render_decided_by(d), mating=mating,
-                    markers=markers, tools=tools)
+                    markers=markers, glycerol=glycerol, tools=tools)
 
 
 def render_unassigned(d):
@@ -1369,6 +1382,78 @@ def render_tools(d):
                      options=options, main_tbl=main_tbl, short_tbl=short_tbl)
 
 
+MITO_STATUS = {
+    # status -> (colour class, glyph); never hue alone
+    "rho+": ("green", "&#9679;"),
+    "rho-": ("red", "&#9632;"),
+    "rho0": ("red", "&#9632;"),
+}
+
+
+def mito_state(mito):
+    """mtDNA status and the growth on glycerol it implies."""
+    status = mito.get("status") or "?"
+    colour, glyph = MITO_STATUS.get(status, ("orange", "&#9650;"))
+    return ('<span class="status {c}"><span class="g">{g}</span>{gl}</span> '
+            '<span class="muted">mtDNA {s}</span>').format(
+        c=colour, g=glyph, gl=esc(mito.get("glycerol") or "unknown"),
+        s=esc(status.replace("_", " ")))
+
+
+def render_mito(d):
+    """Mitochondrial genome: rho+, rho- or rho0, hence growth on glycerol."""
+    mito = (d.get("markers") or {}).get("mitochondria")
+    if not mito:
+        return ""
+
+    def depth(value):
+        return "n/a" if value is None else "{:.1f}".format(float(value))
+    rows = [("Growth on glycerol " + help_btn("mito", "the mtDNA status"), mito_state(mito)),
+            ("Reason", esc(mito.get("reason") or ""))]
+    if mito.get("nuclear_depth") is not None:
+        rows.append(("Nuclear depth", esc(depth(mito["nuclear_depth"])) + "x"))
+    if mito.get("mito_median_depth") is not None:
+        rows.append(("mtDNA gene depth (median)", esc(depth(mito["mito_median_depth"])) + "x"))
+    if mito.get("mtdna_copies_per_nuclear_genome") is not None:
+        rows.append(("mtDNA copies per nuclear genome",
+                     esc(depth(mito["mtdna_copies_per_nuclear_genome"]))))
+    items = "\n".join("    <div><dt>{}</dt><dd>{}</dd></div>".format(k, v) for k, v in rows)
+    genes = mito.get("genes") or []
+    state_colour = {"present": ("green", "&#9679;"), "absent": ("red", "&#9632;"),
+                    "partial": ("orange", "&#9650;")}
+    table = ""
+    if genes:
+        table = """  <table>
+    <thead><tr><th>gene</th><th>role</th><th>exon bp</th><th>covered</th><th>median depth</th>
+      <th>state</th></tr></thead>
+    <tbody>
+{}
+    </tbody>
+  </table>""".format("\n".join(
+            "      <tr><td><strong>{g}</strong></td><td>{r}</td><td>{bp}</td><td>{cov}</td>"
+            "<td>{dp}</td><td><span class=\"status {c}\"><span class=\"g\">{gl}</span>{st}"
+            "</span></td></tr>".format(
+                g=esc(x.get("gene")), r=esc(x.get("role")), bp=esc(x.get("exon_bp")),
+                cov=esc(pct(x.get("covered_fraction"), 0)), dp=esc(depth(x.get("median_depth"))),
+                c=state_colour.get(x.get("state"), ("orange", ""))[0],
+                gl=state_colour.get(x.get("state"), ("orange", "&#9650;"))[1],
+                st=esc(x.get("state")))
+            for x in genes))
+    notes = (mito.get("notes") or []) + (mito.get("limits") or [])
+    note_items = "\n".join("    <li>{}</li>".format(esc(x)) for x in notes)
+    return """<section id="mito">
+  <h2>Mitochondrial genome (growth on glycerol)</h2>
+  <dl class="meta">
+{items}
+  </dl>
+{table}
+  <h3>Notes and limits</h3>
+  <ul>
+{notes}
+  </ul>
+</section>""".format(items=items, table=table, notes=note_items)
+
+
 MARKER_STATUS = {
     # status -> (colour class, glyph, label); never hue alone
     "active": ("green", "&#9679;", "active"),
@@ -1555,6 +1640,7 @@ def render(d, title):
         render_strains(d),
         render_sex(d),
         render_markers(d),
+        render_mito(d),
         render_tools(d),
         '<footer class="page">BioSentinelle report &mdash; rendered {} by '
         "<code>render_report.py</code>. Self-contained: no network access required."
