@@ -33,8 +33,8 @@ import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BIN = os.path.join(ROOT, "bin")
-# build_population_panel.py lives in biosentinelle_db, cloned next to biosentinelle
-DB_BIN = os.path.join(os.path.dirname(ROOT), "biosentinelle_db", "bin")
+# build_population_panel.py lives in biosentinelle_yeast_db, cloned next to biosentinelle
+DB_BIN = os.path.join(os.path.dirname(ROOT), "biosentinelle_yeast_db", "bin")
 GENOME_LEN = 120000
 CONTIG = "chrTest"
 READ_LEN = 150
