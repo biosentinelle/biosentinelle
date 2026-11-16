@@ -1,0 +1,4 @@
+{
+ "shred_length": "200",
+ "kmer_min_depth": "5"
+}

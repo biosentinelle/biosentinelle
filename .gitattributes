@@ -23,3 +23,12 @@
 *.tsv    text eol=lf
 *.bed    text eol=lf
 *.vcf    text eol=lf
+
+# Galaxy tool, planemo scripts and web page: LF whatever the core.autocrlf setting
+# (a CRLF line ending breaks the bash and python scripts: $'\r': command not found).
+# Binary files are detected and kept as they are.
+galaxy/** text=auto eol=lf
+web/**    text=auto eol=lf
+*.yml     text eol=lf
+# Test data of the Galaxy tool: byte-for-byte, as the reference data.
+galaxy/test-data/** -text

@@ -1,0 +1,20 @@
+# Docker image of the biosentinelle web page (web/Dockerfile), for a gitlab.pasteur.fr mirror of the repository.
+# The image is pushed into the GitLab registry of the project, from which the Pasteur hosting deploys it (as SHAMAN with hub/shaman-hosting).
+# The web page exists on the web branch only (web and web-agent), hence the branch of the rule below.
+
+build_web:
+  image: docker:24
+  stage: build
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build -f web/Dockerfile -t "$CI_REGISTRY_IMAGE/web:$CI_COMMIT_SHORT_SHA" -t "$CI_REGISTRY_IMAGE/web:latest" .
+    - docker push --all-tags "$CI_REGISTRY_IMAGE/web"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "web"'
+      changes:
+        - web/**/*
+        - galaxy/**/*
+        - nextflow.config

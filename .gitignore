@@ -13,3 +13,6 @@ commit*
 # nextflow run logs written at the repo root
 main_run.log
 __pycache__/
+# planemo (Galaxy tool tests and Tool Shed uploads)
+tool_test_output.*
+shed_upload*.tar.gz
