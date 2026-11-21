@@ -39,6 +39,7 @@ import argparse
 import datetime
 import html
 import json
+import math
 import re
 import sys
 
@@ -254,9 +255,19 @@ HELP = {
                   "for the strain called: agrees, differs, or not compared when either status is "
                   "unknown.",
     "decided_by": "<b>The SNP panel first.</b> The strain called is the first of the SNP ranking, "
-                  "unless other strains are too close to it: fewer than 200 called sites separate "
-                  "them (min_discriminating_sites), or their log-likelihood is within ln 1000 "
-                  "(about two net mismatches) of the best. Close relatives such as BY4741 and "
+                  "unless other strains are too close to it for the SNPs alone: their "
+                  "log-likelihood is within ln 1000 (about two net mismatches) of the best, or "
+                  "fewer than 200 called sites separate them (min_discriminating_sites). A "
+                  "separating site is a panel site called in the sample where the genotypes of "
+                  "the two strains are known and differ. The second rule does not look at the "
+                  "allele the sample carries there: it may be the allele of the best strain at "
+                  "every separating site, as shown for each strain, but a lead built on so few "
+                  "sites can come from panel errors, a misassembled region or the drift of a "
+                  "laboratory stock. Such a strain can therefore have a PP of 0 and rank below "
+                  "the 10 strains shown in Strain ranking: the PP treats the sites as "
+                  "independent, so that a few of them already bring it to 0, and the "
+                  "log-likelihood also pays at the sites where the genotype of the strain is "
+                  "unknown. Close relatives such as BY4741 and "
                   "BY4742 differ at a few panel sites or none, but by their mating type and by "
                   "whole-gene deletions (met15D0 against lys2D0).<br><b>Then, among those close "
                   "strains, the mating type and the native markers.</b> Each one is compared with "
@@ -933,10 +944,49 @@ OUTCOME = {
 }
 
 
+def snp_position(row, best, shown):
+    """Where a strain close to the best one stands in the SNP panel: rank and
+    PP as in Strain ranking (saying when it is not among the strains shown
+    there), log-likelihood gap, separating sites and the allele the sample
+    carries at them."""
+    first = not row.get("rank") or row["rank"] == 1
+    parts = ["first of the SNP ranking" if first else "SNP rank {}".format(row["rank"])]
+    if row.get("strain") not in shown:
+        parts.append("not in the ranking below")
+    if row.get("probability") is not None:   # absent from older result files
+        parts.append("PP " + pct(row["probability"]))
+    if first:
+        return ", ".join(parts)
+    if row.get("log_likelihood_gap") is not None:
+        parts.append("log-likelihood {:.1f} below".format(row["log_likelihood_gap"]))
+    separating = row.get("separating_sites")
+    if separating is None:
+        return ", ".join(parts)
+    if not separating:
+        sites = "no separating site"
+    else:
+        sites = "{} separating site{}".format(num(separating), "s" if separating > 1 else "")
+        with_best = row.get("separating_with_best")
+        if with_best is not None:
+            # The allele the sample carries at these sites: that of the best
+            # strain, that of this one (or neither, where one is heterozygous).
+            if with_best == separating:
+                sites += ", sample with the {} allele {}".format(
+                    best, "there" if separating == 1 else "at both" if separating == 2 else
+                    "at all {}".format(num(separating)))
+            else:
+                sites += ", sample with the {} allele at {}".format(best, num(with_best))
+                if row.get("separating_with_strain"):
+                    sites += ", with the {} allele at {}".format(
+                        row.get("strain"), num(row["separating_with_strain"]))
+    return "{}; {}".format(", ".join(parts), sites)
+
+
 def render_decided_by(d):
     """How the strain was called: the SNP panel alone, or the SNP panel then
-    the mating type and the native markers among the strains it does not
-    separate, each listed with what agrees and what contradicts it."""
+    the mating type and the native markers among the strains too close to
+    the best one for the SNPs alone, each listed with where it stands in the
+    SNP panel, what agrees and what contradicts it."""
     res = d.get("resolution") or {}
     rows = res.get("candidates") or []
     if "method" not in res:   # result file older than the two-step call
@@ -945,13 +995,23 @@ def render_decided_by(d):
         text = "SNP panel alone: no other strain close to {}".format(esc(d.get("call")))
         return '<li><strong>Decided by:</strong> {} {}</li>'.format(
             text, help_btn("decided_by", "how the strain is decided"))
+    best = next((row.get("strain") for row in rows if row.get("rank") == 1), rows[0].get("strain"))
+    # The two rules that make a strain close, with the thresholds of the run
+    # (the defaults for a result file older than these fields).
+    tie = res.get("tie_log_ratio", math.log(1000))
+    rules = ("log-likelihood at most ln {:g} = {:.1f} below it, or fewer than {} separating "
+             "sites".format(round(math.exp(tie), 2), tie, res.get("min_separating_sites", 200)))
+    close = len(rows) - 1
     if res.get("method") == "snp+markers":
-        text = ("SNP panel, which does not separate {n} strains, then the mating type and the "
-                "native markers").format(n=len(rows))
+        text = ("SNP panel, then the mating type and the native markers among {b} and the {n} "
+                "too close to it for the SNPs alone ({r})").format(
+            b=esc(best), n="{} strains".format(close) if close > 1 else "strain", r=rules)
     else:
-        text = ("SNP panel, which does not separate {n} strains; the mating type and the native "
-                "markers do not settle them, the first of the SNP ranking is kept").format(
-            n=len(rows))
+        text = ("SNP panel: {n} strain{s} too close to {b} for the SNPs alone ({r}), which the "
+                "mating type and the native markers do not settle; the first of the SNP ranking "
+                "is kept").format(b=esc(best), n=close,
+                                  s=" is" if close == 1 else "s are", r=rules)
+    shown = {s.get("strain_id") for _, s in ranked(d.get("strains") or [])[:N_STRAINS_SHOWN]}
     items = []
     for row in rows:
         # A strain ruled out is shown with what rules it out only.
@@ -962,13 +1022,11 @@ def render_decided_by(d):
             points.append("agrees on " + esc(", ".join(row["agree"])))
         if not points:
             points.append("nothing to compare (no documented genotype)")
-        snp = ("first of the SNP ranking" if not row.get("rank") or row["rank"] == 1 else
-               "SNP rank {}, {} separating site(s)".format(row["rank"],
-                                                          row.get("separating_sites")))
         items.append('    <li><span class="sid">{s}</span> {o} <span class="muted">({snp})'
                      '</span>: {p}</li>'.format(s=esc(row.get("strain")),
                                                 o=OUTCOME.get(row.get("outcome"), ""),
-                                                snp=esc(snp), p="; ".join(points)))
+                                                snp=esc(snp_position(row, best, shown)),
+                                                p="; ".join(points)))
     return ('<li><strong>Decided by:</strong> {t} {h}<ul>\n{i}\n  </ul></li>').format(
         t=text, h=help_btn("decided_by", "how the strain is decided"), i="\n".join(items))
 
@@ -1002,7 +1060,7 @@ def marker_state(status, record):
 
 def render_decision(d):
     """The strain called, how it was decided (SNP panel, then mating type and
-    markers among the strains the panel does not separate), then whether the
+    markers among the strains too close for the SNPs alone), then whether the
     mating type, each native marker and each foreign tool element agree with
     it. The evidence is in the sections below."""
     if d.get("unassigned") or not d.get("call"):
@@ -1096,16 +1154,22 @@ def render_warnings(d):
 N_STRAINS_SHOWN = 10
 
 
+def ranked(strains):
+    """(index, strain) pairs in rank order, the strains without a rank last:
+    the order of Strain ranking, whose first N_STRAINS_SHOWN are shown."""
+    return sorted(
+        enumerate(strains),
+        key=lambda t: (t[1].get("rank") if isinstance(t[1].get("rank"), (int, float)) else 10 ** 9, t[0]),
+    )
+
+
 def render_strains(d):
     strains = d.get("strains") or []
     if not strains:
         return """<section id="strains"><h2>Strain ranking</h2>
   <p class="empty">No strain was scored for this sample.</p></section>"""
 
-    ordered = sorted(
-        enumerate(strains),
-        key=lambda t: (t[1].get("rank") if isinstance(t[1].get("rank"), (int, float)) else 10 ** 9, t[0]),
-    )
+    ordered = ranked(strains)
 
     blocks = []
     for si, s in ordered[:N_STRAINS_SHOWN]:
