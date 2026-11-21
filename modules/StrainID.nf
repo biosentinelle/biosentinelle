@@ -62,15 +62,22 @@ process StrainReport {
     input:
     val sample_name
     path strain_json
+    path panel_tree // panels/panel_tree.nwk of the database, or NO_TREE
+    path panel_strains // panels/panel_strains.tsv of the database, for the strains of the tree
 
     output:
     path "strain_identity_report.html", emit: strain_report_ch
 
     script:
     """
+    tree_args=""
+    if [[ "${panel_tree}" != "NO_TREE" ]]; then
+        tree_args="--tree ${panel_tree} --strains ${panel_strains}"
+    fi
     render_report.py \\
         --json ${strain_json} \\
         --out strain_identity_report.html \\
-        --title "BioSentinelle strain identity"
+        --title "BioSentinelle strain identity" \\
+        \${tree_args}
     """
 }
