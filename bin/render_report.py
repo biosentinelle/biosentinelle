@@ -11,6 +11,7 @@ lives inside the single output file.
 
 Usage:
     python render_report.py --json results.json --out report.html [--title "..."]
+                            [--tree panel_tree.nwk --strains panel_strains.tsv]
 
 PERFORMANCE / LAZY RENDERING STRATEGY
 -------------------------------------
@@ -33,9 +34,19 @@ and freezes the browser. Instead:
   * Rows are built with document.createElement + textContent, never innerHTML,
     so no data-derived string is ever parsed as markup. Strings interpolated
     into markup on the Python side go through html.escape.
+
+TREE OF THE PANEL STRAINS
+-------------------------
+With --tree (and --strains), the "Strains in the panel" entry of the header
+gets a "tree" button that opens the tree of every panel strain in a new page,
+the strain called highlighted. The page is written from four blocks embedded
+in the report (its style, body, script and data), so the report stays one
+self-contained file; when the browser blocks the new window, the same page
+opens over the report.
 """
 
 import argparse
+import csv
 import datetime
 import html
 import json
@@ -508,6 +519,27 @@ select, .pager button {
 .empty { color: var(--fg-muted); font-style: italic; padding: 6px 0; }
 code { font-family: var(--mono); }
 footer.page { margin-top: 36px; border-top: 1px solid var(--border); padding-top: 10px; color: var(--fg-muted); font-size: 0.82rem; }
+button.tree-btn {
+  display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; vertical-align: 0.08em;
+  padding: 1px 8px; border: 1px solid var(--border-strong); border-radius: 10px;
+  background: var(--bg-raised); color: var(--accent);
+  font: 600 0.76rem/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer;
+}
+button.tree-btn:hover, button.tree-btn:focus-visible { background: var(--accent); color: var(--accent-fg); outline: none; }
+.tree-overlay {
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 50;
+  display: flex; flex-direction: column; background: var(--bg);
+}
+.tree-overlay[hidden] { display: none; }
+.tree-overlay-bar {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  padding: 6px 16px; border-bottom: 1px solid var(--border); font-size: 0.85rem; background: var(--bg-alt);
+}
+.tree-overlay-bar button {
+  font: inherit; padding: 2px 10px; border: 1px solid var(--border-strong); border-radius: 4px;
+  background: var(--bg-raised); color: var(--fg); cursor: pointer;
+}
+.tree-overlay iframe { flex: 1 1 auto; width: 100%; border: 0; }
 """
 
 
@@ -821,7 +853,80 @@ function filterTools(cls) {
   }
 }
 
+// Tree of the panel strains, in a page of its own. The page is put together
+// from the blocks embedded at the end of this report (style, body, data,
+// script) and written into a new window, so that the report stays one
+// self-contained file. If the browser blocks the new window, the same page
+// opens over the report, in a frame.
+function treeDocument() {
+  function block(id) { var e = document.getElementById(id); return e ? e.textContent : ''; }
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">' +
+         '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+         '<title>Tree of the panel strains<\/title><style>' + block('tree-css') + '<\/style><\/head>' +
+         '<body>' + block('tree-body') +
+         '<script type="application/json" id="tree-data">' + block('tree-data') + '<\/script>' +
+         '<script>' + block('tree-js') + '<\/script><\/body><\/html>';
+}
+
+function treeOverlay(html) {
+  var box = document.getElementById('tree-overlay');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'tree-overlay';
+    box.className = 'tree-overlay';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', 'Tree of the panel strains');
+    var bar = document.createElement('div');
+    bar.className = 'tree-overlay-bar';
+    var back = document.createElement('button');
+    back.type = 'button';
+    back.textContent = '← Back to the report';
+    back.addEventListener('click', closeTreeOverlay);
+    bar.appendChild(back);
+    bar.appendChild(document.createTextNode(
+      'The browser did not let the tree open in a new page, so it is shown here, over the report.'));
+    box.appendChild(bar);
+    var frame = document.createElement('iframe');
+    frame.title = 'Tree of the panel strains';
+    frame.srcdoc = html;
+    box.appendChild(frame);
+    document.body.appendChild(box);
+  }
+  box.hidden = false;
+  box.querySelector('button').focus();
+}
+
+function closeTreeOverlay() {
+  var box = document.getElementById('tree-overlay');
+  if (box && !box.hidden) {
+    box.hidden = true;
+    var b = document.getElementById('open-tree');
+    if (b) { b.focus(); }
+  }
+}
+
+function openTree() {
+  var html = treeDocument(), w = null;
+  try { w = window.open('', '_blank'); } catch (e) { w = null; }
+  if (w) {
+    try {
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      return;
+    } catch (e) {
+      try { w.close(); } catch (e2) { /* nothing to close */ }
+    }
+  }
+  treeOverlay(html);
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+  var treeBtn = document.getElementById('open-tree');
+  if (treeBtn) { treeBtn.addEventListener('click', openTree); }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeTreeOverlay(); }
+  });
   var heads = document.querySelectorAll('.strain-head[data-si]');
   for (var i = 0; i < heads.length; i++) {
     (function (btn) {
@@ -871,6 +976,1052 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 # --------------------------------------------------------------------------- #
+# tree page
+# --------------------------------------------------------------------------- #
+
+# The tree of the panel strains opens in a page of its own, written by the
+# report's openTree() from four blocks embedded in the report: this style,
+# this body, the tree data (tree_payload) and this script. None of them may
+# hold '</script', which would end the block that carries it (checked in
+# render()). Colour carries two marks only, the selected strain (blue) and the
+# best ranked strains (orange), each with its own legend entry and label;
+# clades are neutral bands named in text, never hues.
+
+TREE_CSS = """
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff; --bg-alt: #f4f6f8; --fg: #16191d; --fg-muted: #5a6572;
+  --border: #d2d8de; --border-strong: #9aa4b0; --accent: #1f5fa9; --accent-fg: #ffffff;
+  --branch: #52514e; --leader: #e1e0d9; --node: #898781; --hover: #0b0b0b;
+  --sel: #2a78d6; --rank: #eb6834; --band-a: #e1e0d9; --band-b: #c3c2b7;
+  --row-sel: rgba(42, 120, 214, 0.16); --row-hov: rgba(11, 11, 11, 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171b; --bg-alt: #1c2126; --fg: #e7ecf1; --fg-muted: #a3aeba;
+    --border: #39424c; --border-strong: #5c6773; --accent: #6aa9ef; --accent-fg: #0d1014;
+    --branch: #c3c2b7; --leader: #2c2c2a; --node: #898781; --hover: #f0efec;
+    --sel: #3987e5; --rank: #d95926; --band-a: #2c2c2a; --band-b: #4a4a46;
+    --row-sel: rgba(57, 135, 229, 0.24); --row-hov: rgba(255, 255, 255, 0.08);
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; display: flex; flex-direction: column; background: var(--bg); color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px; line-height: 1.45;
+}
+[hidden] { display: none !important; }
+header.bar { flex: none; background: var(--bg-alt); border-bottom: 1px solid var(--border); padding: 8px 16px 6px 16px; }
+header.bar h1 { font-size: 1.15rem; margin: 0; }
+.sub { margin: 0; color: var(--fg-muted); font-size: 0.85rem; }
+.tools { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin-top: 6px; }
+.grp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.tools button, .tools input, .tools a, .tools label { font: inherit; font-size: 0.84rem; }
+.tools button {
+  padding: 2px 9px; border: 1px solid var(--border-strong); border-radius: 4px;
+  background: var(--bg); color: var(--fg); cursor: pointer;
+}
+.tools button:hover:not(:disabled) { border-color: var(--accent); }
+.tools button:disabled { opacity: .45; cursor: default; }
+.tools button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.tools button:focus-visible, .tools input:focus-visible, .tools a:focus-visible, #c-ranked:focus-visible,
+.info button:focus-visible, .info a:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.tools input {
+  width: 13em; padding: 2px 6px; border: 1px solid var(--border-strong); border-radius: 4px;
+  background: var(--bg); color: var(--fg);
+}
+.tools a { color: var(--accent); }
+.zl, .msg { font-size: 0.8rem; color: var(--fg-muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; margin-top: 6px; font-size: 0.82rem; color: var(--fg-muted); }
+.key { display: inline-flex; align-items: center; gap: 5px; }
+.key svg { flex: none; }
+.scale i { display: inline-block; height: 0; border-top: 2px solid var(--branch); vertical-align: middle; }
+details.about { margin-top: 4px; font-size: 0.82rem; color: var(--fg-muted); max-width: 75em; }
+details.about summary { cursor: pointer; color: var(--accent); width: max-content; }
+details.about p { margin: 4px 0; }
+#stage { flex: 1 1 auto; min-height: 0; overflow: auto; position: relative; cursor: grab; outline: none; }
+#stage.dragging { cursor: grabbing; }
+#stage:focus-visible { box-shadow: inset 0 0 0 3px var(--accent); }
+#stage .msg { display: block; padding: 16px; }
+#tree { display: block; -webkit-user-select: none; user-select: none; }
+.tip {
+  position: fixed; z-index: 30; pointer-events: none; max-width: 340px;
+  background: var(--bg); color: var(--fg); border: 1px solid var(--border-strong); border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .22); padding: 7px 10px; font-size: 0.82rem; line-height: 1.4;
+}
+.tip b { font-size: 0.92rem; }
+.tip div, .info p { margin: 0 0 2px 0; }
+.muted { color: var(--fg-muted); }
+.key-line { display: inline-block; width: 14px; height: 0; border-top: 3px solid; vertical-align: middle; margin-right: 6px; }
+.info {
+  position: fixed; z-index: 25; right: 16px; bottom: 16px; width: min(380px, calc(100vw - 32px));
+  max-height: 60vh; overflow: auto; background: var(--bg); color: var(--fg);
+  border: 1px solid var(--border-strong); border-radius: 8px; box-shadow: 0 6px 22px rgba(0, 0, 0, .25);
+  padding: 10px 34px 10px 14px; font-size: 0.86rem;
+}
+.info h2 { font-size: 1rem; margin: 0 0 4px 0; }
+.info a { color: var(--accent); }
+.info .x {
+  position: absolute; top: 4px; right: 8px; border: 0; background: transparent;
+  color: var(--fg-muted); font-size: 1.2rem; line-height: 1; cursor: pointer;
+}
+.info .acts { margin-top: 8px; }
+.info .acts button {
+  font: inherit; font-size: 0.84rem; padding: 2px 9px; border: 1px solid var(--border-strong);
+  border-radius: 4px; background: var(--bg); color: var(--fg); cursor: pointer;
+}
+"""
+
+TREE_BODY = """
+<header class="bar">
+  <h1>Tree of the panel strains</h1>
+  <p class="sub" id="t-sub"></p>
+  <div class="tools" role="toolbar" aria-label="Tree controls">
+    <div class="grp" role="group" aria-label="Layout">
+      <button type="button" data-layout="rect" aria-pressed="true">Rectangular</button>
+      <button type="button" data-layout="circ" aria-pressed="false">Circular</button>
+    </div>
+    <div class="grp" role="group" aria-label="Part of the tree shown">
+      <button type="button" id="b-whole">Whole tree</button>
+      <button type="button" id="b-around">Around the selected strain</button>
+      <button type="button" id="b-up">Up one level</button>
+    </div>
+    <div class="grp" role="group" aria-label="Zoom">
+      <span class="zl" id="z-label">Height</span>
+      <button type="button" id="b-out" aria-label="Zoom out" title="Zoom out (also Ctrl + mouse wheel)">&minus;</button>
+      <button type="button" id="b-in" aria-label="Zoom in" title="Zoom in (also Ctrl + mouse wheel)">+</button>
+      <span class="zl rect-only">Branch length</span>
+      <button type="button" class="rect-only" id="b-narrow" aria-label="Shorter branches" title="Shorter branches">&minus;</button>
+      <button type="button" class="rect-only" id="b-wide" aria-label="Longer branches" title="Longer branches">+</button>
+      <button type="button" id="b-fit" title="Fit the window">Fit</button>
+    </div>
+    <div class="grp">
+      <label for="find">Find a strain</label>
+      <input type="search" id="find" list="strain-names" placeholder="name or 1011 code" autocomplete="off" spellcheck="false">
+      <datalist id="strain-names"></datalist>
+      <span class="msg" id="find-msg" aria-live="polite"></span>
+    </div>
+    <div class="grp">
+      <span class="zl">Download</span>
+      <a id="dl-nwk" href="#" download="panel_tree.nwk">Newick</a>
+      <a id="dl-svg" href="#" download="panel_tree.svg">SVG</a>
+    </div>
+  </div>
+  <div class="legend">
+    <span class="key"><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" class="mk-sel"/></svg><span id="key-sel"></span></span>
+    <label class="key"><input type="checkbox" id="c-ranked" checked><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4" class="mk-rank"/></svg><span id="key-rank"></span></label>
+    <span class="key"><svg width="12" height="16" aria-hidden="true"><rect x="0" y="0" width="12" height="8" class="band-a"/><rect x="0" y="8" width="12" height="8" class="band-b"/></svg>clades of Peter et al. 2018, named next to their band</span>
+    <span class="key scale"><i id="scale-bar"></i><span id="scale-text"></span></span>
+    <span class="key" id="crumb"></span>
+  </div>
+  <details class="about"><summary>About this tree</summary><div id="about"></div></details>
+</header>
+<main id="stage" tabindex="0" aria-label="Tree of the panel strains: drag to move, Ctrl + wheel to zoom">
+  <svg id="tree" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tree of the panel strains"></svg>
+</main>
+<div class="tip" id="tip" role="tooltip" hidden></div>
+<aside class="info" id="info" hidden></aside>
+"""
+
+TREE_JS = r"""
+'use strict';
+(function () {
+var T = JSON.parse(document.getElementById('tree-data').textContent);
+var PARENT = T.parent, LEN = T.length, NAME = T.name, N = PARENT.length;
+var SVGNS = 'http://www.w3.org/2000/svg';
+var stage = document.getElementById('stage'), svg = document.getElementById('tree');
+var tip = document.getElementById('tip'), infoBox = document.getElementById('info');
+var i;
+
+function fail(msg) {
+  var p = document.createElement('p');
+  p.className = 'msg';
+  p.textContent = msg;
+  stage.textContent = '';
+  stage.appendChild(p);
+}
+if (!N) { fail('The tree is empty.'); return; }
+for (i = 1; i < N; i++) {
+  if (!(PARENT[i] >= 0 && PARENT[i] < i)) { fail('The tree data are not in preorder: the tree cannot be drawn.'); return; }
+}
+
+// Nodes are in preorder: a node comes before its descendants, which follow it
+// in one block, and children are in drawing order. Leaves carry strain names.
+var KIDS = [];
+for (i = 0; i < N; i++) { KIDS.push([]); }
+for (i = 1; i < N; i++) { KIDS[PARENT[i]].push(i); }
+var NNODES = new Int32Array(N), NLEAVES = new Int32Array(N);
+for (i = N - 1; i >= 0; i--) {
+  NNODES[i] += 1;
+  if (!KIDS[i].length) { NLEAVES[i] += 1; }
+  if (i > 0) { NNODES[PARENT[i]] += NNODES[i]; NLEAVES[PARENT[i]] += NLEAVES[i]; }
+}
+var LEAF = {}, FIELD = {};
+for (i = 0; i < N; i++) { if (!KIDS[i].length) { LEAF[NAME[i]] = i; } }
+T.fields.forEach(function (f, k) { FIELD[f] = k; });
+
+function meta(v, field) {
+  var row = T.strains[NAME[v]];
+  return row && FIELD[field] !== undefined ? (row[FIELD[field]] || '') : '';
+}
+function label(v) { return meta(v, 'display_name') || NAME[v]; }
+function cladeOf(v) { return meta(v, 'clade'); }
+function shortClade(c) { var m = /^(M?\d+)\./.exec(c); return m ? m[1] : c.split(' ')[0]; }
+
+var RANK = {};
+(T.ranked || []).forEach(function (r) {
+  var v = LEAF[r[0]];
+  if (v !== undefined) { RANK[v] = {rank: r[1], pp: r[2], conc: r[3]}; }
+});
+var SEL = (T.selected && LEAF[T.selected] !== undefined) ? LEAF[T.selected] : -1;
+var BEST = -1;
+Object.keys(RANK).forEach(function (k) {
+  var v = Number(k);
+  if (BEST < 0 || RANK[v].rank < RANK[BEST].rank) { BEST = v; }
+});
+
+// drawing state; fit: the drawing follows the size of the window
+var S = {layout: 'rect', sub: 0, row: 12, wide: 1, size: 1, ranked: true, fit: false};
+var X = new Float64Array(N), Y = new Float64Array(N), DEP = new Float64Array(N);
+var ANG = new Float64Array(N), RAD = new Float64Array(N);
+var CX = 0, CY = 0;
+var G = null, HOVER = null, PIN = -1;
+var LEFT = 24, TOP = 16, BOTTOM = 18, GAP = 8, STRIP = 10, MARGIN = 14, ROW_MAX = 26, CALLOUT = 26;
+
+// ---------------------------------------------------------------- helpers
+var CTX = document.createElement('canvas').getContext('2d');
+var FAMILY = window.getComputedStyle(document.body).fontFamily || 'sans-serif';
+var WIDTH = {};
+function textW(str, size, weight) {
+  var key = (weight || 400) + '|' + str, w = WIDTH[key];
+  if (w === undefined) {
+    CTX.font = (weight || 400) + ' 12px ' + FAMILY;
+    w = WIDTH[key] = CTX.measureText(str).width;
+  }
+  return w * size / 12;
+}
+function r1(v) { return Math.round(v * 10) / 10; }
+function el(tag, attrs, parent) {
+  var e = document.createElementNS(SVGNS, tag);
+  for (var k in attrs) {
+    if (Object.prototype.hasOwnProperty.call(attrs, k)) { e.setAttribute(k, attrs[k]); }
+  }
+  if (parent) { parent.appendChild(e); }
+  return e;
+}
+function svgText(x, y, str, cls, size, parent) {
+  var e = el('text', {x: r1(x), y: r1(y), dy: '0.35em', 'class': cls, 'font-size': size}, parent);
+  e.textContent = str;
+  return e;
+}
+function inSub(v, g) { return v >= g.s && v < g.end; }
+function leafText(v) { return label(v) + (S.ranked && RANK[v] ? '  #' + RANK[v].rank : ''); }
+function marked(g) {
+  // the selected strain and the best ranked ones in the part shown, top first
+  var out = [];
+  if (SEL >= 0 && inSub(SEL, g)) { out.push(SEL); }
+  if (S.ranked) {
+    Object.keys(RANK).map(Number).sort(function (a, b) { return RANK[a].rank - RANK[b].rank; })
+      .forEach(function (v) { if (v !== SEL && inSub(v, g)) { out.push(v); } });
+  }
+  return out;
+}
+function niceLength(max) {
+  var p = Math.pow(10, Math.floor(Math.log(max) / Math.LN10)), m = max / p;
+  return (m >= 5 ? 5 : m >= 2 ? 2 : 1) * p;
+}
+function fmtLength(v) {
+  return String(+v.toPrecision(2));
+}
+
+// ---------------------------------------------------------------- geometry
+function subtree(s) {
+  var end = s + NNODES[s], leaves = [], inner = [], maxD = 0, v;
+  DEP[s] = 0;
+  for (v = s; v < end; v++) {
+    if (v > s) { DEP[v] = DEP[PARENT[v]] + Math.max(0, LEN[v]); }
+    if (KIDS[v].length) { inner.push(v); } else { leaves.push(v); if (DEP[v] > maxD) { maxD = DEP[v]; } }
+  }
+  return {s: s, end: end, leaves: leaves, inner: inner, maxD: maxD > 0 ? maxD : 1};
+}
+
+function cladeRuns(leaves) {
+  // consecutive leaves of one clade; up to three leaves without a clade
+  // between two leaves of the same clade stay in its band
+  var runs = [], cur = null, k, c;
+  for (k = 0; k < leaves.length; k++) {
+    c = cladeOf(leaves[k]);
+    if (!c) { continue; }
+    if (cur && cur.clade === c && k - cur.k1 <= 4) { cur.k1 = k; }
+    else { cur = {clade: c, k0: k, k1: k}; runs.push(cur); }
+  }
+  return runs;
+}
+
+function spread(items, gap, lo, hi) {
+  // 1-D placement of the labels of the marked strains, in their order
+  var k, n = items.length;
+  for (k = 0; k < n; k++) { items[k].p = Math.max(items[k].p, k ? items[k - 1].p + gap : lo); }
+  if (n && items[n - 1].p > hi) {
+    items[n - 1].p = hi;
+    for (k = n - 2; k >= 0; k--) { items[k].p = Math.min(items[k].p, items[k + 1].p - gap); }
+  }
+}
+
+function pt(r, a) { return r1(CX + r * Math.sin(a)) + ',' + r1(CY - r * Math.cos(a)); }
+function arcTo(r, a0, a1) {
+  var sweep = a1 > a0 ? 1 : 0, rr = r1(r), head = 'A' + rr + ',' + rr + ' 0 0,' + sweep + ' ';
+  if (Math.abs(a1 - a0) > Math.PI) { return head + pt(r, (a0 + a1) / 2) + head + pt(r, a1); }
+  return head + pt(r, a1);
+}
+function sector(r0, r1_, a0, a1) {
+  var m = (a0 + a1) / 2, o0 = r1(r0), o1 = r1(r1_);
+  return 'M' + pt(r0, a0) + 'A' + o0 + ',' + o0 + ' 0 0,1 ' + pt(r0, m) + 'A' + o0 + ',' + o0 + ' 0 0,1 ' +
+    pt(r0, a1) + 'L' + pt(r1_, a1) + 'A' + o1 + ',' + o1 + ' 0 0,0 ' + pt(r1_, m) + 'A' + o1 + ',' + o1 +
+    ' 0 0,0 ' + pt(r1_, a0) + 'Z';
+}
+function dot(x, y, r) {
+  return 'M' + r1(x - r) + ',' + r1(y) + 'a' + r + ',' + r + ' 0 1,0 ' + 2 * r + ',0a' + r + ',' + r +
+    ' 0 1,0 ' + (-2 * r) + ',0';
+}
+// branch from u to its child v: the part drawn for v
+function branch(u, v) {
+  if (S.layout === 'circ') {
+    return 'M' + pt(RAD[u], ANG[v]) + 'L' + pt(RAD[v], ANG[v]);
+  }
+  return 'M' + r1(X[u]) + ',' + r1(Y[v]) + 'H' + r1(X[v]);
+}
+// the joint of u: vertical line or arc over its children
+function joint(u) {
+  var c = KIDS[u];
+  if (S.layout === 'circ') {
+    return RAD[u] > 0.5 ? 'M' + pt(RAD[u], ANG[c[0]]) + arcTo(RAD[u], ANG[c[0]], ANG[c[c.length - 1]]) : '';
+  }
+  return 'M' + r1(X[u]) + ',' + r1(Y[c[0]]) + 'V' + r1(Y[c[c.length - 1]]);
+}
+// path from the top of the part shown down to v
+function pathTo(v, g) {
+  var d = [], u;
+  while (v !== g.s && v > 0) {
+    u = PARENT[v];
+    d.push(branch(u, v));
+    if (S.layout === 'circ') {
+      if (RAD[u] > 0.5) { d.push('M' + pt(RAD[u], ANG[u]) + arcTo(RAD[u], ANG[u], ANG[v])); }
+    } else {
+      d.push('M' + r1(X[u]) + ',' + r1(Y[u]) + 'V' + r1(Y[v]));
+    }
+    v = u;
+  }
+  return d.join('');
+}
+function subtreePath(v) {
+  var d = [], end = v + NNODES[v], u;
+  for (u = v + 1; u < end; u++) { d.push(branch(PARENT[u], u)); }
+  for (u = v; u < end; u++) { if (KIDS[u].length) { d.push(joint(u)); } }
+  return d.join('');
+}
+
+function layers(parent) {
+  var L = {};
+  ['bands', 'rows', 'leaders', 'branches', 'hover', 'path', 'dots', 'marks', 'labels', 'clades', 'top']
+    .forEach(function (name) { L[name] = el('g', {'class': 'layer-' + name}, parent); });
+  return L;
+}
+
+function leafLabel(v, x, y, size, parent, a) {
+  var e = svgText(x, y, label(v), v === SEL ? 'lb lb-sel' : 'lb', size, parent);
+  if (S.ranked && RANK[v]) {
+    var t = document.createElementNS(SVGNS, 'tspan');
+    t.setAttribute('class', 'rk');
+    t.textContent = '  #' + RANK[v].rank;
+    e.appendChild(t);
+  }
+  e.setAttribute('data-v', v);
+  if (a !== undefined) { rotate(e, x, y, a); }
+  return e;
+}
+function rotate(e, x, y, a) {
+  // radial text at angle a (from the top, clockwise), upright on the left half
+  var deg = a * 180 / Math.PI - 90, flip = a > Math.PI;
+  e.setAttribute('transform', 'rotate(' + r1(flip ? deg + 180 : deg) + ',' + r1(x) + ',' + r1(y) + ')');
+  if (flip) { e.setAttribute('text-anchor', 'end'); }
+}
+
+// ---------------------------------------------------------------- rectangular
+function drawRect(g, root) {
+  var n = g.leaves.length, w0 = Math.max(stage.clientWidth, 320), h0 = Math.max(stage.clientHeight, 200);
+  var rowMin = Math.min(Math.max(0.2, (h0 - TOP - BOTTOM) / n), ROW_MAX);
+  if (S.fit) { S.row = rowMin; }
+  var row = Math.max(rowMin, Math.min(ROW_MAX, S.row)), k, v, d;
+  S.row = row;
+  var font = Math.max(9, Math.min(13, row - 2)), showLabels = row >= 8, hl = marked(g);
+  var labelW = 0;
+  if (showLabels) {
+    g.leaves.forEach(function (l) { labelW = Math.max(labelW, textW(leafText(l), font, l === SEL ? 700 : 400)); });
+  } else {
+    hl.forEach(function (l) { labelW = Math.max(labelW, textW(leafText(l), 11, l === SEL ? 700 : 400)); });
+  }
+  var cladeW = 0;
+  g.runs.forEach(function (r) {
+    if ((r.k1 - r.k0 + 1) * row >= 12) { cladeW = Math.max(cladeW, textW(r.clade, 11, 400)); }
+  });
+  var callout = showLabels ? 0 : (hl.length ? CALLOUT : 0);
+  var right = GAP + STRIP + GAP + callout + (labelW ? labelW + GAP : 0) + (cladeW ? cladeW + GAP : 0) + MARGIN;
+  var treeW = Math.max(160, w0 * S.wide - LEFT - right);
+  g.w = Math.ceil(LEFT + treeW + right);
+  g.h = Math.ceil(TOP + n * row + BOTTOM);
+  g.row = row;
+  g.unit = treeW / g.maxD;
+  for (k = 0; k < n; k++) { Y[g.leaves[k]] = TOP + (k + 0.5) * row; }
+  for (v = g.end - 1; v >= g.s; v--) {
+    var c = KIDS[v];
+    if (c.length) { Y[v] = (Y[c[0]] + Y[c[c.length - 1]]) / 2; }
+    X[v] = LEFT + DEP[v] * g.unit;
+  }
+  var xStrip = LEFT + treeW + GAP, xLabel = xStrip + STRIP + GAP + callout;
+  var xClade = xLabel + (labelW ? labelW + GAP : 0);
+  g.labelEnd = xLabel + labelW;
+  var L = layers(root);
+  g.runs.forEach(function (r, j) {
+    var y0 = TOP + r.k0 * row, h = (r.k1 - r.k0 + 1) * row;
+    el('rect', {x: r1(xStrip), y: r1(y0), width: STRIP, height: r1(Math.max(h, 0.6)), 'class': j % 2 ? 'band-b' : 'band-a'}, L.bands);
+    if (h >= 12) { svgText(xClade, y0 + h / 2, r.clade, 'cl', 11, L.clades); }
+  });
+  if (SEL >= 0 && inSub(SEL, g)) {
+    var hs = Math.max(row, 4);
+    el('rect', {x: 0, y: r1(Y[SEL] - hs / 2), width: g.w, height: r1(hs), 'class': 'row-sel'}, L.rows);
+  }
+  d = [];
+  for (v = g.s + 1; v < g.end; v++) { d.push(branch(PARENT[v], v)); }
+  g.inner.forEach(function (u) { d.push(joint(u)); });
+  d.push('M' + r1(X[g.s] - 12) + ',' + r1(Y[g.s]) + 'H' + r1(X[g.s]));
+  el('path', {d: d.join(''), 'class': 'br'}, L.branches);
+  if (row >= 6) {
+    d = [];
+    g.inner.forEach(function (u) { d.push(dot(X[u], Y[u], 1.8)); });
+    el('path', {d: d.join(''), 'class': 'nd'}, L.dots);
+  }
+  if (showLabels) {
+    d = [];
+    g.leaves.forEach(function (l) {
+      if (xStrip - X[l] > 10) { d.push('M' + r1(X[l] + 4) + ',' + r1(Y[l]) + 'H' + r1(xStrip - 3)); }
+      leafLabel(l, xLabel, Y[l], font, L.labels);
+    });
+    el('path', {d: d.join(''), 'class': 'ld'}, L.leaders);
+  } else {
+    var items = hl.map(function (l) { return {v: l, p: Y[l]}; }).sort(function (a, b) { return a.p - b.p; });
+    spread(items, 14, TOP + 6, g.h - BOTTOM - 6);
+    d = [];
+    items.forEach(function (it) {
+      d.push('M' + r1(xStrip + STRIP + 2) + ',' + r1(Y[it.v]) + 'L' + r1(xLabel - 3) + ',' + r1(it.p));
+      leafLabel(it.v, xLabel, it.p, 11, L.labels);
+    });
+    el('path', {d: d.join(''), 'class': 'ld-hl'}, L.leaders);
+  }
+  if (SEL >= 0 && inSub(SEL, g)) { el('path', {d: pathTo(SEL, g), 'class': 'br-sel'}, L.path); }
+  marks(hl, L.marks);
+  return L;
+}
+
+// ---------------------------------------------------------------- circular
+function drawCirc(g, root) {
+  var n = g.leaves.length, w0 = Math.max(stage.clientWidth, 320), h0 = Math.max(stage.clientHeight, 200);
+  if (S.fit) { S.size = 1; }
+  var D = Math.max(360, Math.min(w0, h0) - 8) * S.size, step = 2 * Math.PI / n, hl = marked(g), k, v, d;
+  var cladeW = 0, labelAll = 0, labelHl = 0;
+  g.runs.forEach(function (r) { cladeW = Math.max(cladeW, textW(shortClade(r.clade), 11, 400)); });
+  g.leaves.forEach(function (l) { labelAll = Math.max(labelAll, textW(leafText(l), 11, l === SEL ? 700 : 400)); });
+  hl.forEach(function (l) { labelHl = Math.max(labelHl, textW(leafText(l), 11, l === SEL ? 700 : 400)); });
+  var ring = GAP + STRIP + 4 + (cladeW ? cladeW + GAP : 0);
+  var rAll = D / 2 - MARGIN - labelAll;
+  var showLabels = rAll - ring > 60 && rAll * step >= 10, Rt, rL;
+  if (showLabels) {
+    // every label, radial, outside the ring of the clades
+    Rt = Math.max(60, rAll - ring);
+    rL = Rt + ring;
+    g.w = Math.max(Math.ceil(2 * (rL + labelAll + MARGIN)), w0);
+    g.h = Math.max(Math.ceil(2 * (rL + labelAll + MARGIN)), h0);
+    g.outer = rL + labelAll;
+  } else {
+    // the marked strains only, in two columns beside the circle
+    Rt = Math.max(60, D / 2 - MARGIN - ring);
+    rL = Rt + ring;
+    g.w = Math.max(Math.ceil(2 * (rL + (hl.length ? CALLOUT + labelHl : 0) + MARGIN)), w0);
+    g.h = Math.max(Math.ceil(2 * (rL + MARGIN)), h0);
+    g.outer = rL;
+  }
+  var rS0 = Rt + GAP, rS1 = rS0 + STRIP, rC = rS1 + 4;
+  CX = g.w / 2;
+  CY = g.h / 2;
+  g.step = step;
+  g.unit = Rt / g.maxD;
+  for (k = 0; k < n; k++) { ANG[g.leaves[k]] = (k + 0.5) * step; }
+  for (v = g.end - 1; v >= g.s; v--) {
+    var c = KIDS[v];
+    if (c.length) { ANG[v] = (ANG[c[0]] + ANG[c[c.length - 1]]) / 2; }
+    RAD[v] = DEP[v] * g.unit;
+    X[v] = CX + RAD[v] * Math.sin(ANG[v]);
+    Y[v] = CY - RAD[v] * Math.cos(ANG[v]);
+  }
+  var L = layers(root);
+  g.runs.forEach(function (r, j) {
+    var a0 = ANG[g.leaves[r.k0]] - step / 2, a1 = ANG[g.leaves[r.k1]] + step / 2;
+    el('path', {d: sector(rS0, rS1, a0, a1), 'class': j % 2 ? 'band-b' : 'band-a'}, L.bands);
+    if ((a1 - a0) * rC >= 13) {
+      var m = (a0 + a1) / 2, x = CX + rC * Math.sin(m), y = CY - rC * Math.cos(m);
+      var e = svgText(x, y, shortClade(r.clade), 'cl', 11, L.clades);
+      rotate(e, x, y, m);
+      var t = document.createElementNS(SVGNS, 'title');
+      t.textContent = r.clade;
+      e.appendChild(t);
+    }
+  });
+  d = [];
+  for (v = g.s + 1; v < g.end; v++) { d.push(branch(PARENT[v], v)); }
+  g.inner.forEach(function (u) { d.push(joint(u)); });
+  el('path', {d: d.join(''), 'class': 'br'}, L.branches);
+  if (rL * step >= 6) {
+    d = [];
+    g.inner.forEach(function (u) { d.push(dot(X[u], Y[u], 1.8)); });
+    el('path', {d: d.join(''), 'class': 'nd'}, L.dots);
+  }
+  if (showLabels) {
+    d = [];
+    g.leaves.forEach(function (l) {
+      var a = ANG[l];
+      if (rS0 - RAD[l] > 10) { d.push('M' + pt(RAD[l] + 4, a) + 'L' + pt(rS0 - 3, a)); }
+      leafLabel(l, CX + rL * Math.sin(a), CY - rL * Math.cos(a), 11, L.labels, a);
+    });
+    el('path', {d: d.join(''), 'class': 'ld'}, L.leaders);
+  } else {
+    d = [];
+    [[0, Math.PI, 1], [Math.PI, 2 * Math.PI + 1, -1]].forEach(function (half) {
+      var x = CX + half[2] * (rL + CALLOUT);
+      var items = hl.filter(function (l) { return ANG[l] >= half[0] && ANG[l] < half[1]; })
+        .map(function (l) { return {v: l, p: CY - (rS1 + 2) * Math.cos(ANG[l])}; })
+        .sort(function (a, b) { return a.p - b.p; });
+      spread(items, 14, MARGIN, g.h - MARGIN);
+      items.forEach(function (it) {
+        d.push('M' + pt(rS1 + 2, ANG[it.v]) + 'L' + r1(x - half[2] * 3) + ',' + r1(it.p));
+        var e = leafLabel(it.v, x, it.p, 11, L.labels);
+        if (half[2] < 0) { e.setAttribute('text-anchor', 'end'); }
+      });
+    });
+    el('path', {d: d.join(''), 'class': 'ld-hl'}, L.leaders);
+  }
+  if (SEL >= 0 && inSub(SEL, g)) { el('path', {d: pathTo(SEL, g), 'class': 'br-sel'}, L.path); }
+  marks(hl, L.marks);
+  return L;
+}
+
+function marks(hl, parent) {
+  hl.slice().reverse().forEach(function (v) {
+    el('circle', {cx: r1(X[v]), cy: r1(Y[v]), r: v === SEL ? 5.5 : 4, 'class': v === SEL ? 'mk-sel' : 'mk-rank'}, parent);
+  });
+}
+
+// ---------------------------------------------------------------- render
+function render() {
+  var size = [stage.clientWidth, stage.clientHeight], g = subtree(S.sub);
+  g.runs = cladeRuns(g.leaves);
+  var frag = document.createDocumentFragment();
+  g.L = S.layout === 'circ' ? drawCirc(g, frag) : drawRect(g, frag);
+  while (svg.firstChild) { svg.removeChild(svg.firstChild); }
+  svg.appendChild(frag);
+  svg.setAttribute('width', g.w);
+  svg.setAttribute('height', g.h);
+  svg.setAttribute('viewBox', '0 0 ' + g.w + ' ' + g.h);
+  G = g;
+  HOVER = null;
+  if (PIN >= 0 && inSub(PIN, g)) { pinMark(PIN); }
+  chrome();
+  drawnFor = size;   // the size the drawing was laid out for
+}
+
+// keep the point under (ax, ay) of the stage in place while the drawing changes
+function keepPoint(ax, ay, change) {
+  var old = G, fx = 0.5, fy = 0.5, u = 0;
+  if (old) {
+    fx = (stage.scrollLeft + ax) / old.w;
+    fy = (stage.scrollTop + ay) / old.h;
+    if (S.layout === 'rect') { u = (stage.scrollTop + ay - TOP) / old.row; }
+  }
+  var oldCx = CX, oldCy = CY, oldUnit = old ? old.unit : 1;
+  change();
+  render();
+  if (!old) { return; }
+  if (S.layout === 'rect' && old.s === G.s) {
+    stage.scrollTop = TOP + u * G.row - ay;
+    stage.scrollLeft = fx * G.w - ax;
+  } else if (S.layout === 'circ' && old.s === G.s) {
+    var f = G.unit / oldUnit;
+    stage.scrollLeft = CX + (stage.scrollLeft + ax - oldCx) * f - ax;
+    stage.scrollTop = CY + (stage.scrollTop + ay - oldCy) * f - ay;
+  } else {
+    stage.scrollLeft = fx * G.w - ax;
+    stage.scrollTop = fy * G.h - ay;
+  }
+}
+function zoom(kind, factor, ax, ay) {
+  if (ax === undefined) { ax = stage.clientWidth / 2; ay = stage.clientHeight / 2; }
+  keepPoint(ax, ay, function () {
+    S.fit = false;
+    if (kind === 'wide') { S.wide = Math.max(1, Math.min(64, S.wide * factor)); }
+    else if (S.layout === 'circ') { S.size = Math.max(1, Math.min(16, S.size * factor)); }
+    else { S.row = Math.max(0.2, Math.min(ROW_MAX, S.row * factor)); }
+  });
+}
+
+function centerOn(v) {
+  if (!G || !inSub(v, G)) { return; }
+  var cw = stage.clientWidth;
+  stage.scrollLeft = S.layout === 'rect' ? Math.min(G.labelEnd + 20 - cw, X[v] - 40) : X[v] - cw / 2;
+  stage.scrollTop = Y[v] - stage.clientHeight / 2;
+}
+function flash(v) {
+  if (!G || !inSub(v, G)) { return; }
+  var c = el('circle', {cx: r1(X[v]), cy: r1(Y[v]), r: 6, 'class': 'flash'}, G.L.top);
+  setTimeout(function () { if (c.parentNode) { c.parentNode.removeChild(c); } }, 3000);
+}
+function show(sub, target) {
+  // a part of the tree (the subtree under node sub), then a strain to center on
+  S.sub = sub;
+  if (S.layout === 'rect') {
+    S.wide = 1;
+    S.fit = sub !== 0;
+    if (sub === 0) { S.row = 12; }
+  } else {
+    S.fit = true;
+  }
+  render();
+  if (target !== undefined && target >= 0 && inSub(target, G)) { centerOn(target); flash(target); }
+  else { stage.scrollLeft = 0; stage.scrollTop = 0; }
+}
+function around(v) {
+  var a = v;
+  while (a > 0 && NLEAVES[a] < 20) { a = PARENT[a]; }
+  show(a, v);
+}
+
+// ---------------------------------------------------------------- chrome
+function chrome() {
+  var g = G;
+  document.querySelectorAll('[data-layout]').forEach(function (b) {
+    b.setAttribute('aria-pressed', String(b.getAttribute('data-layout') === S.layout));
+  });
+  document.querySelectorAll('.rect-only').forEach(function (e) { e.hidden = S.layout !== 'rect'; });
+  document.getElementById('z-label').textContent = S.layout === 'rect' ? 'Height' : 'Size';
+  document.getElementById('b-up').disabled = g.s === 0;
+  document.getElementById('b-whole').disabled = g.s === 0;
+  var near = document.getElementById('b-around');
+  near.disabled = SEL < 0 && BEST < 0;
+  near.textContent = SEL >= 0 ? 'Around the selected strain' : 'Around the best ranked strain';
+  var len = niceLength(110 / g.unit);
+  document.getElementById('scale-bar').style.width = r1(len * g.unit) + 'px';
+  document.getElementById('scale-text').textContent = fmtLength(len) + (T.n_sites ?
+    ' = about ' + Math.round(len * T.n_sites).toLocaleString('en-US') + ' differing panel sites' :
+    ' of the panel sites differing');
+  var crumb = g.s === 0 ? 'Whole tree, ' + NLEAVES[0] + ' strains' :
+    'Part of the tree: ' + NLEAVES[g.s] + ' of the ' + NLEAVES[0] + ' strains';
+  if (SEL >= 0 && !inSub(SEL, g)) { crumb += ', without the selected strain'; }
+  document.getElementById('crumb').textContent = crumb;
+  svg.setAttribute('aria-label', crumb + '. Drag to move, Ctrl and the mouse wheel to zoom, ' +
+                   'a click on a strain for its details, on a node for its part of the tree.');
+}
+
+function fillLegend() {
+  document.title = 'Tree of the panel strains' + (T.sample ? ', ' + T.sample : '');
+  var sub = 'Sample ' + (T.sample || 'unknown') + ' · ' + NLEAVES[0] + ' strains' +
+            (T.n_sites ? ', ' + Number(T.n_sites).toLocaleString('en-US') + ' panel sites' : '');
+  document.getElementById('t-sub').textContent = sub;
+  var ks = document.getElementById('key-sel');
+  if (SEL >= 0) { ks.textContent = 'Selected strain: ' + label(SEL); }
+  else if (T.selected) { ks.textContent = 'Selected strain ' + T.selected + ': not in this tree'; }
+  else { ks.textContent = T.unassigned ? 'No strain selected: the sample is unassigned' : 'No strain selected'; }
+  if (SEL < 0) { ks.previousElementSibling.style.display = 'none'; }
+  var nr = Object.keys(RANK).length;
+  document.getElementById('key-rank').textContent = nr ?
+    'the ' + nr + ' best ranked strains of the sample (#rank)' : 'no ranked strain in this tree';
+  document.getElementById('c-ranked').disabled = !nr;
+  var about = document.getElementById('about');
+  (T.about || []).forEach(function (para) {
+    var p = document.createElement('p');
+    p.textContent = para;
+    about.appendChild(p);
+  });
+  var list = document.getElementById('strain-names'), names = [];
+  Object.keys(LEAF).forEach(function (name) { names.push(label(LEAF[name])); });
+  names.sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
+  names.forEach(function (name) {
+    var o = document.createElement('option');
+    o.value = name;
+    list.appendChild(o);
+  });
+}
+
+// ---------------------------------------------------------------- hover, details
+function line(parent, strong, rest, cls) {
+  var p = document.createElement(parent === tip ? 'div' : 'p');
+  if (cls) { p.className = cls; }
+  if (strong) {
+    var b = document.createElement('b');
+    b.textContent = strong;
+    p.appendChild(b);
+  }
+  if (rest) { p.appendChild(document.createTextNode(rest)); }
+  parent.appendChild(p);
+  return p;
+}
+function keyLine(parent, cls, txt) {
+  var p = line(parent, '', '', ''), k = document.createElement('span');
+  k.className = 'key-line';
+  k.style.borderColor = cls === 'sel' ? 'var(--sel)' : 'var(--rank)';
+  p.appendChild(k);
+  p.appendChild(document.createTextNode(txt));
+}
+function facts(v) {
+  return [['Clade', cladeOf(v) || 'none'], ['Origin', meta(v, 'origin')], ['Ploidy', meta(v, 'ploidy')],
+          ['Zygosity', meta(v, 'zygosity')], ['Sequences', meta(v, 'source')]]
+    .filter(function (f) { return f[1]; });
+}
+function strainLines(parent, v) {
+  if (v === SEL) { keyLine(parent, 'sel', 'Selected strain: the strain called for the sample'); }
+  if (RANK[v]) {
+    keyLine(parent, 'rank', 'Rank ' + RANK[v].rank + ' of the sample ranking: concordance ' +
+            RANK[v].conc + ', PP ' + RANK[v].pp);
+  }
+  facts(v).forEach(function (f) { line(parent, '', f[0] + ': ' + f[1]); });
+}
+function cladeCounts(v) {
+  var count = {}, end = v + NNODES[v], u, c;
+  for (u = v; u < end; u++) {
+    if (!KIDS[u].length) { c = cladeOf(u) || 'no clade'; count[c] = (count[c] || 0) + 1; }
+  }
+  var keys = Object.keys(count).sort(function (a, b) { return count[b] - count[a]; });
+  return keys.slice(0, 4).map(function (k) { return k + ' ' + count[k]; }).join(', ') +
+         (keys.length > 4 ? ', ...' : '');
+}
+
+function locate(e) {
+  var t = e.target, v;
+  if (t && t.getAttribute) {
+    var lab = t.closest ? t.closest('[data-v]') : null;
+    if (lab) { return {leaf: Number(lab.getAttribute('data-v'))}; }
+  }
+  var g = G, box = svg.getBoundingClientRect(), px = e.clientX - box.left, py = e.clientY - box.top;
+  // the strain whose row (or ray) the pointer is on, right of its tip
+  var n = g.leaves.length, k, leaf = -1;
+  if (S.layout === 'circ') {
+    var dx = px - CX, dy = py - CY, r = Math.sqrt(dx * dx + dy * dy), a = Math.atan2(dx, -dy);
+    if (a < 0) { a += 2 * Math.PI; }
+    k = Math.floor(a / g.step);
+    if (k >= 0 && k < n) { v = g.leaves[k]; if (r >= RAD[v] - 4 && r <= g.outer + 4) { leaf = v; } }
+  } else {
+    k = Math.floor((py - TOP) / g.row);
+    if (k >= 0 && k < n) { v = g.leaves[k]; if (px >= X[v] - 4 && px <= g.labelEnd + 4) { leaf = v; } }
+  }
+  // the nearest node within 7 px; on a strain's row only when right on it
+  // (a strain with a branch of length 0 has its tip on its parent node)
+  var best = -1, bd = leaf >= 0 ? 9 : 49;
+  g.inner.forEach(function (u) {
+    var ux = X[u] - px, uy = Y[u] - py, dd = ux * ux + uy * uy;
+    if (dd < bd) { bd = dd; best = u; }
+  });
+  if (best >= 0) { return {node: best}; }
+  return leaf >= 0 ? {leaf: leaf} : null;
+}
+
+function clearHover() {
+  if (G) { while (G.L.hover.firstChild) { G.L.hover.removeChild(G.L.hover.firstChild); } }
+  HOVER = null;
+  tip.hidden = true;
+}
+function hover(hit, e) {
+  var key = hit ? (hit.leaf !== undefined ? 'l' + hit.leaf : 'n' + hit.node) : null;
+  if (key !== HOVER) {
+    clearHover();
+    if (!hit) { return; }
+    HOVER = key;
+    var layer = G.L.hover, v = hit.leaf !== undefined ? hit.leaf : hit.node;
+    tip.textContent = '';
+    if (hit.leaf !== undefined) {
+      if (S.layout === 'rect') {
+        var hs = Math.max(G.row, 4);
+        el('rect', {x: 0, y: r1(Y[v] - hs / 2), width: G.w, height: r1(hs), 'class': 'row-hov'}, layer);
+      }
+      el('path', {d: pathTo(v, G), 'class': 'br-hov'}, layer);
+      el('circle', {cx: r1(X[v]), cy: r1(Y[v]), r: 6, 'class': 'mk-hov'}, layer);
+      line(tip, label(v), label(v).indexOf(NAME[v]) < 0 ? '  ' + NAME[v] : '');
+      strainLines(tip, v);
+      line(tip, '', 'Click for its links', 'muted');
+    } else {
+      el('path', {d: subtreePath(v), 'class': 'br-hov'}, layer);
+      el('circle', {cx: r1(X[v]), cy: r1(Y[v]), r: 5, 'class': 'mk-hov'}, layer);
+      line(tip, NLEAVES[v] + ' strains', '');
+      line(tip, '', cladeCounts(v));
+      line(tip, '', 'Click to show this part of the tree alone', 'muted');
+    }
+    tip.hidden = false;
+  }
+  var w = tip.offsetWidth, h = tip.offsetHeight;
+  var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+  var x = e.clientX + 16, y = e.clientY + 16;
+  if (x + w > vw - 8) { x = e.clientX - w - 16; }
+  if (y + h > vh - 8) { y = e.clientY - h - 16; }
+  tip.style.left = Math.max(8, x) + 'px';
+  tip.style.top = Math.max(8, y) + 'px';
+}
+
+function pinMark(v) {
+  var old = svg.querySelector('.mk-pin');
+  if (old) { old.parentNode.removeChild(old); }
+  if (v >= 0 && G && inSub(v, G)) {
+    el('circle', {cx: r1(X[v]), cy: r1(Y[v]), r: 8, 'class': 'mk-pin'}, G.L.top);
+  }
+}
+function closeInfo() {
+  infoBox.hidden = true;
+  PIN = -1;
+  pinMark(-1);
+}
+function openInfo(v) {
+  PIN = v;
+  pinMark(v);
+  infoBox.textContent = '';
+  var x = document.createElement('button');
+  x.type = 'button';
+  x.className = 'x';
+  x.setAttribute('aria-label', 'Close');
+  x.textContent = '×';
+  x.addEventListener('click', closeInfo);
+  infoBox.appendChild(x);
+  var h = document.createElement('h2');
+  h.textContent = label(v);
+  infoBox.appendChild(h);
+  if (label(v) !== NAME[v]) { line(infoBox, '', 'Name in the panel: ' + NAME[v], 'muted'); }
+  strainLines(infoBox, v);
+  var p = line(infoBox, '', 'Links: '), links = [
+    ['SGD', 'https://www.yeastgenome.org/search?q=' + encodeURIComponent(NAME[v])],
+    ['PubMed', 'https://pubmed.ncbi.nlm.nih.gov/?term=' + encodeURIComponent('"' + NAME[v] + '" yeast')]];
+  String(meta(v, 'runs')).split(',').forEach(function (r) {
+    if (/^[SED]RR\d+$/.test(r)) { links.push([r + ' (ENA)', 'https://www.ebi.ac.uk/ena/browser/view/' + r]); }
+  });
+  links.forEach(function (l, k) {
+    var a = document.createElement('a');
+    a.href = l[1];
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = l[0];
+    if (k) { p.appendChild(document.createTextNode(' · ')); }
+    p.appendChild(a);
+  });
+  var acts = document.createElement('div');
+  acts.className = 'acts';
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = 'Show the part of the tree around it';
+  b.addEventListener('click', function () { around(v); });
+  acts.appendChild(b);
+  infoBox.appendChild(acts);
+  infoBox.hidden = false;
+}
+
+// ---------------------------------------------------------------- find
+var lastFind = {q: '', t: 0};
+function findStrain(q) {
+  var msg = document.getElementById('find-msg');
+  q = String(q || '').trim().toLowerCase();
+  msg.textContent = '';
+  if (!q || (q === lastFind.q && Date.now() - lastFind.t < 600)) { return; }
+  lastFind = {q: q, t: Date.now()};
+  var hit = -1, part = -1;
+  Object.keys(LEAF).some(function (name) {
+    var v = LEAF[name], lab = label(v).toLowerCase(), id = name.toLowerCase();
+    if (id === q || lab === q || lab.indexOf('(' + q + ')') >= 0) { hit = v; return true; }
+    if (part < 0 && (id.indexOf(q) >= 0 || lab.indexOf(q) >= 0)) { part = v; }
+    return false;
+  });
+  if (hit < 0) { hit = part; }
+  if (hit < 0) { msg.textContent = 'not in the tree'; return; }
+  if (!inSub(hit, G)) { S.sub = 0; }
+  if (S.layout === 'rect' && S.row < 8) { S.fit = false; S.row = 12; }
+  render();
+  centerOn(hit);
+  flash(hit);
+  openInfo(hit);
+}
+
+// ---------------------------------------------------------------- export
+var SVG_CSS = [
+  '#tree text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }',
+  '.br { fill: none; stroke: var(--branch); stroke-width: 1; }',
+  '.br-sel { fill: none; stroke: var(--sel); stroke-width: 2.5; stroke-linecap: round; }',
+  '.br-hov { fill: none; stroke: var(--hover); stroke-width: 2; }',
+  '.ld { fill: none; stroke: var(--leader); stroke-width: 1; }',
+  '.ld-hl { fill: none; stroke: var(--fg-muted); stroke-width: 1; }',
+  '.nd { fill: var(--node); }',
+  '.lb { fill: var(--fg); }',
+  '.lb-sel { font-weight: 700; }',
+  '.rk { fill: var(--fg-muted); font-weight: 400; }',
+  '.cl { fill: var(--fg-muted); }',
+  '.band-a { fill: var(--band-a); }',
+  '.band-b { fill: var(--band-b); }',
+  '.mk-sel { fill: var(--sel); stroke: var(--bg); stroke-width: 2; }',
+  '.mk-rank { fill: var(--rank); stroke: var(--bg); stroke-width: 2; }',
+  '.mk-hov { fill: none; stroke: var(--hover); stroke-width: 1.5; }',
+  '.mk-pin { fill: none; stroke: var(--sel); stroke-width: 2; }',
+  '.row-sel { fill: var(--row-sel); }',
+  '.row-hov { fill: var(--row-hov); }',
+  '.flash { fill: none; stroke: var(--sel); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: flash 0.9s ease-out 3; }',
+  '@keyframes flash { from { transform: scale(1); opacity: 1; } to { transform: scale(3.5); opacity: 0; } }',
+  '@media (prefers-reduced-motion: reduce) { .flash { animation: none; } }'
+].join('\n');
+
+function svgExport() {
+  var copy = svg.cloneNode(true), cs = window.getComputedStyle(document.documentElement);
+  copy.setAttribute('xmlns', SVGNS);
+  ['.layer-hover', '.flash', '.mk-pin'].forEach(function (sel) {
+    var e = copy.querySelectorAll(sel);
+    for (var k = 0; k < e.length; k++) { e[k].parentNode.removeChild(e[k]); }
+  });
+  var css = SVG_CSS.split('\n').filter(function (r) { return r.indexOf('flash') < 0 && r.indexOf('@media') < 0; })
+    .join('\n').replace(/var\((--[a-z0-9-]+)\)/g, function (m, name) { return cs.getPropertyValue(name).trim(); });
+  var style = document.createElementNS(SVGNS, 'style');
+  style.textContent = css.replace('#tree text', 'text');
+  var bg = document.createElementNS(SVGNS, 'rect');
+  bg.setAttribute('width', '100%');
+  bg.setAttribute('height', '100%');
+  bg.setAttribute('fill', cs.getPropertyValue('--bg').trim());
+  copy.insertBefore(bg, copy.firstChild);
+  copy.insertBefore(style, copy.firstChild);
+  return new XMLSerializer().serializeToString(copy);
+}
+
+// ---------------------------------------------------------------- events
+var drag = null, noClick = false;
+stage.addEventListener('pointerdown', function (e) {
+  var box = stage.getBoundingClientRect();
+  if (e.button !== 0 || e.pointerType !== 'mouse' || e.clientX - box.left >= stage.clientWidth ||
+      e.clientY - box.top >= stage.clientHeight) { return; }
+  drag = {x: e.clientX, y: e.clientY, sl: stage.scrollLeft, st: stage.scrollTop, moved: false};
+});
+window.addEventListener('pointermove', function (e) {
+  if (!drag) { return; }
+  var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 4) { drag.moved = true; stage.classList.add('dragging'); clearHover(); }
+  if (drag.moved) { stage.scrollLeft = drag.sl - dx; stage.scrollTop = drag.st - dy; }
+});
+window.addEventListener('pointerup', function () {
+  if (drag && drag.moved) { noClick = true; setTimeout(function () { noClick = false; }, 0); }
+  drag = null;
+  stage.classList.remove('dragging');
+});
+svg.addEventListener('pointermove', function (e) { if (!drag || !drag.moved) { hover(locate(e), e); } });
+svg.addEventListener('pointerleave', clearHover);
+svg.addEventListener('click', function (e) {
+  if (noClick) { return; }
+  var hit = locate(e);
+  if (!hit) { closeInfo(); return; }
+  if (hit.leaf !== undefined) { openInfo(hit.leaf); }
+  else { clearHover(); show(hit.node, PIN >= 0 && inSub(PIN, {s: hit.node, end: hit.node + NNODES[hit.node]}) ? PIN : SEL); }
+});
+stage.addEventListener('wheel', function (e) {
+  if (!e.ctrlKey) { return; }
+  e.preventDefault();
+  var box = stage.getBoundingClientRect();
+  zoom('main', e.deltaY < 0 ? 1.25 : 0.8, e.clientX - box.left, e.clientY - box.top);
+}, {passive: false});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') { closeInfo(); clearHover(); }
+});
+document.querySelectorAll('[data-layout]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var layout = b.getAttribute('data-layout');
+    if (layout === S.layout) { return; }
+    S.layout = layout;
+    S.fit = layout === 'circ';
+    S.wide = 1;
+    S.size = 1;
+    if (layout === 'rect') { S.row = 12; }
+    render();
+    var target = PIN >= 0 ? PIN : (SEL >= 0 ? SEL : BEST);
+    if (layout === 'rect' && target >= 0 && inSub(target, G)) { centerOn(target); }
+    else { stage.scrollLeft = (G.w - stage.clientWidth) / 2; stage.scrollTop = (G.h - stage.clientHeight) / 2; }
+  });
+});
+document.getElementById('b-whole').addEventListener('click', function () {
+  var was = S.sub;
+  show(0);
+  centerOn(was > 0 ? was : (SEL >= 0 ? SEL : BEST));
+});
+document.getElementById('b-up').addEventListener('click', function () {
+  if (S.sub > 0) { var was = S.sub; show(PARENT[S.sub]); centerOn(was); }
+});
+document.getElementById('b-around').addEventListener('click', function () {
+  var v = SEL >= 0 ? SEL : BEST;
+  if (v >= 0) { around(v); }
+});
+document.getElementById('b-in').addEventListener('click', function () { zoom('main', 1.5); });
+document.getElementById('b-out').addEventListener('click', function () { zoom('main', 1 / 1.5); });
+document.getElementById('b-wide').addEventListener('click', function () { zoom('wide', 1.5); });
+document.getElementById('b-narrow').addEventListener('click', function () { zoom('wide', 1 / 1.5); });
+document.getElementById('b-fit').addEventListener('click', function () {
+  S.fit = true;
+  S.wide = 1;
+  S.size = 1;
+  render();
+  stage.scrollLeft = 0;
+  stage.scrollTop = 0;
+});
+document.getElementById('c-ranked').addEventListener('change', function (e) {
+  var top = stage.scrollTop, left = stage.scrollLeft;
+  S.ranked = e.target.checked;
+  render();
+  stage.scrollTop = top;
+  stage.scrollLeft = left;
+});
+var find = document.getElementById('find');
+find.addEventListener('change', function () { findStrain(find.value); });
+find.addEventListener('input', function () {
+  var q = find.value.trim().toLowerCase();
+  if (q && Object.keys(LEAF).some(function (name) { return label(LEAF[name]).toLowerCase() === q; })) {
+    findStrain(find.value);
+  }
+});
+find.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); findStrain(find.value); } });
+document.getElementById('dl-nwk').addEventListener('click', function () {
+  this.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(T.newick || '');
+});
+document.getElementById('dl-svg').addEventListener('click', function () {
+  this.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgExport());
+});
+// redrawn when the window or the header (which wraps) changes size
+var resizing = 0, drawnFor = [0, 0];
+function relayout() {
+  clearTimeout(resizing);
+  resizing = setTimeout(function () {
+    if (Math.abs(stage.clientWidth - drawnFor[0]) < 2 && Math.abs(stage.clientHeight - drawnFor[1]) < 2) { return; }
+    keepPoint(stage.clientWidth / 2, stage.clientHeight / 2, function () {});
+  }, 120);
+}
+window.addEventListener('resize', relayout);
+if (window.ResizeObserver) { new ResizeObserver(relayout).observe(document.querySelector('header.bar')); }
+
+// ---------------------------------------------------------------- start
+var style = document.createElement('style');
+style.textContent = SVG_CSS;
+document.head.appendChild(style);
+fillLegend();
+render();
+var start = SEL >= 0 ? SEL : BEST;
+if (start >= 0) { centerOn(start); flash(start); }
+})();
+"""
+
+
+# --------------------------------------------------------------------------- #
 # HTML sections
 # --------------------------------------------------------------------------- #
 
@@ -902,7 +2053,18 @@ def help_btn(key, label):
         k=esc(key), l=esc(label))
 
 
-def render_header(d, title):
+# Button next to "Strains in the panel": opens the tree page (openTree() in JS).
+TREE_BUTTON = (
+    ' <button type="button" class="tree-btn" id="open-tree" '
+    'title="Open the tree of the {n} panel strains in a new page, the strain called highlighted" '
+    'aria-label="Open the tree of the panel strains in a new page">'
+    '<svg class="ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" '
+    'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M2 12h5M7 6v12M7 6h6M7 18h6M13 3v6M13 3h8M13 9h8M13 15v6M13 15h8M13 21h8"/></svg>'
+    'tree</button>')
+
+
+def render_header(d, title, tree=None):
     panel = d.get("panel") or {}
     rows = [
         ("Organism", d.get("organism"), "organism"),
@@ -911,9 +2073,11 @@ def render_header(d, title):
         ("SNP sites in the panel", num(panel.get("n_sites")), "panel_sites"),
         ("Strains in the panel", num(panel.get("n_strains")), "panel_strains"),
     ]
+    extra = {"panel_strains": TREE_BUTTON.format(n=esc(tree["n_leaves"]))} if tree else {}
     items = "\n".join(
-        "      <div><dt>{} {}</dt><dd>{}</dd></div>".format(
-            esc(k), help_btn(h, k.lower()), esc(v) if v not in (None, "") else "n/a")
+        "      <div><dt>{} {}</dt><dd>{}{}</dd></div>".format(
+            esc(k), help_btn(h, k.lower()), esc(v) if v not in (None, "") else "n/a",
+            extra.get(h, ""))
         for k, v, h in rows
     )
     return """<header class="page">
@@ -1659,12 +2823,196 @@ def render_markers(d):
 
 
 # --------------------------------------------------------------------------- #
+# tree of the panel strains
+# --------------------------------------------------------------------------- #
+
+def parse_newick(text):
+    """Nodes of a Newick tree in preorder, the root first: (parents, lengths,
+    names), parent -1 for the root, length 0 where none is given, name '' for
+    an unnamed node. Written without recursion: the tree can be deep. Quoted
+    labels ('...', '' for a quote) and [comments] are understood."""
+    parents, lengths, names = [], [], []
+    stack, last, expect, i, n = [], None, True, 0, len(text)
+
+    def new(parent):
+        parents.append(parent)
+        lengths.append(0.0)
+        names.append("")
+        return len(parents) - 1
+
+    while i < n:
+        c = text[i]
+        if c.isspace():
+            i += 1
+        elif c == "[":
+            j = text.find("]", i)
+            i = n if j < 0 else j + 1
+        elif c == "(":
+            node = new(stack[-1] if stack else -1)
+            stack.append(node)
+            last, expect = None, True
+            i += 1
+        elif c in ",)":
+            if expect:   # an empty leaf, as in (,)
+                new(stack[-1] if stack else -1)
+            if c == ")":
+                if not stack:
+                    raise ValueError("unbalanced ')' at character %d" % i)
+                last, expect = stack.pop(), False
+            else:
+                last, expect = None, True
+            i += 1
+        elif c == ":":
+            if expect:
+                last, expect = new(stack[-1] if stack else -1), False
+            j = i + 1
+            while j < n and text[j] not in ",);[" and not text[j].isspace():
+                j += 1
+            lengths[last] = float(text[i + 1:j])
+            i = j
+        elif c == ";":
+            break
+        else:
+            if c == "'":
+                j, label = i + 1, []
+                while j < n:
+                    if text[j] == "'":
+                        if j + 1 < n and text[j + 1] == "'":
+                            label.append("'")
+                            j += 2
+                            continue
+                        break
+                    label.append(text[j])
+                    j += 1
+                label, i = "".join(label), j + 1
+            else:
+                j = i
+                while j < n and text[j] not in "(),:;[" and not text[j].isspace():
+                    j += 1
+                label, i = text[i:j], j
+            if expect:
+                last, expect = new(stack[-1] if stack else -1), False
+            names[last] = label
+    if stack:
+        raise ValueError("unbalanced '(': %d clade(s) not closed" % len(stack))
+    if not parents:
+        raise ValueError("no node")
+    return parents, lengths, names
+
+
+def strain_source(row):
+    """How the sequences of a panel strain were obtained, in words, and its
+    read runs. The assembly paths of the database build machine are not
+    shown, only the collection they come from."""
+    kind, source = row.get("source_type") or "", row.get("source") or ""
+    if kind == "reads":
+        runs = [r for r in source.split(",") if re.match(r"^[SED]RR\d+$", r)]
+        return ("reads, runs " + ", ".join(runs)) if runs else "reads", ",".join(runs)
+    if kind == "matrix":
+        code = (" (isolate " + source + ")") if re.match(r"^[A-Za-z0-9_]+$", source) else ""
+        return "1011 Yeast Genomes matrix" + code, ""
+    if kind == "assembly":
+        low = source.lower()
+        for key, collection in (("scrapdb", "ScRAPdb"), ("sgd", "SGD")):
+            if key in low:
+                return "genome assembly, " + collection, ""
+        return "genome assembly", ""
+    return kind, ""
+
+
+TREE_FIELDS = ["display_name", "clade", "origin", "ploidy", "zygosity", "source", "runs"]
+
+
+def tree_payload(d, newick_text, strain_rows):
+    """Data of the tree page: the tree in preorder, the strains of the panel,
+    the strain called and the best ranked ones."""
+    parents, lengths, names = parse_newick(newick_text)
+    children = set(parents)
+    leaves = [names[v] for v in range(len(parents)) if v not in children]
+    leaf_set = set(leaves)
+    strains = {}
+    for row in strain_rows:
+        source, runs = strain_source(row)
+        strains[row.get("strain")] = [row.get("display_name") or "", row.get("clade") or "",
+                                      row.get("origin") or "", row.get("ploidy") or "",
+                                      row.get("zygosity") or "", source, runs]
+    panel = d.get("panel") or {}
+    best = [[s.get("strain_id"), s.get("rank"), pct(s.get("probability")), pct(s.get("concordance"), 1)]
+            for _, s in ranked(d.get("strains") or [])[:N_STRAINS_SHOWN]
+            if isinstance(s.get("rank"), (int, float))]
+    missing = sorted(set(strains) - leaf_set)
+    about = [
+        "Tree of the {n} strains of the panel, the strains the sample is compared with, built "
+        "once by BIONJ (the method of Peter et al. 2018 for the 1011 isolates) from their "
+        "genotypes at the {sites} panel sites: the distance between two strains is the fraction "
+        "of the sites known in both where their genotypes differ, a heterozygous genotype "
+        "against a homozygous one counting one half. The selected strain is the one called for "
+        "the sample (Decision of the report); the best ranked strains are the first of its "
+        "Strain ranking.".format(n=len(leaves), sites=num(panel.get("n_sites"))),
+        "The tree shows which strains group together. Its branch lengths are distances over "
+        "the panel sites, not genome-wide divergences: the panel keeps the rarest variants of "
+        "each strain and a share of the common ones, so a small and very divergent lineage, "
+        "such as the Taiwanese wild isolates, looks closer to the others than it is. The root, "
+        "on the most divergent lineage known (the Taiwanese isolates, for yeast), only sets "
+        "the drawing.",
+        "Clades: Table S1 of Peter et al. 2018 (Nature 556:339), for the 1011 isolates and the "
+        "S288C family; the strains taken from genome assemblies have none. Two strains at "
+        "distance 0 are not separated by any panel site (in the yeast panel, BY4741 and BY4742).",
+        "The tree is the panels/panel_tree.nwk file of the strain identity database "
+        "(biosentinelle_yeast_db), made by its bin/build_panel_tree.py and described in its "
+        "db/README.md; Download Newick saves it, for FigTree or iTOL.",
+    ]
+    if missing:
+        about.append("{} strain(s) of the panel are not in this tree, which was built before "
+                     "them: {}. Rebuild it with build_db.nf.".format(
+                         len(missing), ", ".join(missing[:20]) + (", ..." if len(missing) > 20
+                                                                  else "")))
+    return {
+        "parent": parents,
+        "length": [round(x, 10) for x in lengths],
+        "name": names,
+        "fields": TREE_FIELDS,
+        "strains": {k: v for k, v in strains.items() if k in leaf_set},
+        "newick": newick_text.strip() + "\n",
+        "sample": d.get("sample"),
+        "selected": None if d.get("unassigned") else d.get("call"),
+        "unassigned": bool(d.get("unassigned")),
+        "ranked": best,
+        "n_sites": panel.get("n_sites"),
+        "n_leaves": len(leaves),
+        "about": about,
+    }
+
+
+def read_tree(newick_path, strains_path, d):
+    """Tree data for the report, or None (with a warning on stderr) when the
+    tree file is absent or unreadable: the report is then made without it."""
+    if not newick_path:
+        return None
+    try:
+        with open(newick_path, "r", encoding="utf-8") as fh:
+            text = fh.read()
+        rows = []
+        if strains_path:
+            with open(strains_path, "r", encoding="utf-8", newline="") as fh:
+                rows = list(csv.DictReader(fh, delimiter="\t"))
+        return tree_payload(d, text, rows)
+    except (OSError, ValueError) as err:
+        sys.stderr.write("warning: no tree in the report, {} unreadable: {}\n".format(
+            newick_path, err))
+        return None
+
+
+# --------------------------------------------------------------------------- #
 # document
 # --------------------------------------------------------------------------- #
 
-def render(d, title):
+def render(d, title, tree=None):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     help_data = dict(HELP, __classes__=CLASS_HELP)
+    if tree:
+        help_data["panel_strains"] += (" The <b>tree</b> button opens the tree of all these "
+                                       "strains in a new page, the strain called highlighted.")
     help_data["marker_effect"] = (
         "<b>Effect of the sample's allele on the encoded protein</b>, from the changes found in "
         "the reads at the gene (coding changes column): whole ORF deleted, frameshift, stop "
@@ -1696,7 +3044,7 @@ def render(d, title):
         "<style>{}</style>".format(CSS),
         "</head>",
         "<body>",
-        render_header(d, title),
+        render_header(d, title, tree),
         '<div class="wrap">',
         render_unassigned(d),
         render_decision(d),
@@ -1713,10 +3061,19 @@ def render(d, title):
         '<script type="application/json" id="report-data">{}</script>'.format(embed_json(d)),
         '<script type="application/json" id="help-data">{}</script>'.format(embed_json(help_data)),
         "<script>{}</script>".format(JS),
-        "</body>",
-        "</html>",
-        "",
     ]
+    if tree:
+        # the four blocks of the tree page, read by openTree()
+        for block in (TREE_CSS, TREE_BODY, TREE_JS):
+            if "</script" in block.lower():
+                raise ValueError("a block of the tree page holds '</script'")
+        parts += [
+            '<script type="text/plain" id="tree-css">{}</script>'.format(TREE_CSS),
+            '<script type="text/plain" id="tree-body">{}</script>'.format(TREE_BODY),
+            '<script type="application/json" id="tree-data">{}</script>'.format(embed_json(tree)),
+            '<script type="text/plain" id="tree-js">{}</script>'.format(TREE_JS),
+        ]
+    parts += ["</body>", "</html>", ""]
     return "\n".join(parts)
 
 
@@ -1727,6 +3084,12 @@ def main(argv=None):
     ap.add_argument("--json", required=True, metavar="FILE", help="input results JSON file")
     ap.add_argument("--out", required=True, metavar="FILE", help="output HTML file")
     ap.add_argument("--title", default="BioSentinelle report", help="report title")
+    ap.add_argument("--tree", metavar="FILE",
+                    help="tree of the panel strains, Newick (panels/panel_tree.nwk of the "
+                         "database): opened in a page of its own from the report")
+    ap.add_argument("--strains", metavar="FILE",
+                    help="panel_strains.tsv of the database: clade, origin and source of the "
+                         "strains shown in the tree")
     args = ap.parse_args(argv)
 
     with open(args.json, "r", encoding="utf-8") as fh:
@@ -1736,9 +3099,10 @@ def main(argv=None):
         return 1
 
     title = args.title
+    tree = read_tree(args.tree, args.strains, data)
 
     with open(args.out, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(render(data, title))
+        fh.write(render(data, title, tree))
 
     sys.stderr.write("wrote {}\n".format(args.out))
     return 0

@@ -589,9 +589,24 @@ workflow {
             )
             copyLogFile('strain_score_report.log', StrainScore.out.strain_score_log_ch, out_path)
 
+            // Tree of the panel strains, opened from the report (button next to
+            // "Strains in the panel"): made without it, with a warning, when the
+            // database predates panels/panel_tree.nwk.
+            panel_tree_file = file("${db_dir}/panels/panel_tree.nwk", checkIfExists: false)
+            if(panel_tree_file.exists()){
+                panel_tree = Channel.value(panel_tree_file)
+            }else{
+                warn5 = "\n\nWARNING:\nNO ${db_dir}/panels/panel_tree.nwk.\nTHE STRAIN IDENTITY REPORT HAS NO TREE OF THE PANEL STRAINS. UPDATE THE CLONE OF biosentinelle_yeast_db.\n"
+                print(warn5)
+                warning_ch = warning_ch.mix(Channel.value(warn5))
+                panel_tree = Channel.of('').collectFile(name: 'NO_TREE').first()
+            }
+
             StrainReport(
                 fastq_name,
-                StrainScore.out.strain_json_ch
+                StrainScore.out.strain_json_ch,
+                panel_tree,
+                panel_strains
             )
         }
     }

@@ -72,7 +72,7 @@ No assembly is made. The sample sequences are compared with a strain identity da
 | **Mitochondrial genome, growth on glycerol** | From the same alignment, the depth over the exons of the mitochondrial genes needed for respiration (database *mito/mito_genes.tsv*), against the nuclear depth: rho+ (every gene covered, growth on glycerol expected), rho- (whole genes missing), rho0 (no mtDNA), uncertain (genes covered in part). Optional introns are not counted, point mutations (mit-) and nuclear respiratory mutations are not seen. In *marker_genotype.json* under `mitochondria`, in the Decision of the report (Glycerol) and in its own section. | Yes |
 | **Lab tool elements** (plasmids, cassettes, drug resistance markers, ...) | The reads are aligned with bowtie2 against the tool sequences of the database. Each element is scored by breadth of coverage and identity. | No, only the tool sequences |
 
-The panel strains are then ranked by likelihood. If the best strain matches less than `min_concordance` of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain, which is what flags a strain absent from the database. The result is the *strain_identity_report.html* file.
+The panel strains are then ranked by likelihood. If the best strain matches less than `min_concordance` of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain, which is what flags a strain absent from the database. The result is the *strain_identity_report.html* file. Its *tree* button, next to *Strains in the panel*, opens the tree of all the panel strains in a new page, with the strain called highlighted.
 
 In addition, the historical part of the pipeline aligns the reads (bowtie2) against the genomes of `ref_path`, the features of `features_path` and the mating type sequences of `sex_path`, for coverage plots, read counts after mapping quality 20 filtering, and variant counts (bcftools), summarized in *report.html*. This part does not use the database.
 
@@ -119,7 +119,7 @@ The database is in the separate repository [biosentinelle_yeast_db](https://gith
 | Folder | Content |
 | :--- | :--- |
 | *organism.tsv* | Organism, reference genome and summary of the database. |
-| *panels* | Strain SNP and indel panel: *panel_sites.tsv.gz* (sites and expected allele of each strain), *panel_kmers.tsv.gz* (k-mers of each allele), *panel_strains.tsv* (strains of the panel), *panel_report.txt* (build log). |
+| *panels* | Strain SNP and indel panel: *panel_sites.tsv.gz* (sites and expected allele of each strain), *panel_kmers.tsv.gz* (k-mers of each allele), *panel_strains.tsv* (strains of the panel), *panel_report.txt* (build log), *panel_tree.nwk* (tree of the panel strains, opened from the report) and *panel_tree_report.txt* (its build log). |
 | *strains* | Strain catalogue (*strains.tsv*) and strain name aliases (*aliases.tsv*). |
 | *mating* | MATa and MATalpha k-mers (*mating_kmers.tsv*). |
 | *markers* | Native marker gene loci (*marker_loci.tsv*, *.bed*, *.fasta*), allele catalogue (*marker_alleles.tsv*), documented genotypes of laboratory strains (*documented_genotypes.tsv*) and repeats masked in the flanks (*marker_repeats.tsv*). |
@@ -292,6 +292,16 @@ Check that the `panel_reference` parameter of the *nextflow.config* file points 
 #### Message 5
 
 ```
+WARNING:
+NO .../db/yeast/panels/panel_tree.nwk.
+THE STRAIN IDENTITY REPORT HAS NO TREE OF THE PANEL STRAINS. UPDATE THE CLONE OF biosentinelle_yeast_db.
+```
+
+The clone of biosentinelle_yeast_db predates the tree of the panel strains. Update it (`git pull` in its folder): the report is otherwise complete, without its *tree* button.
+
+#### Message 6
+
+```
 ERROR ~ Error executing process > 'Print_report (1)'
 ...
 Command error:
@@ -322,6 +332,7 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
         <td>
             Main result. HTML report of the strain identity of the sample, made from the <i>tsv/strain_id.json</i> file:
             <ul>
+                <li><b>Header</b>: organism, reference genome, date, numbers of panel sites and strains. The <b>tree</b> button next to <i>Strains in the panel</i> opens, in a new page, the tree of all the panel strains (BIONJ over the panel sites, <i>panels/panel_tree.nwk</i> of the database), with the strain called highlighted and the 10 best ranked strains marked: rectangular or circular layout, zoom, part of the tree around a strain, search, details and links of each strain, Newick and SVG download. Its branch lengths are distances over the panel sites, not genome-wide divergences (see <i>db/README.md</i> of biosentinelle_yeast_db). The button is absent, with a warning, if the database has no tree.</li>
                 <li><b>Decision</b>: bullet points only: the strain called, then whether the mating type, each native marker and each foreign tool element present agree or disagree with the documented genotype of that strain; or an <b>UNASSIGNED</b> banner when no strain of the panel matches the sample well enough (with the reason). The strain is called in two steps, shown in the <b>Decided by</b> point. First the SNP panel: the first strain of the ranking is called when no other strain is close to it. Second, when other strains are too close to the first one for the SNPs alone (a log-likelihood within ln 1000 of the best, or fewer than 200 separating sites, i.e., called sites where the genotypes of the two strains are known and differ, whatever allele the sample carries there: close relatives such as BY4741 and BY4742, which differ by their mating type and by whole-gene deletions, met15D0 against lys2D0, rather than by SNPs), each of them is compared with the mating type and the native markers measured in the sample, from its documented genotype or, without one, from the marker alleles of its assembly. A strain contradicted at any point is ruled out; among the others, the one agreeing at the most points is called, the SNP ranking breaking the ties. Each of these strains is listed as called, ruled out (with what contradicts it) or not excluded, with its SNP rank, its PP, its log-likelihood below the best, its separating sites and the number of them where the sample carries the allele of the best strain (and its own). A strain close by its few separating sites can have a PP of 0 and rank below the 10 strains shown in <b>Strain ranking</b>, even when the sample carries the allele of the best strain at all of them: a lead built on so few sites is not trusted alone, as panel errors, a misassembled region or the drift of a laboratory stock can make it. When every one of them is contradicted, or none can be compared, the first of the SNP ranking is kept and a warning says so.</li>
                 <li><b>Warnings</b>: every point that limits the call (low coverage, many heterozygous sites, native markers differing from those documented for the best strain, tool elements native to the host genome, ...).</li>
                 <li><b>Strain ranking</b>: the top strains of the ranking (see <i>strain_ranking.tsv</i> below), with, for each, the detail of the panel sites (every mismatching and uncovered site, the matching sites being thinned).</li>
