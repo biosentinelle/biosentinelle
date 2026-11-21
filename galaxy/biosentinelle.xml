@@ -29,8 +29,8 @@
             BS_APPTAINER_OPTIONS  (optional) apptainer run options, default: "no-home and bind /pasteur" (two dashes before each option).
                                   The folders of the Galaxy datasets, of the job and of BS_DB_PATH must be visible in the containers
             APPTAINER_TMPDIR      (optional) temporary folder used to build the images, default: the job working folder
-        - destination with at least 12 cores and 32 GB for full speed
-          (bowtie2 and bedtools labels of nextflow.config; lower values are applied by process.resourceLimits)
+        - destination with at least 12 cores and 12 GB for full speed
+          (MarkerAlign process of nextflow.config, the largest one; lower values are applied by process.resourceLimits)
         - allow the two HTML reports to be displayed without sanitization (Admin > Allowlist), otherwise their scripts and styles are removed
         - the Run accession option downloads the reads with fastq-dump during the job: it needs an internet access from the computing node
         - optional: live_tool_output_reporting: true in the parameters of the destination, so that the users follow the nextflow processes
