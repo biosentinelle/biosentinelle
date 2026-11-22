@@ -3,7 +3,7 @@
 ##                                                                     ##
 ##     app.R                                                           ##
 ##                                                                     ##
-##     Web page of biosentinelle                                       ##
+##     Web page of lab_strain_watch                                    ##
 ##     Bioinformatics and Biostatistics Hub                            ##
 ##     Institut Pasteur Paris                                          ##
 ##                                                                     ##
@@ -12,12 +12,12 @@
 
 ################################ Aim
 
-# Simple web form generated from the nextflow.config file of biosentinelle:
+# Simple web form generated from the nextflow.config file of lab_strain_watch:
 # one input per parameter of the "Parameters that must be set by the user" section (except those of galaxy/locked_params.txt),
 # with the default value and the comment of nextflow.config as help.
-# A submission writes the sample files in <BS_WORK_DIR>/jobs/<key>/sample/, the parameters in <BS_WORK_DIR>/jobs/<key>/params.json
-# and the task in <BS_WORK_DIR>/todo/<key>.json (with the run accession, if given instead of files).
-# The web/daemon/bs_bioblend.py daemon sends the task to the biosentinelle Galaxy tool (galaxy.pasteur.fr -> Maestro cluster).
+# A submission writes the sample files in <LSW_WORK_DIR>/jobs/<key>/sample/, the parameters in <LSW_WORK_DIR>/jobs/<key>/params.json
+# and the task in <LSW_WORK_DIR>/todo/<key>.json (with the run accession, if given instead of files).
+# The web/daemon/lsw_bioblend.py daemon sends the task to the lab_strain_watch Galaxy tool (galaxy.pasteur.fr -> Maestro cluster).
 # The key, given to the user, is the only way to get the results back ("Check my job" tab, or the link in the e-mail).
 
 ################################ End Aim
@@ -25,11 +25,11 @@
 
 ################################ Settings (environment variables)
 
-work_dir <- Sys.getenv("BS_WORK_DIR", "/srv/bs_work") # folder shared with the daemon
-repo_dir <- Sys.getenv("BS_REPO_DIR", normalizePath(file.path(getwd(), "..", ".."), mustWork = FALSE)) # biosentinelle clone (nextflow.config and galaxy/)
-python <- Sys.getenv("BS_PYTHON", "python3")
-max_upload_mb <- as.numeric(Sys.getenv("BS_MAX_UPLOAD_MB", "1000"))
-retention_days <- Sys.getenv("BS_RETENTION_DAYS", "15")
+work_dir <- Sys.getenv("LSW_WORK_DIR", "/srv/lsw_work") # folder shared with the daemon
+repo_dir <- Sys.getenv("LSW_REPO_DIR", normalizePath(file.path(getwd(), "..", ".."), mustWork = FALSE)) # lab_strain_watch clone (nextflow.config and galaxy/)
+python <- Sys.getenv("LSW_PYTHON", "python3")
+max_upload_mb <- as.numeric(Sys.getenv("LSW_MAX_UPLOAD_MB", "1000"))
+retention_days <- Sys.getenv("LSW_RETENTION_DAYS", "15")
 options(shiny.maxRequestSize = max_upload_mb * 1024^2)
 
 config_file <- file.path(repo_dir, "nextflow.config")
@@ -71,9 +71,9 @@ param_input <- function(p){
         widget <- shiny::textInput(id, p$name, value = p$default, width = "100%")
     }
     shiny::div(
-        class = "bs-param",
+        class = "lsw-param",
         widget,
-        shiny::tags$details(shiny::tags$summary("help"), shiny::tags$pre(class = "bs-help", p$help))
+        shiny::tags$details(shiny::tags$summary("help"), shiny::tags$pre(class = "lsw-help", p$help))
     )
 }
 
@@ -81,7 +81,7 @@ section_panel <- function(title){
     params <- Filter(function(x){x$section == title}, spec)
     shiny::tags$details(
         open = if(grepl("^Optional", title)){NULL}else{"open"}, # optional sections closed
-        class = "bs-section",
+        class = "lsw-section",
         shiny::tags$summary(shiny::h4(title, style = "display: inline")),
         lapply(params, param_input)
     )
@@ -136,12 +136,12 @@ safe_names <- function(names){
 ################################ UI
 
 ui <- shiny::navbarPage(
-    title = "biosentinelle",
+    title = "lab_strain_watch",
     id = "tabs",
     header = shiny::tags$style(shiny::HTML("
-        .bs-section {border: 1px solid #ddd; border-radius: 4px; padding: 8px 12px; margin-bottom: 10px;}
-        .bs-param {margin-bottom: 6px;}
-        .bs-help {white-space: pre-wrap; font-size: 12px; max-height: 250px; overflow-y: auto;}
+        .lsw-section {border: 1px solid #ddd; border-radius: 4px; padding: 8px 12px; margin-bottom: 10px;}
+        .lsw-param {margin-bottom: 6px;}
+        .lsw-help {white-space: pre-wrap; font-size: 12px; max-height: 250px; overflow-y: auto;}
         details > summary {cursor: pointer;}
     ")),
     shiny::tabPanel(
@@ -149,13 +149,13 @@ ui <- shiny::navbarPage(
         value = "submit",
         shiny::fluidRow(shiny::column(
             width = 10, offset = 1,
-            shiny::p("Check the identity of a sequenced laboratory yeast strain with the ", shiny::a("biosentinelle", href = "https://github.com/biosentinelle/biosentinelle", target = "_blank"),
+            shiny::p("Check the identity of a sequenced laboratory yeast strain with the ", shiny::a("lab_strain_watch", href = "https://github.com/lab-strain-watch/lab_strain_watch", target = "_blank"),
                 " pipeline, on the Institut Pasteur cluster: most probable strain, mating type, native marker genes, mitochondrial genome and laboratory tool elements.",
                 " Fill the form below, which corresponds to the nextflow.config file of the pipeline, and submit.",
                 " You will get a key to follow the job and download the results, which are kept ", retention_days, " days."),
             shiny::tags$details(
                 open = "open",
-                class = "bs-section",
+                class = "lsw-section",
                 shiny::tags$summary(shiny::h4("Sample", style = "display: inline")),
                 shiny::fileInput("sample_files", paste0("Sequence file(s) of a single sample (fastq_path parameter, max ", max_upload_mb, " MB in all): FASTQ, FASTA, GenBank, EMBL (plain, .gz or .bz2), BAM, SAM, CRAM, or a zip of FASTQ, FASTA, GenBank or EMBL files. Paired files are recognized by their _1/_2 or _R1/_R2 suffix."), multiple = TRUE, width = "100%"),
                 shiny::textInput("accession", "Or a run accession of SRA (SRR...), ENA (ERR...) or DDBJ (DRR...), instead of files"),
@@ -308,7 +308,7 @@ server <- function(input, output, session){
 
     job_file <- function(name){
         shiny::downloadHandler(
-            filename = function(){paste0("biosentinelle_", name)},
+            filename = function(){paste0("lab_strain_watch_", name)},
             content = function(file){
                 res <- current()
                 shiny::req(res)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Fill a copy of the biosentinelle nextflow.config with user values.
+Fill a copy of the lab_strain_watch nextflow.config with user values.
 
 The parameters of the "Parameters that must be set by the user" section of
 nextflow.config are written as `name = "value" // comment` lines, inside or
@@ -9,7 +9,7 @@ command line, so each web or Galaxy job gets its own filled copy of the file,
 run with `nextflow -C job.config run main.nf`.
 
 Sources of values, applied in this order (a later source wins):
-    --galaxy-inputs inputs.json   the Galaxy tool form (galaxy/biosentinelle.xml), as
+    --galaxy-inputs inputs.json   the Galaxy tool form (galaxy/lab_strain_watch.xml), as
                                   written by Galaxy (<configfiles><inputs/>): sections and
                                   conditionals are nested objects, with booleans, numbers and
                                   strings. Each field named as a nextflow.config parameter
@@ -20,7 +20,7 @@ Sources of values, applied in this order (a later source wins):
                                   --galaxy-flags FIELD=NAME1,NAME2... : FIELD is a multiple
                                   select whose options are TRUE/FALSE parameters: the
                                   selected ones are set to TRUE, the other NAMEs to FALSE
-                                  (not used by the biosentinelle form).
+                                  (not used by the lab_strain_watch form).
     --values params.json          JSON object {name: value} typed by a user (e.g. the web page
                                   or the optional parameter file of the Galaxy tool).
     --set name=value              values set by the server or the Galaxy wrapper (trusted,
@@ -208,7 +208,7 @@ def positive_int_or_empty(text):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--template", required=True, help="path of the nextflow.config of biosentinelle")
+    parser.add_argument("--template", required=True, help="path of the nextflow.config of lab_strain_watch")
     parser.add_argument("--spec", action="store_true", help="print the user parameters as JSON and exit")
     parser.add_argument("--galaxy-inputs", help="JSON file of the Galaxy tool form (<configfiles><inputs/> of the tool)")
     parser.add_argument("--galaxy-ignore", action="append", default=[], metavar="NAME[,NAME...]",

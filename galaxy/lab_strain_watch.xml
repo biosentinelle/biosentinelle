@@ -1,4 +1,4 @@
-<tool id="biosentinelle" name="biosentinelle" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="22.05">
+<tool id="lab_strain_watch" name="lab_strain_watch" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="22.05">
     <description>identity check of a sequenced laboratory yeast strain: strain, mating type, markers, mtDNA, tool elements</description>
     <macros>
         <token name="@TOOL_VERSION@">1.0</token>
@@ -22,12 +22,12 @@
 
     Galaxy administrators:
         - job environment variables:
-            BS_APPTAINER_CACHE    (required) folder of the apptainer images, shared by the jobs. The images are pulled there by the first job,
+            LSW_APPTAINER_CACHE   (required) folder of the apptainer images, shared by the jobs. The images are pulled there by the first job,
                                   or beforehand with pull_images.sh of this folder if the computing nodes have no internet access
-            BS_DB_PATH            (required) strain identity database: the db folder of a clone of https://github.com/biosentinelle/biosentinelle_yeast_db
-                                  (git clone https://github.com/biosentinelle/biosentinelle_yeast_db.git, then BS_DB_PATH=<clone>/db), readable by the jobs
-            BS_APPTAINER_OPTIONS  (optional) apptainer run options, default: "no-home and bind /pasteur" (two dashes before each option).
-                                  The folders of the Galaxy datasets, of the job and of BS_DB_PATH must be visible in the containers
+            LSW_DB_PATH           (required) strain identity database: the db folder of a clone of https://github.com/lab-strain-watch/yeast_db
+                                  (git clone https://github.com/lab-strain-watch/yeast_db.git, then LSW_DB_PATH=<clone>/db), readable by the jobs
+            LSW_APPTAINER_OPTIONS (optional) apptainer run options, default: "no-home and bind /pasteur" (two dashes before each option).
+                                  The folders of the Galaxy datasets, of the job and of LSW_DB_PATH must be visible in the containers
             APPTAINER_TMPDIR      (optional) temporary folder used to build the images, default: the job working folder
         - destination with at least 12 cores and 12 GB for full speed
           (MarkerAlign process of nextflow.config, the largest one; lower values are applied by process.resourceLimits)
@@ -49,7 +49,7 @@
         <!-- dot command: nextflow renders reports/nf_dag.png with it -->
         <requirement type="package" version="@GRAPHVIZ_VERSION@">graphviz</requirement>
     </requirements>
-    <version_command>echo 'biosentinelle @TOOL_VERSION@'</version_command>
+    <version_command>echo 'lab_strain_watch @TOOL_VERSION@'</version_command>
     <command detect_errors="exit_code"><![CDATA[
 #import re
 #set $pipeline = $__tool_directory__ + '/..'
@@ -58,8 +58,8 @@ set -o pipefail &&
 ## apptainer runs the processes of the pipeline (requirement of the tool, or module loaded by the job configuration of the server)
 command -v apptainer > /dev/null || { echo 'ERROR: apptainer not found in the PATH of the Galaxy job' >&2; exit 1; } &&
 ## strain identity database of the server
-if [[ ! -d "\${BS_DB_PATH:-}" ]]; then
-    echo "ERROR: the BS_DB_PATH variable of the Galaxy job must be set by the Galaxy administrators to the db folder of a clone of https://github.com/biosentinelle/biosentinelle_yeast_db (current value: '\${BS_DB_PATH:-}')" >&2;
+if [[ ! -d "\${LSW_DB_PATH:-}" ]]; then
+    echo "ERROR: the LSW_DB_PATH variable of the Galaxy job must be set by the Galaxy administrators to the db folder of a clone of https://github.com/lab-strain-watch/yeast_db (current value: '\${LSW_DB_PATH:-}')" >&2;
     exit 1;
 fi &&
 
@@ -185,12 +185,12 @@ python3 '$__tool_directory__/fill_config.py'
     #if $data.sex.sex_source == 'own':
         --set "sex_path=\$PWD/references/sex_path"
     #end if
-    --set "db_path=\$BS_DB_PATH"
+    --set "db_path=\$LSW_DB_PATH"
     --set system_exec=local
-    --set "apptainer_local_images=\${BS_APPTAINER_CACHE:?the BS_APPTAINER_CACHE variable must be set by the Galaxy administrators (folder of the apptainer images)}"
-    --set "cluster_runOptions=\${BS_APPTAINER_OPTIONS:---no-home --bind /pasteur}"
+    --set "apptainer_local_images=\${LSW_APPTAINER_CACHE:?the LSW_APPTAINER_CACHE variable must be set by the Galaxy administrators (folder of the apptainer images)}"
+    --set "cluster_runOptions=\${LSW_APPTAINER_OPTIONS:---no-home --bind /pasteur}"
     --set "out_path_ini=\$PWD/results"
-    --set result_folder_name=biosentinelle
+    --set result_folder_name=lab_strain_watch
     --cpus "\${GALAXY_SLOTS:-1}"
     --memory-mb "\${GALAXY_MEMORY_MB:-}"
     -o nextflow.config &&
@@ -202,7 +202,7 @@ mkdir -p "\$APPTAINER_TMPDIR" &&
 nextflow -C nextflow.config run '$pipeline/main.nf' -work-dir work -ansi-log false &&
 
 ## outputs: the report.html dataset carries the whole result folder (its links work in Galaxy, its download is a zip of the folder)
-results_dir=\$(ls -d results/biosentinelle_*) &&
+results_dir=\$(ls -d results/lab_strain_watch_*) &&
 cp "\$results_dir/report.html" '$report' &&
 mkdir -p '$report.extra_files_path' &&
 cp -r "\$results_dir"/. '$report.extra_files_path' &&
@@ -314,7 +314,7 @@ echo "result folder: \$results_dir"
             </conditional>
             <param name="ylab" type="integer" value="200" min="1" label="Y-axis range of the coverage plots (ylab)" help="Maximal coverage depth shown."/>
         </section>
-        <section name="strain" title="Strain identity" expanded="false" help="Strain identity database section of nextflow.config. The strain identity database (Saccharomyces cerevisiae, 1,172 strains, biosentinelle_yeast_db) and its reference genome (panel_reference, S288C R64-1-1) are installed on the Galaxy server.">
+        <section name="strain" title="Strain identity" expanded="false" help="Strain identity database section of nextflow.config. The strain identity database (Saccharomyces cerevisiae, 1,172 strains, yeast_db) and its reference genome (panel_reference, S288C R64-1-1) are installed on the Galaxy server.">
             <param name="strain_id_on" type="boolean" checked="true" label="Strain identity (strain_id_on)" help="Strain, mating type, native marker genes, mitochondrial genome and tool elements (strain identity report). No: only the coverage plots and variant counts of report.html."/>
             <param name="kmer_max_bases" type="integer" value="0" min="0" label="Read bases scanned for the strain panel (kmer_max_bases)" help="0 for all of them. The cap is in bases, not reads, because coverage decides whether a site is called. Scanning everything costs about 90 s for 275 Mb. For a much larger genome or a very deep run, 300000000 gives about 25x on a 12 Mb genome."/>
             <param name="kmer_min_depth" type="integer" value="3" min="1" label="Minimal k-mer depth of a panel site (kmer_min_depth)" help="Number of panel k-mer observations required before a site is called. Below it, the site is reported as not covered, never as carrying the reference allele. Set to 1 for an assembly."/>
@@ -358,24 +358,24 @@ echo "result folder: \$results_dir"
             </section>
             <output name="strain_report" ftype="html">
                 <assert_contents>
-                    <has_text text="BioSentinelle strain identity"/>
+                    <has_text text="lab_strain_watch strain identity"/>
                     <has_text text="S288C_chrIII"/>
                 </assert_contents>
             </output>
             <output name="report" ftype="html">
                 <assert_contents>
-                    <has_text text="Biosentinelle Report"/>
+                    <has_text text="lab_strain_watch Report"/>
                 </assert_contents>
                 <extra_files type="file" name="tsv/strain_ranking.tsv" value="strain_ranking_columns.txt" compare="contains"/>
             </output>
             <output name="results_zip" ftype="zip">
                 <assert_contents>
-                    <has_archive_member path="biosentinelle_[0-9]+/report\.html"/>
-                    <has_archive_member path="biosentinelle_[0-9]+/strain_identity_report\.html"/>
-                    <has_archive_member path="biosentinelle_[0-9]+/tsv/site_calls\.tsv"/>
-                    <has_archive_member path="biosentinelle_[0-9]+/tsv/marker_genotype\.json"/>
-                    <has_archive_member path="biosentinelle_[0-9]+/reports/nf_dag\.png"/>
-                    <has_archive_member path="biosentinelle_[0-9]+/reports/nextflow\.config">
+                    <has_archive_member path="lab_strain_watch_[0-9]+/report\.html"/>
+                    <has_archive_member path="lab_strain_watch_[0-9]+/strain_identity_report\.html"/>
+                    <has_archive_member path="lab_strain_watch_[0-9]+/tsv/site_calls\.tsv"/>
+                    <has_archive_member path="lab_strain_watch_[0-9]+/tsv/marker_genotype\.json"/>
+                    <has_archive_member path="lab_strain_watch_[0-9]+/reports/nf_dag\.png"/>
+                    <has_archive_member path="lab_strain_watch_[0-9]+/reports/nextflow\.config">
                         <has_text text="seq_kind = &quot;assembly&quot;"/>
                         <has_text text="executor.cpus"/>
                     </has_archive_member>
@@ -417,7 +417,7 @@ echo "result folder: \$results_dir"
             </section>
             <output name="report" ftype="html">
                 <assert_contents>
-                    <has_text text="Biosentinelle Report"/>
+                    <has_text text="lab_strain_watch Report"/>
                 </assert_contents>
                 <extra_files type="file" name="reports/nextflow.config" value="test2_nextflow_config_lines.txt" compare="contains"/>
                 <extra_files type="file" name="tsv/variant_counts.tsv" value="variant_counts_columns.txt" compare="contains"/>
@@ -427,7 +427,7 @@ echo "result folder: \$results_dir"
     <help><![CDATA[
 **What it does**
 
-Runs the biosentinelle_ Nextflow pipeline on the sequences of a single sample of a laboratory yeast strain (*Saccharomyces cerevisiae*),
+Runs the lab_strain_watch_ Nextflow pipeline on the sequences of a single sample of a laboratory yeast strain (*Saccharomyces cerevisiae*),
 reads or assembly, to check its identity ("is this tube really the strain written on its label?"):
 
 - the most probable strain among the 1,172 strains of the strain identity database, or "unassigned" if none fits well enough,
@@ -441,7 +441,7 @@ The form recapitulates the nextflow.config file of the pipeline: same sections, 
 parameter in parentheses, so that the documentation of the pipeline (README and nextflow.config) applies. The strain identity
 database and the execution parameters (Local / Cluster execution section) are set by the Galaxy server.
 
-.. _biosentinelle: https://github.com/biosentinelle/biosentinelle
+.. _lab_strain_watch: https://github.com/lab-strain-watch/lab_strain_watch
 
 -----
 
@@ -477,11 +477,11 @@ The whole pipeline runs inside a single Galaxy job: from a few minutes for an as
 run, plus the waiting time of the job, and longer the first time on a server, which pulls the container images of the pipeline.
     ]]></help>
     <citations>
-        <citation type="bibtex">@misc{biosentinelle,
+        <citation type="bibtex">@misc{lab_strain_watch,
   author = {Millot, Gael A.},
-  title = {biosentinelle},
+  title = {lab_strain_watch},
   publisher = {GitHub},
-  url = {https://github.com/biosentinelle/biosentinelle}
+  url = {https://github.com/lab-strain-watch/lab_strain_watch}
 }</citation>
         <citation type="doi">10.1038/s41586-018-0030-5</citation>
     </citations>

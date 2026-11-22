@@ -1,4 +1,4 @@
-# Docker image of the biosentinelle web page (web/Dockerfile), for a gitlab.pasteur.fr mirror of the repository.
+# Docker image of the lab_strain_watch web page (web/Dockerfile), for a gitlab.pasteur.fr mirror of the repository.
 # The image is pushed into the GitLab registry of the project, from which the Pasteur hosting deploys it (as SHAMAN with hub/shaman-hosting).
 # The web page exists on the web branch only (web and web-agent), hence the branch of the rule below.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Check that the form of the Galaxy tool (galaxy/biosentinelle.xml) still recapitulates nextflow.config.
+Check that the form of the Galaxy tool (galaxy/lab_strain_watch.xml) still recapitulates nextflow.config.
 
 Errors (exit code 1):
     - a user parameter of nextflow.config (not locked) is not in the tool (form field, option value or command)
@@ -12,7 +12,7 @@ Warnings:
 Run by galaxy/local/test.sh, after any change of nextflow.config or of the tool.
 
 Usage:
-    check_tool.py --template nextflow.config --locked galaxy/locked_params.txt --tool galaxy/biosentinelle.xml
+    check_tool.py --template nextflow.config --locked galaxy/locked_params.txt --tool galaxy/lab_strain_watch.xml
 """
 
 import argparse
@@ -55,9 +55,9 @@ def same_value(a, b):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--template", required=True, help="nextflow.config of biosentinelle")
+    parser.add_argument("--template", required=True, help="nextflow.config of lab_strain_watch")
     parser.add_argument("--locked", required=True, help="parameters not in the form (galaxy/locked_params.txt)")
-    parser.add_argument("--tool", required=True, help="galaxy/biosentinelle.xml")
+    parser.add_argument("--tool", required=True, help="galaxy/lab_strain_watch.xml")
     args = parser.parse_args()
 
     with open(args.template, encoding="utf-8") as f:

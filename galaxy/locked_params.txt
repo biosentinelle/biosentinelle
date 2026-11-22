@@ -1,5 +1,5 @@
 # Parameters of nextflow.config that users of the web page and of the Galaxy tool cannot set.
-# They are set by the Galaxy wrapper (biosentinelle.xml) or keep their nextflow.config value.
+# They are set by the Galaxy wrapper (lab_strain_watch.xml) or keep their nextflow.config value.
 # Read by galaxy/fill_config.py (--locked) and by the web form (web/app/app.R), which hides them.
 
 # input files: replaced by upload fields
@@ -9,7 +9,7 @@ ref_path
 features_path
 sex_path
 
-# strain identity database: installed on the server (BS_DB_PATH variable, db folder of biosentinelle_yeast_db).
+# strain identity database: installed on the server (LSW_DB_PATH variable, db folder of yeast_db).
 # Only the yeast database is provided, and panel_reference must be the genome it was built on.
 db_path
 organism_dir

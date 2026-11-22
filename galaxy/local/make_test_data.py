@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Writes the sequence files of galaxy/test-data used by the tests of the Galaxy tool (galaxy/biosentinelle.xml),
+Writes the sequence files of galaxy/test-data used by the tests of the Galaxy tool (galaxy/lab_strain_watch.xml),
 from the reference files of the repository, so that they can be rebuilt identically (fixed random seed, gzip without date):
 
     S288C_chrIII.fasta.gz     chromosome III of the S288C reference genome (references/genome), an assembly

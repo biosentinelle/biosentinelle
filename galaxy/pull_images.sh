@@ -3,7 +3,7 @@
 ##                                                                     ##
 ##     pull_images.sh                                                  ##
 ##                                                                     ##
-##     Pre-pulls the container images of biosentinelle                 ##
+##     Pre-pulls the container images of lab_strain_watch              ##
 ##     Bioinformatics and Biostatistics Hub                            ##
 ##     Institut Pasteur Paris                                          ##
 ##                                                                     ##
@@ -11,7 +11,7 @@
 
 # Pulls the images of the container directives of nextflow.config into an apptainer image folder, with the file names
 # used by nextflow (image name with / and : replaced by -, plus .img), so that nextflow finds them and does not pull.
-# Use it to fill the BS_APPTAINER_CACHE folder of the Galaxy tool (or the apptainer_local_images / apptainer_cluster_images
+# Use it to fill the LSW_APPTAINER_CACHE folder of the Galaxy tool (or the apptainer_local_images / apptainer_cluster_images
 # folders of nextflow.config) from a computer with internet access, when the computing nodes have none.
 # Images already present are skipped.
 #

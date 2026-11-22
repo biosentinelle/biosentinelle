@@ -1,6 +1,6 @@
-# Tool Shed repository of the biosentinelle Galaxy tool (galaxy/biosentinelle.xml), with the pipeline files it runs.
+# Tool Shed repository of the lab_strain_watch Galaxy tool (galaxy/lab_strain_watch.xml), with the pipeline files it runs.
 # The Tool Shed repository keeps the layout of this git repository, so that the tool finds the pipeline in its parent folder.
-# The strain identity database is not included: it is installed on the Galaxy server (BS_DB_PATH, see galaxy/biosentinelle.xml).
+# The strain identity database is not included: it is installed on the Galaxy server (LSW_DB_PATH, see galaxy/lab_strain_watch.xml).
 # The owner is the Tool Shed account of the API key used for the upload (or the --owner option of planemo).
 #
 # Check (lint of the tool and of this repository):
@@ -8,28 +8,28 @@
 # Upload, from the root of this git repository (API key: user menu of the Tool Shed > Preferences > Manage API key):
 #   planemo shed_create --shed_target https://toolshed.pasteur.fr --shed_key <API_KEY> .                (first upload)
 #   planemo shed_update --shed_target https://toolshed.pasteur.fr --shed_key <API_KEY> --check_diff .   (next versions)
-name: biosentinelle
-description: Identity check of a sequenced laboratory yeast strain with the biosentinelle Nextflow pipeline (strain, mating type, marker genes, mtDNA, tool elements)
+name: lab_strain_watch
+description: Identity check of a sequenced laboratory yeast strain with the lab_strain_watch Nextflow pipeline (strain, mating type, marker genes, mtDNA, tool elements)
 long_description: |
-  Galaxy tool running the whole biosentinelle Nextflow pipeline in a single Galaxy job, on the sequences of a single
+  Galaxy tool running the whole lab_strain_watch Nextflow pipeline in a single Galaxy job, on the sequences of a single
   sample of a laboratory Saccharomyces cerevisiae strain (reads or assembly): most probable strain among the 1,172
   strains of the strain identity database (or unassigned), mating type, genotype of the native marker genes, status
   of the mitochondrial genome, laboratory tool elements present, coverage plots and variant counts, in HTML reports.
   The form of the tool recapitulates the nextflow.config file of the pipeline.
 
-  Requirements on the Galaxy server: the BS_APPTAINER_CACHE job environment variable (folder of the apptainer images
+  Requirements on the Galaxy server: the LSW_APPTAINER_CACHE job environment variable (folder of the apptainer images
   of the pipeline, pulled by the first job, or beforehand with galaxy/pull_images.sh if the computing nodes have no
-  internet access), the BS_DB_PATH job environment variable (db folder of a clone of
-  https://github.com/biosentinelle/biosentinelle_yeast_db) and the HTML reports allowed in the sanitization allowlist.
-  See the comment at the top of galaxy/biosentinelle.xml.
-homepage_url: https://github.com/biosentinelle/biosentinelle
-remote_repository_url: https://github.com/biosentinelle/biosentinelle
+  internet access), the LSW_DB_PATH job environment variable (db folder of a clone of
+  https://github.com/lab-strain-watch/yeast_db) and the HTML reports allowed in the sanitization allowlist.
+  See the comment at the top of galaxy/lab_strain_watch.xml.
+homepage_url: https://github.com/lab-strain-watch/lab_strain_watch
+remote_repository_url: https://github.com/lab-strain-watch/lab_strain_watch
 type: unrestricted
 categories:
   - Sequence Analysis
   - Variant Analysis
 include:
-  - galaxy/biosentinelle.xml
+  - galaxy/lab_strain_watch.xml
   - galaxy/fill_config.py
   - galaxy/locked_params.txt
   - galaxy/pull_images.sh

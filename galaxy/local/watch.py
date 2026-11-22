@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Progress of the nextflow processes of the biosentinelle jobs run by the local Galaxy (serve.sh, test.sh),
+Progress of the nextflow processes of the lab_strain_watch jobs run by the local Galaxy (serve.sh, test.sh),
 in a terminal, like the console of `nextflow run main.nf`.
 
 The Galaxy tool runs nextflow with -ansi-log false, so that its standard output stays readable in the Galaxy page
@@ -21,8 +21,8 @@ Usage, in a second terminal, from any folder (Ctrl+C to stop):
     python3 galaxy/local/watch.py            # last started job, then the next ones
     python3 galaxy/local/watch.py <folder>   # only the job of this Galaxy job folder (or of its working subfolder)
     python3 galaxy/local/watch.py --once     # prints the table once
-Settings: BS_WORK_DIR and BS_TMPDIR, as for serve.sh and test.sh (see settings.sh).
-The Galaxy job folders are BS_TMPDIR/tmp*/job_working_directory/*/<job id>, with the nextflow launch folder in working/.
+Settings: LSW_WORK_DIR and LSW_TMPDIR, as for serve.sh and test.sh (see settings.sh).
+The Galaxy job folders are LSW_TMPDIR/tmp*/job_working_directory/*/<job id>, with the nextflow launch folder in working/.
 """
 
 import argparse
@@ -270,8 +270,8 @@ def main():
     parser.add_argument("--once", action="store_true", help="print the progress once, then stop")
     args = parser.parse_args()
 
-    work_dir = os.environ.get("BS_WORK_DIR") or os.path.join(os.path.expanduser("~"), ".planemo", "biosentinelle")
-    tmp_dir = os.environ.get("BS_TMPDIR") or os.path.join(work_dir, "tmp")
+    work_dir = os.environ.get("LSW_WORK_DIR") or os.path.join(os.path.expanduser("~"), ".planemo", "lab_strain_watch")
+    tmp_dir = os.environ.get("LSW_TMPDIR") or os.path.join(work_dir, "tmp")
     pattern = os.path.join(tmp_dir, "tmp*", "job_working_directory", "*", "*", "working", ".nextflow.log")
     pinned = None
     if args.folder:
@@ -297,7 +297,7 @@ def main():
                     followed.add(run.log)
             columns, rows = shutil.get_terminal_size((120, 50))
             if run is None:
-                title = "biosentinelle jobs of the local Galaxy: progress of the nextflow processes"
+                title = "lab_strain_watch jobs of the local Galaxy: progress of the nextflow processes"
                 status = f"No running job in {os.path.dirname(os.path.dirname(pattern))}. Waiting for a job (Ctrl+C to stop)"
             else:
                 launch_dir = os.path.dirname(run.log)

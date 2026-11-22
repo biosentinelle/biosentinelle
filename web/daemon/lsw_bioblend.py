@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Submission daemon of the biosentinelle web page (same principle as shaman_bioblend.py of SHAMAN).
+Submission daemon of the lab_strain_watch web page (same principle as shaman_bioblend.py of SHAMAN).
 
 The web page (web/app/app.R) writes, for each submission with key KEY:
     <work_dir>/jobs/KEY/sample/*          sequence files of the sample (absent with a run accession)
@@ -10,27 +10,27 @@ The web page (web/app/app.R) writes, for each submission with key KEY:
 This daemon polls todo/, moves each task to doing/, and in a thread:
     1) creates a Galaxy history and uploads the files, under their names (the mates are paired by their _1/_2 or
        _R1/_R2 suffix),
-    2) runs the biosentinelle Galaxy tool (galaxy/biosentinelle.xml): the files (or the run accession) are its sample
+    2) runs the lab_strain_watch Galaxy tool (galaxy/lab_strain_watch.xml): the files (or the run accession) are its sample
        input and params.json its parameter file (whose values replace those of the tool form, whose defaults are those
        of nextflow.config),
     3) waits for the job, downloads the results into jobs/KEY/ (results.zip, the result folder, and
        strain_identity_report.html and report.html, extracted from it) and moves the task to done/ (or error/),
     4) sends an e-mail if an address was given.
 The task file always holds the current "state" and "message", read by the web page for the "Check my job" tab.
-Jobs older than BS_RETENTION_DAYS are removed, locally and in Galaxy.
+Jobs older than LSW_RETENTION_DAYS are removed, locally and in Galaxy.
 
 Configuration (environment variables, never in the code):
     GALAXY_API_KEY      required, key of the Galaxy service account
     GALAXY_URL          default https://galaxy.pasteur.fr
-    BS_TOOL_ID          default biosentinelle (full Tool Shed id if installed from a Tool Shed)
-    BS_MAX_JOBS         max number of jobs running at the same time in Galaxy, default 5
-    BS_RETENTION_DAYS   default 15
-    BS_PUBLIC_URL       URL of the web page, written in the e-mails
-    BS_SMTP_HOST        default smtp.pasteur.fr ("" for no e-mail)
-    BS_MAIL_FROM        default biosentinelle@pasteur.fr
+    LSW_TOOL_ID         default lab_strain_watch (full Tool Shed id if installed from a Tool Shed)
+    LSW_MAX_JOBS        max number of jobs running at the same time in Galaxy, default 5
+    LSW_RETENTION_DAYS  default 15
+    LSW_PUBLIC_URL      URL of the web page, written in the e-mails
+    LSW_SMTP_HOST       default smtp.pasteur.fr ("" for no e-mail)
+    LSW_MAIL_FROM       default lab_strain_watch@pasteur.fr
 
 Usage:
-    bs_bioblend.py -w <work_dir> [--once]
+    lsw_bioblend.py -w <work_dir> [--once]
 """
 
 import argparse
@@ -59,7 +59,7 @@ RETRY_SECONDS = 300  # when Galaxy is unreachable (e.g., maintenance)
 UPLOAD_MAX_WAIT = 6 * 3600  # seconds: sequencing runs can be large
 REPORTS = ("strain_identity_report.html", "report.html")  # extracted from the result zip for the web page
 
-log = logging.getLogger("bs_bioblend")
+log = logging.getLogger("lsw_bioblend")
 
 
 class Config:
@@ -67,14 +67,14 @@ class Config:
         self.work_dir = os.path.abspath(work_dir)
         self.galaxy_url = os.environ.get("GALAXY_URL", "https://galaxy.pasteur.fr")
         self.galaxy_key = os.environ.get("GALAXY_API_KEY", "")
-        self.tool_id = os.environ.get("BS_TOOL_ID", "biosentinelle")
-        self.max_jobs = int(os.environ.get("BS_MAX_JOBS", "5"))
-        self.retention_days = int(os.environ.get("BS_RETENTION_DAYS", "15"))
-        self.public_url = os.environ.get("BS_PUBLIC_URL", "")
-        self.smtp_host = os.environ.get("BS_SMTP_HOST", "smtp.pasteur.fr")
-        self.mail_from = os.environ.get("BS_MAIL_FROM", "biosentinelle@pasteur.fr")
+        self.tool_id = os.environ.get("LSW_TOOL_ID", "lab_strain_watch")
+        self.max_jobs = int(os.environ.get("LSW_MAX_JOBS", "5"))
+        self.retention_days = int(os.environ.get("LSW_RETENTION_DAYS", "15"))
+        self.public_url = os.environ.get("LSW_PUBLIC_URL", "")
+        self.smtp_host = os.environ.get("LSW_SMTP_HOST", "smtp.pasteur.fr")
+        self.mail_from = os.environ.get("LSW_MAIL_FROM", "lab_strain_watch@pasteur.fr")
         if not self.galaxy_key:
-            sys.exit("bs_bioblend.py: ERROR: the GALAXY_API_KEY environment variable is not set")
+            sys.exit("lsw_bioblend.py: ERROR: the GALAXY_API_KEY environment variable is not set")
 
     def path(self, *parts):
         return os.path.join(self.work_dir, *parts)
@@ -154,13 +154,13 @@ class Job(threading.Thread):
 
     def submit(self, gi):
         if not self.task.get("history_id"):
-            history = gi.histories.create_history(name="biosentinelle_" + self.key)
+            history = gi.histories.create_history(name="lab_strain_watch_" + self.key)
             self.task["history_id"] = history["id"]
             self.update("uploading", "Uploading the files to Galaxy.")
         hid = self.task["history_id"]
         accession = self.task.get("accession", "")
         sample_dir = os.path.join(self.job_dir, "sample")
-        # inputs of the tool form (sections and conditionals of galaxy/biosentinelle.xml); the other fields keep
+        # inputs of the tool form (sections and conditionals of galaxy/lab_strain_watch.xml); the other fields keep
         # their default (that of nextflow.config) and the parameter file replaces them with the values of the web page
         if accession:
             if not ACCESSION_RE.match(accession):
@@ -206,7 +206,7 @@ class Job(threading.Thread):
         self.update("downloading", "Downloading the results.")
         zip_path = os.path.join(self.job_dir, "results.zip")
         gi.datasets.download_dataset(self.task["outputs"]["results_zip"], file_path=zip_path, use_default_filename=False)
-        # the zip holds the result folder biosentinelle_<time>/, with the two HTML reports at its root
+        # the zip holds the result folder lab_strain_watch_<time>/, with the two HTML reports at its root
         with zipfile.ZipFile(zip_path) as z:
             for report in REPORTS:
                 members = [n for n in z.namelist() if re.fullmatch(r"[^/]+/" + re.escape(report), n)]
@@ -220,7 +220,7 @@ class Job(threading.Thread):
         if not mail or not self.cfg.smtp_host:
             return
         msg = EmailMessage()
-        msg["Subject"] = "biosentinelle job {0}: {1}".format(self.key, state)
+        msg["Subject"] = "lab_strain_watch job {0}: {1}".format(self.key, state)
         msg["From"] = self.cfg.mail_from
         msg["To"] = mail
         text = "{0}\n\nYour job key is: {1}\n".format(message, self.key)
