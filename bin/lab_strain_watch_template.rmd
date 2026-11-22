@@ -1,5 +1,5 @@
 ---
-title: 'Biosentinelle Report'
+title: 'lab_strain_watch Report'
 date: ''
 output:
   html_document:
@@ -138,7 +138,7 @@ fastq_name, '
 ```
 
 
-Description of the folders and files can be found [here](https://github.com/biosentinelle/biosentinelle/tree/main#output)
+Description of the folders and files can be found [here](https://github.com/lab-strain-watch/lab_strain_watch/tree/main#output)
 <br>
 The <i>[nextflow.config](./reports/nextflow.config.html)</i> file mentioned here is the one gathering all the parameters set for the present analysis. A copy is saved in the [reports](./reports) folder.
 <br><br>

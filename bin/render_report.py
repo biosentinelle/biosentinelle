@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-render_report.py -- BioSentinelle strain-identification HTML report renderer.
+render_report.py -- lab_strain_watch strain-identification HTML report renderer.
 
 Reads one results JSON file and writes one self-contained interactive HTML
 report. Standard library only (json, argparse, html, datetime); no templating
@@ -3069,7 +3069,7 @@ def tree_payload(d, newick_text, strain_rows):
         "S288C family; the strains taken from genome assemblies have none. Two strains at "
         "distance 0 are not separated by any panel site (in the yeast panel, BY4741 and BY4742).",
         "The tree is the panels/panel_tree.nwk file of the strain identity database "
-        "(biosentinelle_yeast_db), made by its bin/build_panel_tree.py and described in its "
+        "(yeast_db), made by its bin/build_panel_tree.py and described in its "
         "db/README.md; Download Newick saves it, for FigTree or iTOL.",
     ]
     if missing:
@@ -3188,7 +3188,7 @@ def render(d, title, tree=None):
         sections["markers"],
         sections["mito"],
         sections["tools"],
-        '<footer class="page">BioSentinelle report &mdash; rendered {} by '
+        '<footer class="page">lab_strain_watch report &mdash; rendered {} by '
         "<code>render_report.py</code>. Self-contained: no network access required."
         "</footer>".format(esc(now)),
         "</main>",
@@ -3215,10 +3215,10 @@ def render(d, title, tree=None):
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Render a self-contained interactive HTML report from a "
-                    "BioSentinelle strain-identification results JSON file.")
+                    "lab_strain_watch strain-identification results JSON file.")
     ap.add_argument("--json", required=True, metavar="FILE", help="input results JSON file")
     ap.add_argument("--out", required=True, metavar="FILE", help="output HTML file")
-    ap.add_argument("--title", default="BioSentinelle report", help="report title")
+    ap.add_argument("--title", default="lab_strain_watch report", help="report title")
     ap.add_argument("--tree", metavar="FILE",
                     help="tree of the panel strains, Newick (panels/panel_tree.nwk of the "
                          "database): opened in a page of its own from the report")

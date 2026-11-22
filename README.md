@@ -1,4 +1,6 @@
-<img src="logo.png" align="center" width="300" alt="Biosentinelle Logo">
+<img src="logo.png" align="center" width="160" alt="lab_strain_watch logo">
+
+# lab_strain_watch
 
 | Usage | Requirement |
 | :--- | :--- |
@@ -28,7 +30,7 @@
 <br><br>
 ## AIM
 
-Check the identity of a sequenced laboratory strain, i.e., answer "is this tube really the strain written on its label?". From the sequences of a single sample (reads or assembly), biosentinelle reports:
+Check the identity of a sequenced laboratory strain, i.e., answer "is this tube really the strain written on its label?". From the sequences of a single sample (reads or assembly), lab_strain_watch reports:
 
 - the most probable strain among the strains of a database (1,172 *Saccharomyces cerevisiae* strains for the yeast database), or "unassigned" if none fits well enough,
 - the mating type (MATa, MATalpha or MATa/alpha),
@@ -40,10 +42,10 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 <br><br>
 ## WARNINGS
 
-- Currently dedicated to *Saccharomyces cerevisiae*: only the yeast database (`db/yeast` of [biosentinelle_yeast_db](https://github.com/biosentinelle/biosentinelle_yeast_db)) is provided. Another organism needs its own database, built with the *build_db.nf* file of biosentinelle_yeast_db (see [STRAIN IDENTITY DATABASE](#strain-identity-database)).
+- Currently dedicated to *Saccharomyces cerevisiae*: only the yeast database (`db/yeast` of [yeast_db](https://github.com/lab-strain-watch/yeast_db)) is provided. Another organism needs its own database, built with the *build_db.nf* file of yeast_db (see [STRAIN IDENTITY DATABASE](#strain-identity-database)).
 - The strain probability is a posterior over the strains of the database, which are assumed to be exhaustive. It is not the probability that the sample *is* that strain. The concordance (fraction of the expected alleles found) is the measure of fit. See the [OUTPUT](#output) section.
 - A single sample per run. All the files of the `fastq_path` folder are analyzed together as one sample.
-- Laboratory stocks drift: a few mismatching sites between a sample and its documented strain are expected (see *db/README.md* of biosentinelle_yeast_db).
+- Laboratory stocks drift: a few mismatching sites between a sample and its documented strain are expected (see *db/README.md* of yeast_db).
 
 <br><br>
 ## CONTENT
@@ -66,7 +68,7 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 <br><br>
 ## HOW IT WORKS
 
-No assembly is made. The sample sequences are compared with a strain identity database (*db/\<organism\>* of [biosentinelle_yeast_db](https://github.com/biosentinelle/biosentinelle_yeast_db), built once by its *build_db.nf* from a reference genome and the sequences of 1,172 *S. cerevisiae* strains), through three independent kinds of evidence:
+No assembly is made. The sample sequences are compared with a strain identity database (*db/\<organism\>* of [yeast_db](https://github.com/lab-strain-watch/yeast_db), built once by its *build_db.nf* from a reference genome and the sequences of 1,172 *S. cerevisiae* strains), through three independent kinds of evidence:
 
 | Evidence | How | Reference genome used at run time? |
 | :--- | :--- | :--- |
@@ -91,7 +93,7 @@ In addition, the historical part of the pipeline aligns the reads (bowtie2) agai
 | `ref_path` | Genome(s) used for the variant counts (*variant_counts.tsv*). A file or a folder of files, or a .zip archive. A single multi-sequence FASTA file is split into one file per sequence. |
 | `features_path` | Feature sequences (cassettes, genes, ...) used for the coverage plots and the *coverage_feat.tsv* file. Same format as `ref_path`. |
 | `sex_path` | Mating type sequences (MATa, MATalpha) used for the coverage plots and the *coverage_sex.tsv* file. Same format as `ref_path`. |
-| `db_path`, `organism_dir` | Strain identity database used: *\<db_path\>/\<organism_dir\>* (*../biosentinelle_yeast_db/db/yeast* by default, i.e., biosentinelle_yeast_db cloned next to biosentinelle). |
+| `db_path`, `organism_dir` | Strain identity database used: *\<db_path\>/\<organism_dir\>* (*../yeast_db/db/yeast* by default, i.e., yeast_db cloned next to lab_strain_watch). |
 | `panel_reference` | Reference genome of the database (S288C R64-1-1 for yeast), used to genotype the native marker genes. |
 
 See the *nextflow.config* file for the other parameters (`strain_id_on`, `kmer_min_depth`, `marker_min_depth`, `strain_error_rate`, `min_concordance`, `kmer_max_bases`, `shred_max_length`, `shred_length`, `ylab`, ...), each one described there.
@@ -117,7 +119,7 @@ The reference, feature and mating type sequences (`ref_path`, `features_path`, `
 <br><br>
 ## STRAIN IDENTITY DATABASE
 
-The database is in the separate repository [biosentinelle_yeast_db](https://github.com/biosentinelle/biosentinelle_yeast_db), which also holds *build_db.nf*, the workflow that builds it. The yeast database is provided in its *db/yeast* folder and is only read by *main.nf*: nothing has to be built to analyze a sample. On galaxy.pasteur.fr, it is installed on the server by the Galaxy administrators (see [galaxy/README.md](galaxy/README.md)). It contains:
+The database is in the separate repository [yeast_db](https://github.com/lab-strain-watch/yeast_db), which also holds *build_db.nf*, the workflow that builds it. The yeast database is provided in its *db/yeast* folder and is only read by *main.nf*: nothing has to be built to analyze a sample. On galaxy.pasteur.fr, it is installed on the server by the Galaxy administrators (see [galaxy/README.md](galaxy/README.md)). It contains:
 
 | Folder | Content |
 | :--- | :--- |
@@ -128,7 +130,7 @@ The database is in the separate repository [biosentinelle_yeast_db](https://gith
 | *markers* | Native marker gene loci (*marker_loci.tsv*, *.bed*, *.fasta*), allele catalogue (*marker_alleles.tsv*), documented genotypes of laboratory strains (*documented_genotypes.tsv*) and repeats masked in the flanks (*marker_repeats.tsv*). |
 | *tools* | Laboratory tool element sequences (*tools.fasta*) and their description (*tools.tsv*). |
 
-The way each part was made, the sources, the choice of k and the validation of the yeast panel are described in the *db/README.md* file of biosentinelle_yeast_db, together with the commands to rebuild them. Warning: `panel_reference` must be the reference genome the database was built on.
+The way each part was made, the sources, the choice of k and the validation of the yeast panel are described in the *db/README.md* file of yeast_db, together with the commands to rebuild them. Warning: `panel_reference` must be the reference genome the database was built on.
 
 <br><br>
 ## HOW TO RUN
@@ -136,7 +138,7 @@ The way each part was made, the sources, the choice of k and the validation of t
 ### 1. Connection
 
 - Open [https://galaxy.pasteur.fr](https://galaxy.pasteur.fr) in a web browser and log in with your Institut Pasteur account.
-- Type *biosentinelle* in the search field of the *Tools* panel (left), then click on the tool: its form opens in the central panel.
+- Type *lab_strain_watch* in the search field of the *Tools* panel (left), then click on the tool: its form opens in the central panel.
 
 <br><br>
 ### 2. Parameters
@@ -163,7 +165,7 @@ The way each part was made, the sources, the choice of k and the validation of t
 - The datasets of the run appear at the top of the history: grey (queued), yellow (running), green (finished) or red (error).
 - From a few minutes for an assembly to about an hour for a whole-genome sequencing run, plus the waiting time of the job on the Maestro cluster.
 - Click on a dataset, then on *Dataset Details* (i icon): parameters of the run and nextflow messages (*Tool Standard Output* and *Tool Standard Error*).
-- Red dataset: click on it to read the error message. *Error* icon (bug): report to the Galaxy administrators (or post an issue [here](https://github.com/biosentinelle/biosentinelle/issues)). *Run Job Again* icon: form with the same parameters, to rerun.
+- Red dataset: click on it to read the error message. *Error* icon (bug): report to the Galaxy administrators (or post an issue [here](https://github.com/lab-strain-watch/lab_strain_watch/issues)). *Run Job Again* icon: form with the same parameters, to rerun.
 - Warnings of the run at the end of *report.html* (e.g., NO SNP PANEL or NO NATIVE MARKER DATABASE: database of the server incomplete, to report to the Galaxy administrators).
 
 <br><br>
@@ -179,13 +181,13 @@ The way each part was made, the sources, the choice of k and the validation of t
 <br><br>
 ## OUTPUT
 
-By default, all the results are returned in a *results* folder where the *main.nf* executed file is located (created if does not exist). This can be changed using the `out_path_ini` parameter of the *nextflow.config* file. By default, each execution produces a new folder named *biosentinelle_\<ID\>*, created inside the *results* folder and containing all the outputs of the execution. The name of the folder can be changed using the `result_folder_name` parameter of the *nextflow.config* file. The new name file will be followed by an \<ID\> (number of seconds since 1970-01-01) in all cases.
+By default, all the results are returned in a *results* folder where the *main.nf* executed file is located (created if does not exist). This can be changed using the `out_path_ini` parameter of the *nextflow.config* file. By default, each execution produces a new folder named *lab_strain_watch_\<ID\>*, created inside the *results* folder and containing all the outputs of the execution. The name of the folder can be changed using the `result_folder_name` parameter of the *nextflow.config* file. The new name file will be followed by an \<ID\> (number of seconds since 1970-01-01) in all cases.
 <br><br>
 Files of the strain identity branch (*strain_identity_report.html*, *site_calls.tsv*, *strain_ranking.tsv*, *strain_id.json*, *tool_coverage.tsv*, *marker_genotype.tsv*, *marker_genotype.json*) are absent if the `strain_id_on` parameter of the *nextflow.config* file is "FALSE", or if the strain panel is missing from the database. The *marker_genotype.\** files are also absent if the native marker database or the `panel_reference` file is missing.
 <br><br>
 <table>
     <tr>
-        <th align="left">biosentinelle_&lt;ID&gt; folders and files</th>
+        <th align="left">lab_strain_watch_&lt;ID&gt; folders and files</th>
         <th align="left">Description</th>
     </tr>
     <tr>
@@ -193,7 +195,7 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
         <td>
             Main result. HTML report of the strain identity of the sample, made from the <i>tsv/strain_id.json</i> file, with a table of contents of its sections on the left side:
             <ul>
-                <li><b>Header</b>: organism, reference genome, date, numbers of panel sites and strains. The <b>tree</b> button next to <i>Strains in the panel</i> opens, in a new page, the tree of all the panel strains (BIONJ over the panel sites, <i>panels/panel_tree.nwk</i> of the database), with the strain called highlighted and the 10 best ranked strains marked: rectangular or circular layout, zoom, part of the tree around a strain, search, details and links of each strain, Newick and SVG download. Its branch lengths are distances over the panel sites, not genome-wide divergences (see <i>db/README.md</i> of biosentinelle_yeast_db). The button is absent, with a warning, if the database has no tree.</li>
+                <li><b>Header</b>: organism, reference genome, date, numbers of panel sites and strains. The <b>tree</b> button next to <i>Strains in the panel</i> opens, in a new page, the tree of all the panel strains (BIONJ over the panel sites, <i>panels/panel_tree.nwk</i> of the database), with the strain called highlighted and the 10 best ranked strains marked: rectangular or circular layout, zoom, part of the tree around a strain, search, details and links of each strain, Newick and SVG download. Its branch lengths are distances over the panel sites, not genome-wide divergences (see <i>db/README.md</i> of yeast_db). The button is absent, with a warning, if the database has no tree.</li>
                 <li><b>Decision</b>: bullet points only: the strain called, then whether the mating type, each native marker and each foreign tool element present agree or disagree with the documented genotype of that strain; or an <b>UNASSIGNED</b> banner when no strain of the panel matches the sample well enough (with the reason). The strain is called in two steps, shown in the <b>Decided by</b> point. First the SNP panel: the first strain of the ranking is called when no other strain is close to it. Second, when other strains are too close to the first one for the SNPs alone (a log-likelihood within ln 1000 of the best, or fewer than 200 separating sites, i.e., called sites where the genotypes of the two strains are known and differ, whatever allele the sample carries there: close relatives such as BY4741 and BY4742, which differ by their mating type and by whole-gene deletions, met15D0 against lys2D0, rather than by SNPs), each of them is compared with the mating type and the native markers measured in the sample, from its documented genotype or, without one, from the marker alleles of its assembly. A strain contradicted at any point is ruled out; among the others, the one agreeing at the most points is called, the SNP ranking breaking the ties. Each of these strains is listed as called, ruled out (with what contradicts it) or not excluded, with its SNP rank, its PP, its log-likelihood below the best, its separating sites and the number of them where the sample carries the allele of the best strain (and its own): the strain called first, the others in a drop-down list under it. A strain close by its few separating sites can have a PP of 0 and rank below the 10 strains shown in <b>Strain ranking</b>, even when the sample carries the allele of the best strain at all of them: a lead built on so few sites is not trusted alone, as panel errors, a misassembled region or the drift of a laboratory stock can make it. When every one of them is contradicted, or none can be compared, the first of the SNP ranking is kept and a warning says so.</li>
                 <li><b>Warnings</b>: every point that limits the call (low coverage, many heterozygous sites, native markers differing from those documented for the best strain, tool elements native to the host genome, ...).</li>
                 <li><b>Strain ranking</b>: the top strains of the ranking (see <i>strain_ranking.tsv</i> below), with, for each, the detail of the panel sites (every mismatching and uncovered site, the matching sites being thinned).</li>
@@ -385,9 +387,9 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
 ## VERSIONS
 
 
-The different releases are [here](https://github.com/biosentinelle/biosentinelle/releases).
+The different releases are [here](https://github.com/lab-strain-watch/lab_strain_watch/releases).
 
-The different tagged versions are [here](https://github.com/biosentinelle/biosentinelle/tags).
+The different tagged versions are [here](https://github.com/lab-strain-watch/lab_strain_watch/tags).
 
 
 <br><br>
