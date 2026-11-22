@@ -3,7 +3,7 @@ workflow CheckVariables {
 //////// Checks
 //// check of the bin folder
 tested_files_bin = [
-    "biosentinelle_template.rmd", 
+    "lab_strain_watch_template.rmd", 
     ]
 for(i1 in tested_files_bin){
     if( ! (file("${projectDir}/bin/${i1}").exists()) ){

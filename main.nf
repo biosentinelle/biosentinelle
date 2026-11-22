@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 /*
 #########################################################################
 ##                                                                     ##
-##     main.nf of biosentinelle                                        ##
+##     main.nf of lab_strain_watch                                     ##
 ##                                                                     ##
 ##     Institut Pasteur Paris                                          ##
 ##                                                                     ##
@@ -483,7 +483,7 @@ workflow {
         }
 
         if( ! panel_sites.exists() || ! panel_kmers.exists() || ! panel_strains.exists()){
-            warn2 = "\n\nWARNING:\nNO SNP PANEL IN ${db_dir}/panels.\nSTRAIN RANKING IS SKIPPED. CHECK db_path (A CLONE OF biosentinelle_yeast_db) OR RUN ITS build_db.nf FIRST.\n"
+            warn2 = "\n\nWARNING:\nNO SNP PANEL IN ${db_dir}/panels.\nSTRAIN RANKING IS SKIPPED. CHECK db_path (A CLONE OF yeast_db) OR RUN ITS build_db.nf FIRST.\n"
             print(warn2)
             warning_ch = warning_ch.mix(Channel.value(warn2))
         }else{
@@ -596,7 +596,7 @@ workflow {
             if(panel_tree_file.exists()){
                 panel_tree = Channel.value(panel_tree_file)
             }else{
-                warn5 = "\n\nWARNING:\nNO ${db_dir}/panels/panel_tree.nwk.\nTHE STRAIN IDENTITY REPORT HAS NO TREE OF THE PANEL STRAINS. UPDATE THE CLONE OF biosentinelle_yeast_db.\n"
+                warn5 = "\n\nWARNING:\nNO ${db_dir}/panels/panel_tree.nwk.\nTHE STRAIN IDENTITY REPORT HAS NO TREE OF THE PANEL STRAINS. UPDATE THE CLONE OF yeast_db.\n"
                 print(warn5)
                 warning_ch = warning_ch.mix(Channel.value(warn5))
                 panel_tree = Channel.of('').collectFile(name: 'NO_TREE').first()
