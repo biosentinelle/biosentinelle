@@ -90,8 +90,23 @@ def run_case(case, args):
     ranking = list(csv.DictReader(open(os.path.join(work, "ranking.tsv")), delimiter="\t"))
     rank = next((int(r["rank"]) for r in ranking if r["strain_id"] == name), None)
     best = report["strains"][0]
-    tied = [row["strain"] for row in report["resolution"]["tied"]]
-    return {"tied": tied, "in_tied": name in tied,"expected": name, "rank_of_expected": rank, "best": best["strain_id"],
+    resolution = report["resolution"]
+    # resolution["candidates"] (resolve() in score_strains.py) lists the SNP best
+    # first, then every strain too close to it for the SNPs alone (log likelihood
+    # within tie_log_ratio of the best, or fewer than min_separating_sites called
+    # sites separating them), and is empty when no strain is that close. The call
+    # is made among these candidates by the mating type and the native markers;
+    # this script gives score_strains.py neither, so the call is the SNP best
+    # (method snp).
+    # tied: these close strains, the SNP best excluded, whatever their outcome
+    # (called, ruled out, not excluded). in_tied: the expected strain is one of
+    # them, too close to the SNP best for the SNPs alone, however far down the
+    # ranking it is.
+    tied = [row["strain"] for row in resolution["candidates"]
+            if row["strain"] != best["strain_id"]]
+    return {"expected": name, "rank_of_expected": rank, "best": best["strain_id"],
+            "call": report["call"], "method": resolution["method"],
+            "tied": tied, "in_tied": name in tied,
             "concordance": best["concordance"],
             "separating_vs_next": best.get("discriminating_sites_vs_next"),
             "runner_up": best.get("runner_up"),
@@ -116,18 +131,20 @@ def main():
     cases = list(csv.DictReader(open(args.cases), delimiter="\t"))
     with ThreadPoolExecutor(args.threads) as pool:
         results = list(pool.map(lambda c: run_case(c, args), cases))
-    print("expected\trank\tbest\tconcordance\tseparating_vs_next\trunner_up\tuncovered"
-          "\tunassigned\ttied_with_best")
-    correct = within = 0
+    print("expected\trank\tbest\tcall\tmethod\tconcordance\tseparating_vs_next\trunner_up"
+          "\tuncovered\tunassigned\ttied_with_best")
+    correct = within = called = 0
     for r in results:
         correct += r["rank_of_expected"] == 1
         within += r["rank_of_expected"] == 1 or r["in_tied"]
-        print("%s\t%s\t%s\t%.4f\t%s\t%s\t%.3f\t%s\t%s" % (
-            r["expected"], r["rank_of_expected"], r["best"], r["concordance"],
-            r["separating_vs_next"], r["runner_up"], r["uncovered"], r["unassigned"],
-            ",".join(r["tied"])))
-    print("\n%d of %d ranked first; %d of %d first or among the strains reported as not "
-          "separable from the first" % (correct, len(results), within, len(results)))
+        called += r["call"] == r["expected"]
+        print("%s\t%s\t%s\t%s\t%s\t%.4f\t%s\t%s\t%.3f\t%s\t%s" % (
+            r["expected"], r["rank_of_expected"], r["best"], r["call"], r["method"],
+            r["concordance"], r["separating_vs_next"], r["runner_up"], r["uncovered"],
+            r["unassigned"], ",".join(r["tied"])))
+    print("\n%d of %d ranked first by the SNP panel; %d of %d first or among the strains "
+          "too close to the first for the SNPs alone; %d of %d called"
+          % (correct, len(results), within, len(results), called, len(results)))
     return 0 if correct == len(results) else 1
 
 
