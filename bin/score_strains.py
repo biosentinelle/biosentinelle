@@ -61,6 +61,7 @@ import gzip
 import json
 import math
 import os
+import re
 import sys
 
 
@@ -175,6 +176,27 @@ def carrying(panel, obs, sites, strain):
     return popcount(sites & ((obs["A"] & panel.alt[strain]) | (obs["R"] & panel.ref(strain))))
 
 
+def public_source(info):
+    """The source of a panel strain as written to the JSON the report is
+    made from: the read runs of a strain sequenced from reads, the code of an
+    isolate of the 1011 matrix, and only the collection of a strain taken
+    from a genome assembly, whose source in the panel is the path of the
+    assembly file on the machine that built the database (as strain_source()
+    of render_report.py does for the tree page)."""
+    kind, source = info.get("source_type") or "", info.get("source") or ""
+    if kind == "reads":
+        return ",".join(run for run in source.split(",") if re.match(r"^[SED]RR\d+$", run))
+    if kind == "matrix":
+        return source if re.match(r"^[A-Za-z0-9_]+$", source) else ""
+    if kind == "assembly":
+        low = source.lower()
+        for key, collection in (("scrapdb", "ScRAPdb"), ("sgd", "SGD")):
+            if key in low:
+                return "genome assembly, " + collection
+        return "genome assembly"
+    return ""
+
+
 def score_strains(panel, calls, error_rate, max_detail_sites, detail_top):
     """Return one result block per strain, ranked; the top ones with site detail."""
     log_match = math.log(1.0 - error_rate)
@@ -251,7 +273,7 @@ def score_strains(panel, calls, error_rate, max_detail_sites, detail_top):
             "display_name": info.get("display_name", info["strain"]),
             "clade": info.get("clade", ""), "source_type": info.get("source_type", ""),
             "origin": info.get("origin", ""), "ploidy": info.get("ploidy", ""),
-            "zygosity": info.get("zygosity", ""), "source": info.get("source", ""),
+            "zygosity": info.get("zygosity", ""), "source": public_source(info),
             "log_likelihood": (matching * log_match + (mismatching - partial) * log_mismatch
                                + partial * log_partial + unknown_term),
             "concordance": round(matching / float(sites_called), 4) if sites_called else 0.0,
