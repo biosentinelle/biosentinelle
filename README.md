@@ -292,7 +292,7 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
                 <li>unassigned (true / false) and unassigned_reason.</li>
                 <li>mating_type: mean count of the MATa and MATalpha k-mers, a_fraction (MATa / (MATa + MATalpha)) and call: MATa (a_fraction ≥ 0.58), MATalpha (a_fraction ≤ 0.42), MATa/alpha (in between) or unknown (too few k-mers seen).</li>
                 <li>coverage: median depth of the called sites and fraction of uncovered sites.</li>
-                <li>strains: the top strains of the ranking, with the columns of <i>strain_ranking.tsv</i> plus log_likelihood, sites_het (number of H sites), the site detail, and the number of sites separating each strain from the next one.</li>
+                <li>strains: the top strains of the ranking, with the columns of <i>strain_ranking.tsv</i> plus source (the sequencing runs of a reads strain, the code of a matrix isolate, or the collection of an assembly strain: ScRAPdb or SGD, never the path of the assembly file), log_likelihood, sites_het (number of H sites), the site detail, and the number of sites separating each strain from the next one.</li>
                 <li>tools and tool_summary: score of each tool element (columns of <i>tool_coverage.tsv</i> plus name, class, score, colour, present and origin: native or foreign to the host genome) and number of green, orange and red elements.</li>
                 <li>markers: content of <i>marker_genotype.json</i>. markers_expected: comparison of the native markers with those expected for the first strain of the ranking.</li>
                 <li>warnings: all the warnings shown in the report.</li>
