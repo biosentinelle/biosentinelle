@@ -374,7 +374,39 @@ body {
   font-size: 15px;
   line-height: 1.5;
 }
-.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+.wrap { max-width: 1420px; margin: 0 auto; padding: 0 16px; }
+/* table of contents on the left, the sections on the right */
+.layout { display: grid; grid-template-columns: 11.5rem minmax(0, 1fr); column-gap: 28px; align-items: start; }
+main.content { min-width: 0; }
+nav.toc {
+  position: sticky; top: 0; max-height: 100vh; overflow-y: auto;
+  padding: 30px 0 16px 0; font-size: 0.9rem;
+}
+nav.toc .toc-title {
+  margin: 0 0 6px 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--fg-muted);
+}
+nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--border); }
+nav.toc a {
+  display: block; margin-left: -2px; padding: 4px 0 4px 12px; border-left: 2px solid transparent;
+  color: var(--fg-muted); text-decoration: none; line-height: 1.3;
+}
+nav.toc a:hover { color: var(--fg); border-left-color: var(--border-strong); }
+nav.toc a[aria-current="true"] { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+nav.toc a:focus-visible { outline: 3px solid var(--accent); outline-offset: -1px; }
+@media (max-width: 900px) {
+  .layout { display: block; }
+  nav.toc { position: static; max-height: none; overflow: visible; padding: 0 0 4px 0; }
+  nav.toc ol { display: flex; flex-wrap: wrap; gap: 6px; border-left: 0; }
+  nav.toc a { margin: 0; padding: 2px 10px; border: 1px solid var(--border); border-radius: 12px; }
+  nav.toc a[aria-current="true"] { border-color: var(--accent); }
+}
+@media print {
+  .layout { display: block; }
+  nav.toc { display: none; }
+}
 header.page {
   background: var(--bg-alt);
   border-bottom: 1px solid var(--border);
@@ -392,7 +424,7 @@ dl.meta {
 dl.meta div { border-left: 3px solid var(--border-strong); padding-left: 8px; }
 dl.meta dt { font-size: 0.78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--fg-muted); }
 dl.meta dd { margin: 0; font-weight: 600; word-break: break-word; }
-section { margin: 28px 0; }
+section { margin: 28px 0; scroll-margin-top: 12px; }
 h2 { font-size: 1.2rem; border-bottom: 2px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; }
 h3 { font-size: 1.02rem; margin: 18px 0 6px 0; }
 p.note { color: var(--fg-muted); font-size: 0.87rem; margin: 6px 0 12px 0; }
@@ -507,6 +539,19 @@ select, .pager button {
 .decision { margin: 6px 0; padding-left: 22px; }
 .decision > li { margin: 3px 0; }
 .decision ul { margin: 2px 0; padding-left: 20px; }
+/* the strains not called, in a drop-down list under the one called */
+.decision li.others { list-style: none; margin-top: 4px; }
+.decision details > summary {
+  display: inline-flex; align-items: baseline; gap: 8px; cursor: pointer; list-style: none;
+  padding: 1px 10px; border: 1px solid var(--border-strong); border-radius: 4px;
+  background: var(--bg-raised); font-size: 0.92rem;
+}
+.decision details > summary::-webkit-details-marker { display: none; }
+.decision details > summary::after { content: "▾"; color: var(--fg-muted); }
+.decision details[open] > summary::after { content: "▴"; }
+.decision details > summary:hover { border-color: var(--accent); }
+.decision details > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.decision details > ul { margin-top: 4px; }
 .documented { list-style: none; padding-left: 0; }
 .documented > li { margin: 0 0 10px 0; }
 .marker-grid {
@@ -921,7 +966,57 @@ function openTree() {
   treeOverlay(html);
 }
 
+// Table of contents: the link of the section being read is marked current
+// (aria-current), i.e. the last section whose top has passed a line near the
+// top of the window, or the last section at the end of the page. The section
+// of a link just clicked stays current until the reader scrolls again, also
+// when the end of the page keeps it lower than that line.
+function tocSpy() {
+  var links = document.querySelectorAll('nav.toc a[href^="#"]'), marks = [], i;
+  for (i = 0; i < links.length; i++) {
+    var target = document.getElementById(links[i].getAttribute('href').slice(1));
+    if (target) { marks.push({link: links[i], target: target}); }
+  }
+  if (!marks.length) { return; }
+  var chosen = null, jumping = false, timer = 0, queued = false;
+  function settle() {   // the scroll of a click is over when no scroll event came for 200 ms
+    clearTimeout(timer);
+    timer = setTimeout(function () { jumping = false; }, 200);
+  }
+  function update() {
+    queued = false;
+    var line = Math.min(80, window.innerHeight / 4), current = marks[0], j;
+    for (j = 0; j < marks.length; j++) {
+      if (marks[j].target.getBoundingClientRect().top <= line) { current = marks[j]; }
+    }
+    if (window.pageYOffset > 0 &&
+        window.pageYOffset + window.innerHeight >= document.documentElement.scrollHeight - 2) {
+      current = marks[marks.length - 1];
+    }
+    if (chosen) { current = chosen; }
+    for (j = 0; j < marks.length; j++) {
+      if (marks[j] === current) { marks[j].link.setAttribute('aria-current', 'true'); }
+      else { marks[j].link.removeAttribute('aria-current'); }
+    }
+  }
+  function queue() {
+    if (!queued) { queued = true; window.requestAnimationFrame(update); }
+  }
+  window.addEventListener('scroll', function () {
+    if (jumping) { settle(); } else { chosen = null; }
+    queue();
+  });
+  window.addEventListener('resize', queue);
+  for (i = 0; i < marks.length; i++) {
+    (function (m) {
+      m.link.addEventListener('click', function () { chosen = m; jumping = true; settle(); queue(); });
+    })(marks[i]);
+  }
+  update();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+  tocSpy();
   var treeBtn = document.getElementById('open-tree');
   if (treeBtn) { treeBtn.addEventListener('click', openTree); }
   document.addEventListener('keydown', function (e) {
@@ -2150,7 +2245,8 @@ def render_decided_by(d):
     """How the strain was called: the SNP panel alone, or the SNP panel then
     the mating type and the native markers among the strains too close to
     the best one for the SNPs alone, each listed with where it stands in the
-    SNP panel, what agrees and what contradicts it."""
+    SNP panel, what agrees and what contradicts it: the strain called, then
+    the others in a drop-down list."""
     res = d.get("resolution") or {}
     rows = res.get("candidates") or []
     if "method" not in res:   # result file older than the two-step call
@@ -2176,7 +2272,7 @@ def render_decided_by(d):
                 "is kept").format(b=esc(best), n=close,
                                   s=" is" if close == 1 else "s are", r=rules)
     shown = {s.get("strain_id") for _, s in ranked(d.get("strains") or [])[:N_STRAINS_SHOWN]}
-    items = []
+    items, others, counts = [], [], {}
     for row in rows:
         # A strain ruled out is shown with what rules it out only.
         points = []
@@ -2186,11 +2282,25 @@ def render_decided_by(d):
             points.append("agrees on " + esc(", ".join(row["agree"])))
         if not points:
             points.append("nothing to compare (no documented genotype)")
-        items.append('    <li><span class="sid">{s}</span> {o} <span class="muted">({snp})'
-                     '</span>: {p}</li>'.format(s=esc(row.get("strain")),
-                                                o=OUTCOME.get(row.get("outcome"), ""),
-                                                snp=esc(snp_position(row, best, shown)),
-                                                p="; ".join(points)))
+        item = '<span class="sid">{s}</span> {o} <span class="muted">({snp})</span>: {p}'.format(
+            s=esc(row.get("strain")), o=OUTCOME.get(row.get("outcome"), ""),
+            snp=esc(snp_position(row, best, shown)), p="; ".join(points))
+        if row.get("strain") == d.get("call"):
+            items.append("    <li>{}</li>".format(item))
+        else:
+            others.append("        <li>{}</li>".format(item))
+            counts[row.get("outcome")] = counts.get(row.get("outcome"), 0) + 1
+    if others:
+        # The strains not called, in a drop-down list under the one called.
+        n = len(others)
+        tally = ", ".join("{} {}".format(counts[o], o) if n > 1 else o
+                          for o in ("ruled out", "not excluded") if counts.get(o))
+        items.append('    <li class="others"><details>\n'
+                     '      <summary>{n} other strain{s}{t}</summary>\n'
+                     '      <ul>\n{i}\n      </ul>\n'
+                     '    </details></li>'.format(n=n, s="s" if n > 1 else "",
+                                                  t=" ({})".format(tally) if tally else "",
+                                                  i="\n".join(others)))
     return ('<li><strong>Decided by:</strong> {t} {h}<ul>\n{i}\n  </ul></li>').format(
         t=text, h=help_btn("decided_by", "how the strain is decided"), i="\n".join(items))
 
@@ -3007,6 +3117,25 @@ def read_tree(newick_path, strains_path, d):
 # document
 # --------------------------------------------------------------------------- #
 
+# Sections of the report, in their order, with their name in the table of
+# contents (the warnings and the unassigned banner are not sections).
+TOC = [("decision", "Decision"), ("strains", "Strain ranking"), ("sex", "Sex"),
+       ("markers", "Native marker genes"), ("mito", "Mitochondrial genome"),
+       ("tools", "Tool elements")]
+
+
+def render_toc(sections):
+    """Table of contents on the left of the page: the sections present."""
+    items = "\n".join('    <li><a href="#{k}">{l}</a></li>'.format(k=k, l=esc(label))
+                      for k, label in TOC if sections.get(k))
+    return """<nav class="toc" aria-labelledby="toc-title">
+  <p class="toc-title" id="toc-title">Contents</p>
+  <ol>
+{items}
+  </ol>
+</nav>""".format(items=items)
+
+
 def render(d, title, tree=None):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     help_data = dict(HELP, __classes__=CLASS_HELP)
@@ -3034,6 +3163,9 @@ def render(d, title, tree=None):
             "(active or inactive) is compared with the status expected in {s} "
             "({src}). Expected: {a}. Not compared when either status is unknown.").format(
             s=strain, src=esc(ex.get("source")), a=alleles)
+    sections = {"decision": render_decision(d), "strains": render_strains(d),
+                "sex": render_sex(d), "markers": render_markers(d), "mito": render_mito(d),
+                "tools": render_tools(d)}
     parts = [
         "<!DOCTYPE html>",
         '<html lang="en">',
@@ -3045,18 +3177,21 @@ def render(d, title, tree=None):
         "</head>",
         "<body>",
         render_header(d, title, tree),
-        '<div class="wrap">',
+        '<div class="wrap layout">',
+        render_toc(sections),
+        '<main class="content">',
         render_unassigned(d),
-        render_decision(d),
+        sections["decision"],
         render_warnings(d),
-        render_strains(d),
-        render_sex(d),
-        render_markers(d),
-        render_mito(d),
-        render_tools(d),
+        sections["strains"],
+        sections["sex"],
+        sections["markers"],
+        sections["mito"],
+        sections["tools"],
         '<footer class="page">BioSentinelle report &mdash; rendered {} by '
         "<code>render_report.py</code>. Self-contained: no network access required."
         "</footer>".format(esc(now)),
+        "</main>",
         "</div>",
         '<script type="application/json" id="report-data">{}</script>'.format(embed_json(d)),
         '<script type="application/json" id="help-data">{}</script>'.format(embed_json(help_data)),
