@@ -862,7 +862,7 @@ def main():
                         and tool["scorable"] == "yes"]
         if native_hits:
             warnings.append(
-                "%d element(s) scored as covered but are native to the host "
+                "%d tool element(s) scored as covered but are native to the host "
                 "genome (%s). An unmodified strain covers these end to end "
                 "because it carries the native locus, so they are not evidence "
                 "of a cassette and are excluded from the counts. Showing one of "
