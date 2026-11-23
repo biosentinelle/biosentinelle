@@ -7,8 +7,6 @@ output:
     toc_float: TRUE
 params:
     fastq_name: ""
-    nb_ref: -1
-    nb_feat: -1
     warning_collect: ""
 ---
 
@@ -60,38 +58,17 @@ params:
 
 [comment 2]: <> (End of script to zoom on images)
 
-[comment 3]: <> (The following script is meant to display the tsv files in a readable way)
+[comment 3]: <> (Setup, and the inline view buttons of the database tables)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
-read_tsv_with_dummy <- function(file_path, row_nb){
-    if( ! file.exists(file_path)){
-        stop(paste0("\n\n================\n\nINTERNAL ERROR IN Print_report PROCESS.\nfile_path DOES NOT EXISTS: ", file_path, "\n\nPLEASE, REPORT AN ISSUE HERE https://gitlab.pasteur.fr/gmillot/repertoire_profiler/-/issues OR AT gael.millot<AT>pasteur.fr.\n\n========\n\n"), call. = FALSE)
-    }else if(file.info(file_path)$size == 0){
-        stop(paste0("\n\n================\n\nINTERNAL ERROR IN Print_report PROCESS.\nfile_path FILE IS EMPTY BUT SHOULD NOT BE READ HERE. PATH IS: ", file_path, "\n\nPLEASE, REPORT AN ISSUE HERE https://gitlab.pasteur.fr/gmillot/repertoire_profiler/-/issues OR AT gael.millot<AT>pasteur.fr.\n\n========\n\n"), call. = FALSE)
-    }else{
-        df <- read.table(file_path, header = TRUE, sep = "\t", fill = TRUE, quote = "", comment.char = "", stringsAsFactors = FALSE)
-        truncated <- FALSE
-        # If the file is empty but has column names, add an empty line to make the column names readable
-        if (nrow(df) == 0){
-            dummy_row <- as.data.frame(matrix("", nrow = 1, ncol = ncol(df)))
-            colnames(dummy_row) <- colnames(df)
-            df <- df[ -(1:nrow(df)), ]
-        }else if(nrow(df) > row_nb){
-            df <- df[1:row_nb, ]
-            truncated <- TRUE
-        }
-        return(list(df = df, truncated = truncated, nb = row_nb))
-    }
-}
 ```
 
 <style>
 details.inline {display:inline-block;}
 </style>
 
-[comment 4]: <> (End tsv display)
+[comment 4]: <> (End setup)
 
 [comment 5]: <> (Openable .config file)
 
@@ -121,8 +98,6 @@ writeLines(out, "nextflow.config.html")
 
 ```{r, echo=FALSE, results='asis'}
     fastq_name <- params$fastq_name
-    nb_ref <- params$nb_ref
-    nb_feat <- params$nb_feat
     warning_collect <- params$warning_collect
 ```
 
@@ -142,62 +117,6 @@ Description of the folders and files can be found [here](https://github.com/lab-
 <br>
 The <i>[nextflow.config](./reports/nextflow.config.html)</i> file mentioned here is the one gathering all the parameters set for the present analysis. A copy is saved in the [reports](./reports) folder.
 <br><br>
-
-### Most probable strain (by alignment)
-
-Number of reference genomes tested : ```r nb_ref```
-
-The table below indicates the number of variants compared to the indicated genome of reference.<br>
-The top one is the most probable background of the tested strain:
-
-```{r, echo=FALSE, results='asis'}
-        cat(paste0('
-&nbsp; <details class="inline"><summary style="color: #1a73e8; font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;">view</summary>
-<span style="color:green">variant_counts.tsv file in the [tsv](./tsv) folder</span>
-        '))
-        tempo_read <- read_tsv_with_dummy("tsv/variant_counts.tsv", row_nb = 10)
-        df <- tempo_read$df
-        truncated_log <- tempo_read$truncated
-        if(is.data.frame(df) && truncated_log){
-            cat(paste0('<span style="color:green;font-style:italic;">(table truncated to ', tempo_read$nb, ' rows in the display):</span><br><br>'))
-        }else{
-            cat('<span style="color:green;font-style:italic;">:</span><br><br>')
-        }
-        cat(knitr::kable(df, format = "html", row.names = FALSE))
-        cat('
-<br>
-</details>
-        ')
-```
-
-### Features found (by alignment)
-
-Number of features tested : ```r nb_feat```
-
-The table below indicates the max and mean coverage, meaning nb of reads covering the tested features:
-
-```{r, echo=FALSE, results='asis'}
-        cat(paste0('
-&nbsp; <details class="inline"><summary style="color: #1a73e8; font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;">view</summary>
-<span style="color:green">coverage_feat.tsv file in the [tsv](./tsv) folder</span>
-        '))
-        tempo_read <- read_tsv_with_dummy("tsv/coverage_feat.tsv", row_nb = 10)
-        df <- tempo_read$df
-        if(nrow(df) > 1){
-            df <- df[order(df$MEAN, decreasing = TRUE), ]
-        }
-        truncated_log <- tempo_read$truncated
-        if(is.data.frame(df) && truncated_log){
-            cat(paste0('<span style="color:green;font-style:italic;">(table truncated to ', tempo_read$nb, ' rows in the display):</span><br><br>'))
-        }else{
-            cat('<span style="color:green;font-style:italic;">:</span><br><br>')
-        }
-        cat(knitr::kable(df, format = "html", row.names = FALSE))
-        cat('
-<br>
-</details>
-        ')
-```
 
 ### Database used
 
@@ -362,6 +281,56 @@ The table below indicates the max and mean coverage, meaning nb of reads coverin
             db_none("Biomolecular tool database (tools.tsv)")
         }
 ```
+
+###  Warnings recapitulation
+
+```{r, echo=FALSE, results='asis'}
+#remove work directory from current directory
+if(length(warning_collect) == 1 && all(warning_collect == "")){
+    cat(paste0('No warning message reported.'))
+}else{
+     # remove strings
+    # warning_collect[duplicated(warning_collect) & ! grepl(x = warning_collect, pattern = "^WARNING:.*")] <- "" # remove duplicated messages
+    # remove the 2 consec strings "WARNING" and ""
+    # to_remove <- which(grepl(x = warning_collect, pattern = "^WARNING:.*") & c(warning_collect[-1], NA) == "")
+    # if(length(to_remove) > 0){
+    #     warning_collect <- warning_collect[-sort(c(to_remove, to_remove + 1))]
+    # }
+    # end remove the 2 consec strings "WARNING" and ""
+    warning_collect <- warning_collect[warning_collect != ""]
+    # Find positions of "WARNING:" warning_collect
+    warning_positions <- which(grepl("^WARNING:$", warning_collect))
+    # Initialize a list to store collapsed segments
+    collapsed_warnings <- list()
+    # Loop through positions to extract and collapse segments
+    for (i1 in seq_along(warning_positions)) {
+        start_pos <- warning_positions[i1]
+        # Determine the end position
+        if (i1 < length(warning_positions)) {
+            end_pos <- warning_positions[i1 + 1] - 1
+        } else {
+            end_pos <- length(warning_collect) # Until the end of the vector
+        }
+        # Collapse warning_collect from start_pos to end_pos
+        collapsed_segment <- paste0(warning_collect[start_pos:end_pos], collapse = "\n")
+        collapsed_warnings[[i1]] <- collapsed_segment
+    }
+    # Convert list to vector if needed
+    collapsed_warnings_vector <- unlist(collapsed_warnings)
+    # View the result
+    collapsed_warnings_vector <- unique(collapsed_warnings_vector)
+    collapsed_warnings_vector <- gsub(x = collapsed_warnings_vector, pattern = "\n*$", replacement = "")
+    collapsed_warnings_vector <- gsub(x = collapsed_warnings_vector, pattern = "^\n*", replacement = "")
+    collapsed_warnings_vector <- gsub(x = collapsed_warnings_vector, pattern = "^WARNING: *", replacement = "")
+    collapsed_warnings_vector <- paste0(collapsed_warnings_vector, collapse = "<br><br>") # single string
+    # warning_collect <- warning_collect[ ! grepl(x = warning_collect, pattern = "^ *WARNING: *")]
+    # end remove strings
+    cat(collapsed_warnings_vector)
+}
+```
+
+
+<br><br>
 
 ###  Backup
 

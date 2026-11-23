@@ -36,8 +36,7 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 - the mating type (MATa, MATalpha or MATa/alpha),
 - the genotype of the native auxotrophic and counter-selection marker genes (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5),
 - the status of the mitochondrial genome (rho+, rho- or rho0), hence whether the strain is expected to grow on glycerol,
-- the laboratory tool elements present (plasmids, cassettes, drug resistance markers, tags, promoters, ...),
-- coverage and variant counts against user-provided genomes, features and mating type sequences.
+- the laboratory tool elements present (plasmids, cassettes, drug resistance markers, tags, promoters, ...).
 
 <br><br>
 ## WARNINGS
@@ -79,8 +78,6 @@ No assembly is made. The sample sequences are compared with a strain identity da
 
 The panel strains are then ranked by likelihood. If the best strain matches less than `min_concordance` of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain, which is what flags a strain absent from the database. The result is the *strain_identity_report.html* file. Its *tree* button, next to *Strains in the panel*, opens the tree of all the panel strains in a new page, with the strain called highlighted.
 
-In addition, the historical part of the pipeline aligns the reads (bowtie2) against the genomes of `ref_path`, the features of `features_path` and the mating type sequences of `sex_path`, for coverage plots, read counts after mapping quality 20 filtering, and variant counts (bcftools), summarized in *report.html*. This part does not use the database.
-
 <br><br>
 ## INPUT
 
@@ -90,13 +87,10 @@ In addition, the historical part of the pipeline aligns the reads (bowtie2) agai
 | `seq_kind` | `"reads"` (default) for sequencing reads, short or long, or `"assembly"` for contigs, scaffolds or a complete genome sequence. |
 | `seq_molecule` | `"DNA"` (default) or `"RNA"` (RNA-seq or direct RNA reads). The analysis is the same, but the report warns that depths then follow gene expression, and that a strain site or a marker gene that is not expressed is reported as not covered. |
 | `cram_reference` | Only for a CRAM sample: the FASTA reference it was compressed against. If "NULL", samtools finds the reference from its checksum, which needs network access. |
-| `ref_path` | Genome(s) used for the variant counts (*variant_counts.tsv*). A file or a folder of files, or a .zip archive. A single multi-sequence FASTA file is split into one file per sequence. |
-| `features_path` | Feature sequences (cassettes, genes, ...) used for the coverage plots and the *coverage_feat.tsv* file. Same format as `ref_path`. |
-| `sex_path` | Mating type sequences (MATa, MATalpha) used for the coverage plots and the *coverage_sex.tsv* file. Same format as `ref_path`. |
 | `db_path`, `organism_dir` | Strain identity database used: *\<db_path\>/\<organism_dir\>* (*../yeast_db/db/yeast* by default, i.e., yeast_db cloned next to lab_strain_watch). |
 | `panel_reference` | Reference genome of the database (S288C R64-1-1 for yeast), used to genotype the native marker genes. |
 
-See the *nextflow.config* file for the other parameters (`strain_id_on`, `kmer_min_depth`, `marker_min_depth`, `strain_error_rate`, `min_concordance`, `kmer_max_bases`, `shred_max_length`, `shred_length`, `ylab`, ...), each one described there.
+See the *nextflow.config* file for the other parameters (`kmer_min_depth`, `marker_min_depth`, `strain_error_rate`, `min_concordance`, `kmer_max_bases`, `shred_max_length`, `shred_length`, ...), each one described there.
 
 Accepted sample formats (recognized from the file content, except BAM, SAM and CRAM, recognized from the extension):
 
@@ -110,11 +104,9 @@ Accepted sample formats (recognized from the file content, except BAM, SAM and C
 
 Each of these files can be compressed (.gz, .bz2) or put into a .zip archive (except BAM, SAM and CRAM). U is read as T (RNA) and IUPAC ambiguity letters as N.
 
-Long reads (Oxford Nanopore, PacBio) and assemblies: the k-mer scan reads each sequence whole. For the bowtie2 alignments, which are designed for short reads, the sequences longer than `shred_max_length` (1000 bp by default) are cut into pieces of `shred_length` bases (250 by default), without overlap for reads (the depth stays the sequencing depth), and with half overlapping pieces for an assembly. With `seq_kind = "assembly"`, the depth thresholds `kmer_min_depth` and `marker_min_depth` are set to 1, since an assembly has a single copy of each sequence, and the coverage plots no longer measure copy number. The mating type of an assembly is read from the number of copies of the a and alpha cassettes (2 : 1 for MATa, 1 : 2 for MATalpha). A short-read assembly often collapses the three nearly identical cassettes (MAT, HML, HMR) into one a and one alpha contig: the mating type is then reported as unknown rather than as a MATa/alpha diploid. The *tsv/prepare_reads.tsv* output file describes what was done with each input file.
+Long reads (Oxford Nanopore, PacBio) and assemblies: the k-mer scan reads each sequence whole. For the bowtie2 alignments, which are designed for short reads, the sequences longer than `shred_max_length` (1000 bp by default) are cut into pieces of `shred_length` bases (250 by default), without overlap for reads (the depth stays the sequencing depth), and with half overlapping pieces for an assembly. With `seq_kind = "assembly"`, the depth thresholds `kmer_min_depth` and `marker_min_depth` are set to 1, since an assembly has a single copy of each sequence, and the depths of the tool elements and of the native marker genes no longer measure copy number. The mating type of an assembly is read from the number of copies of the a and alpha cassettes (2 : 1 for MATa, 1 : 2 for MATalpha). A short-read assembly often collapses the three nearly identical cassettes (MAT, HML, HMR) into one a and one alpha contig: the mating type is then reported as unknown rather than as a MATa/alpha diploid. The *tsv/prepare_reads.tsv* output file describes what was done with each input file.
 
 Not accepted: raw Nanopore signal (FAST5, POD5), which must be basecalled first (with dorado, for instance), and Illumina BCL run folders, which must be demultiplexed first (with bcl-convert, for instance).
-
-The reference, feature and mating type sequences (`ref_path`, `features_path`, `sex_path`) can be FASTA, GenBank or EMBL files, compressed with gzip or not, or a .zip archive of them.
 
 <br><br>
 ## STRAIN IDENTITY DATABASE
@@ -183,7 +175,7 @@ The way each part was made, the sources, the choice of k and the validation of t
 
 By default, all the results are returned in a *results* folder where the *main.nf* executed file is located (created if does not exist). This can be changed using the `out_path_ini` parameter of the *nextflow.config* file. By default, each execution produces a new folder named *lab_strain_watch_\<ID\>*, created inside the *results* folder and containing all the outputs of the execution. The name of the folder can be changed using the `result_folder_name` parameter of the *nextflow.config* file. The new name file will be followed by an \<ID\> (number of seconds since 1970-01-01) in all cases.
 <br><br>
-Files of the strain identity branch (*strain_identity_report.html*, *site_calls.tsv*, *strain_ranking.tsv*, *strain_id.json*, *tool_coverage.tsv*, *marker_genotype.tsv*, *marker_genotype.json*) are absent if the `strain_id_on` parameter of the *nextflow.config* file is "FALSE", or if the strain panel is missing from the database. The *marker_genotype.\** files are also absent if the native marker database or the `panel_reference` file is missing.
+Files of the strain identity branch (*strain_identity_report.html*, *site_calls.tsv*, *strain_ranking.tsv*, *strain_id.json*, *tool_coverage.tsv*, *marker_genotype.tsv*, *marker_genotype.json*) are absent if the strain panel is missing from the database. The *marker_genotype.\** files are also absent if the native marker database or the `panel_reference` file is missing.
 <br><br>
 <table>
     <tr>
@@ -207,13 +199,7 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
     <tr>
         <th align="left">report.html</th>
         <td>
-            HTML report of the historical part of the pipeline: variant counts against the <code>ref_path</code> genomes (<i>variant_counts.tsv</i>), coverage of the <code>features_path</code> features (<i>coverage_feat.tsv</i>), and a summary of the strain identity database used (strains, native markers, tool elements). Also contains the warnings of the run.
-        </td>
-    </tr>
-    <tr>
-        <th align="left">figures</th>
-        <td>
-            Folder containing the coverage plots (<i>.png</i>), one per feature of <code>features_path</code> and per mating type sequence of <code>sex_path</code>, named <i>plot_&lt;SEQUENCE_NAME&gt;_mini.png</i>. Each plot shows the number of reads (mapping quality ≥ 20) covering each position of the sequence (<code>bedtools genomecov -bga</code>), the y-axis range being set by the <code>ylab</code> parameter of the <i>nextflow.config</i> file. The title indicates the number of reads after the mapping quality 20 filtering. A plot shows "EMPTY ... NO PLOT DRAWN" if too few positions are covered.
+            HTML report of the run: link to the parameters used (<i>nextflow.config</i>), summary of the strain identity database used (strains, native markers, tool elements) and the warnings of the run.
         </td>
     </tr>
     <tr>
@@ -221,7 +207,7 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
         <td>
             Folder containing:
             <ul>
-                <li><b>*.log</b>: the log of each process of the pipeline (<i>prepare_reads_report.log</i>, <i>kmer_scan_report.log</i>, <i>bowtie2_*_report.log</i>, <i>q20_*_report.log</i>, <i>coverage_*_report.log</i>, <i>variantCall_*_report.log</i>, <i>tool_depth_report.log</i>, <i>tool_score_report.log</i>, <i>marker_align_report.log</i>, <i>marker_genotype_report.log</i>, <i>strain_score_report.log</i>, <i>fastq_dump_report.log</i> if an accession was downloaded, <i>aln_to_fastq_report.log</i> if a BAM, SAM or CRAM was given, <i>split_fasta.log</i>, <i>print_report.log</i>).</li>
+                <li><b>*.log</b>: the log of each process of the pipeline (<i>prepare_reads_report.log</i>, <i>kmer_scan_report.log</i>, <i>bowtie2_tools_report.log</i>, <i>tool_depth_report.log</i>, <i>tool_score_report.log</i>, <i>marker_align_report.log</i>, <i>marker_genotype_report.log</i>, <i>strain_score_report.log</i>, <i>fastq_dump_report.log</i> if an accession was downloaded, <i>aln_to_fastq_report.log</i> if a BAM, SAM or CRAM was given, <i>print_report.log</i>).</li>
                 <li><b>nextflow.config</b>: copy of the <i>nextflow.config</i> file used, and <b>nextflow.config.html</b>, its display linked from <i>report.html</i>.</li>
                 <li><b>Run_info.txt</b>: git repository and commit of the code used, command line, execution mode, loaded modules (<code>--modules</code> option), result path and nextflow version.</li>
                 <li><b>warnings.txt</b>: all the warnings of the run.</li>
@@ -338,48 +324,6 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
             Complete native marker results: baseline_depth and read_length of the sample, limits of the analysis, genotype (e.g., "ura3D0 his3D1 leu2D0 TRP1 lys2D0 ADE2 MET15 CAN1"), markers (per gene: locus, depths, status, all the alleles with their coding, upstream and downstream events, protein form, documented names and carriers in the catalogue, structural evidence, heterozygous calls), documented_genotype_matches (documented laboratory strains with the number of genes agreeing and the differences) and catalogue_assemblies (number of assemblies in the allele catalogue).
         </td>
     </tr>
-    <tr>
-        <th align="left">- variant_counts.tsv</th>
-        <td>
-            Number of variants of the sample against each genome of <code>ref_path</code>, sorted by increasing number. The genome with the fewest variants is the most probable genetic background of the sample. One row per genome.
-            <ul>
-                <li>Name: name of the genome file (without extension).</li>
-                <li>Nb_of_variants: number of variants (SNPs and indels) called by <code>bcftools mpileup -q 20 -Q 20 | bcftools call -mv</code>, minus 1.</li>
-            </ul>
-        </td>
-    </tr>
-    <tr>
-        <th align="left">- coverage_feat.tsv</th>
-        <td>
-            Coverage of each feature of <code>features_path</code> by the reads of mapping quality ≥ 20 (bowtie2). One row per feature (features with too few covered positions to be plotted are absent).
-            <ul>
-                <li>REF: name of the feature (file name without extension).</li>
-                <li>MAX: maximum number of reads covering a position of the feature.</li>
-                <li>MEAN: mean of the depth values of the <code>bedtools genomecov -bga</code> intervals of the feature (intervals of constant depth, not weighted by their length).</li>
-            </ul>
-        </td>
-    </tr>
-    <tr>
-        <th align="left">- coverage_sex.tsv</th>
-        <td>
-            As <i>coverage_feat.tsv</i>, but for the mating type sequences of <code>sex_path</code> (MATA, MATALPHA). The mating type call of the strain identity branch is in <i>strain_id.json</i>.
-        </td>
-    </tr>
-    <tr>
-        <th align="left">- variant_calling</th>
-        <td>
-            Folder containing, for each genome of <code>ref_path</code> and each mating type sequence of <code>sex_path</code>, the variants of the sample (<i>&lt;NAME&gt;_variants.tsv</i>, <code>bcftools query</code> of the VCF). One row per variant. The header line starts with #.
-            <ul>
-                <li>[1]CHROM: chromosome or sequence name.</li>
-                <li>[2]POS: position of the variant (1-based).</li>
-                <li>[3]REF: reference allele.</li>
-                <li>[4]ALT: alternative allele(s), separated by commas.</li>
-                <li>[5]QUAL: quality of the variant (phred scale).</li>
-                <li>[6]&lt;SAMPLE&gt;:GT: genotype of the sample (0/1 heterozygous, 1/1 homozygous alternative, 1/2 two different alternative alleles).</li>
-                <li>[7]&lt;SAMPLE&gt;:TYPE: SNP, MNP, INDEL or OTHER.</li>
-            </ul>
-        </td>
-    </tr>
 </table>
 
 
@@ -424,12 +368,10 @@ The developers & maintainers of the mentioned softwares and packages, including:
 - [Apptainer](https://apptainer.org/)
 - [Docker](https://www.docker.com/)
 - [Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/)
-- [Samtools and bcftools](https://www.htslib.org/)
-- [Bedtools](https://bedtools.readthedocs.io/)
+- [Samtools](https://www.htslib.org/)
 - [SRA Toolkit](https://github.com/ncbi/sra-tools)
 - [Python](https://www.python.org/)
 - [R](https://www.r-project.org/)
-- [ggplot2](https://ggplot2.tidyverse.org/)
 - [The 1011 Yeast Genomes project](http://1002genomes.u-strasbg.fr/)
 - [Saccharomyces Genome Database](https://www.yeastgenome.org/)
 - [Github](https://github.com/)

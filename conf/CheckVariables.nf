@@ -16,26 +16,15 @@ for(i1 in tested_files_bin){
 tested_files_modules = [
     "Backup.nf", 
     "Bowtie2.nf", 
-    "CopyLogFile.nf", 
-    "CountSnps.nf", 
-    "Coverage.nf", 
-    "DetermineGenotype.nf", 
     "Fastq_dump.nf", 
-    "FindBestRef.nf", 
     "Functions.nf", 
-    "MultiQC.nf", 
-    "Plot_coverage.nf", 
+    "KmerScan.nf", 
+    "MarkerGenotype.nf", 
+    "PrepareReads.nf", 
     "Print_report.nf", 
-    "Print_sex_count.nf", 
-    "Print_var_count.nf", 
     "Print_warnings.nf", 
-    "Q20.nf", 
-    "SexCount.nf", 
-    "Split_fasta.nf", 
-    "Unzip.nf", 
-    "VCF_comp.nf", 
-    "VariantCall.nf", 
-    "VariantCount.nf", 
+    "StrainID.nf", 
+    "ToolScan.nf", 
     "WorkflowParam.nf"
     ]
 for(i1 in tested_files_modules){
@@ -66,22 +55,6 @@ if( ! (shred_max_length =~ /^[0-9]+$/ && shred_length =~ /^[0-9]+$/ && shred_len
 }
 if( cram_reference != "NULL" && ! file(cram_reference).exists() ){
     error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID cram_reference PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${cram_reference}\n\n========\n\n"
-}
-if( ! (ref_path in String || ref_path in GString) ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ref_path PARAMETER IN nextflow.config FILE:\n${ref_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}else {
-    // ref_path can contain multiple space-separated paths
-    if( ! (file(ref_path).exists()) ){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID ref_path PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${ref_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-    }
-}
-if( ! (features_path in String || features_path in GString) ){
-    error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID features_path PARAMETER IN nextflow.config FILE:\n${features_path}\nMUST BE A SINGLE CHARACTER STRING\n\n========\n\n"
-}else {
-    // features_path can contain multiple space-separated paths
-    if( ! (file(features_path).exists()) ){
-        error "\n\n========\n\nERROR IN NEXTFLOW EXECUTION\n\nINVALID features_path PARAMETER IN nextflow.config FILE (DOES NOT EXIST): ${features_path}\nIF POINTING TO A DISTANT SERVER, CHECK THAT IT IS MOUNTED\n\n========\n\n"
-    }
 }
 //// end check of config file parameters
 }
