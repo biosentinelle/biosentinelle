@@ -14,7 +14,7 @@ long_description: |
   Galaxy tool running the whole lab_strain_watch Nextflow pipeline in a single Galaxy job, on the sequences of a single
   sample of a laboratory Saccharomyces cerevisiae strain (reads or assembly): most probable strain among the 1,172
   strains of the strain identity database (or unassigned), mating type, genotype of the native marker genes, status
-  of the mitochondrial genome, laboratory tool elements present, coverage plots and variant counts, in HTML reports.
+  of the mitochondrial genome and laboratory tool elements present, in HTML reports.
   The form of the tool recapitulates the nextflow.config file of the pipeline.
 
   Requirements on the Galaxy server: the LSW_APPTAINER_CACHE job environment variable (folder of the apptainer images

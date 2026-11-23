@@ -143,7 +143,7 @@ The way each part was made, the sources, the choice of k and the validation of t
     - *Run accession*: SRR..., ERR... or DRR..., downloaded during the run. This requires an internet access of the Galaxy computing nodes: otherwise, import the reads into the history first (e.g., with the *Faster Download and Extract Reads in FASTQ* tool, if available) and use *Sequence file(s)*.
     - *Sample name*: optional, name of the sample in the reports (default: name of the first file).
 - *Kind of sequences (seq_kind)*: reads or assembly. *Molecule (seq_molecule)*: DNA or RNA.
-- *Sample handling and reference sequences* (optional): genomes of the variant counts (ref_path), features (features_path) and mating type sequences (sex_path) of *report.html*: those of the pipeline by default, or your own files.
+- *Sample handling* (optional): FASTA reference of a CRAM sample, and the cutting of the long sequences (long reads, contigs) into pieces before the bowtie2 alignments.
 - *Strain identity* (optional): thresholds of the strain call. The strain identity database (yeast, 1,172 strains) is installed on the server.
 - *Outputs*: optional additional datasets (see [Results](#4-results) below).
 - *Parameter file* (optional): JSON file `{"parameter": "value"}` whose values replace those of the form, e.g., to reuse a set of parameters.
@@ -165,7 +165,7 @@ The way each part was made, the sources, the choice of k and the validation of t
 
 - *strain identity report* dataset, *View* icon (eye): main result, *strain_identity_report.html* (decision, warnings, strain ranking, tool elements, native marker genes, mitochondrial genome, see [OUTPUT](#output)); its *tree* button, next to *Strains in the panel*, opens the tree of all the panel strains, the strain called highlighted.
 - *report and result folder* dataset:
-    - *View* icon (eye): *report.html* (coverage, variant counts, database used) in the central panel, with working links to the tables and reports.
+    - *View* icon (eye): *report.html* (database used, warnings) in the central panel, with working links to the tables and reports.
     - *Download* icon (floppy disk, after clicking on the dataset): zip file of the whole result folder (see [OUTPUT](#output)), saved where the web browser proposes.
 - Optional datasets (*Outputs* section of the form): *tables* (.tsv files as a collection, for other Galaxy tools) and *result folder (zip)*.
 - The datasets stay in the history: *Delete* icon (bin) when no longer needed.

@@ -5,9 +5,6 @@
 # input files: replaced by upload fields
 fastq_path
 cram_reference
-ref_path
-features_path
-sex_path
 
 # strain identity database: installed on the server (LSW_DB_PATH variable, db folder of yeast_db).
 # Only the yeast database is provided, and panel_reference must be the genome it was built on.

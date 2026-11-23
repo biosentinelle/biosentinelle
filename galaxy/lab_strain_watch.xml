@@ -9,7 +9,6 @@
         <!-- formats read by bin/prepare_reads.py (FASTQ, FASTA, GenBank, EMBL, plain, .gz, .bz2 or in a zip) and by samtools (BAM, SAM, CRAM) -->
         <token name="@SEQ_FORMATS@">fastqsanger,fastqsanger.gz,fastqsanger.bz2,fastq,fastq.gz,fastq.bz2,fasta,fasta.gz,fasta.bz2,genbank,genbank.gz,embl,embl.gz,unsorted.bam,sam,cram,zip</token>
         <token name="@READ_FORMATS@">fastqsanger,fastqsanger.gz,fastqsanger.bz2,fastq,fastq.gz,fastq.bz2,fasta,fasta.gz,fasta.bz2</token>
-        <token name="@REF_FORMATS@">fasta,fasta.gz,genbank,genbank.gz,embl,embl.gz,zip</token>
     </macros>
     <!--
     The form below recapitulates the "Parameters that must be set by the user" part of ../nextflow.config:
@@ -39,7 +38,7 @@
 
     Galaxy-only fields of the form (not parameters of nextflow.config) are listed in the galaxy-ignore option of fill_config.py below.
     The input files are staged in the job folder: sample/<sample name>/ (fastq_path, the folder name is the sample name of the reports)
-    and references/<parameter>/ (cram_reference, ref_path, features_path, sex_path), with the dataset names, so that the mates are paired
+    and references/cram_reference/ (cram_reference), with the dataset names, so that the mates are paired
     by their _1/_2 or _R1/_R2 suffix and the compressed files keep their .gz or .bz2 extension.
     -->
     <requirements>
@@ -63,7 +62,7 @@ if [[ ! -d "\${LSW_DB_PATH:-}" ]]; then
     exit 1;
 fi &&
 
-## nextflow.config uses ./bin/... paths (template_rmd_path, cute_path), relative to the launch folder (the job working folder)
+## nextflow.config uses ./bin/... paths (template_rmd_path), relative to the launch folder (the job working folder)
 ln -s '$pipeline/bin' bin &&
 
 ## sample name: name of the folder of the sample files, used as sample name by the pipeline (fastq_name of main.nf)
@@ -102,21 +101,6 @@ ln -s '$pipeline/bin' bin &&
 #end if
 #if $data.cram.cram_source == 'own':
     #silent $to_stage.append(['references/cram_reference', $data.cram.cram_fasta, 'cram_reference'])
-#end if
-#if $data.ref.ref_source == 'own':
-    #for $f in $data.ref.ref_files:
-        #silent $to_stage.append(['references/ref_path', $f, str($f.element_identifier)])
-    #end for
-#end if
-#if $data.feat.feat_source == 'own':
-    #for $f in $data.feat.feat_files:
-        #silent $to_stage.append(['references/features_path', $f, str($f.element_identifier)])
-    #end for
-#end if
-#if $data.sex.sex_source == 'own':
-    #for $f in $data.sex.sex_files:
-        #silent $to_stage.append(['references/sex_path', $f, str($f.element_identifier)])
-    #end for
 #end if
 
 ## staging: hard link (no copy of big read files), or copy if the dataset is on another file system.
@@ -164,7 +148,7 @@ python3 '$__tool_directory__/fill_config.py'
     --template '$pipeline/nextflow.config'
     --locked '$__tool_directory__/locked_params.txt'
     --galaxy-inputs '$form_values'
-    --galaxy-ignore input_type,sample_name,accession,cram_source,ref_source,feat_source,sex_source,tables,zip
+    --galaxy-ignore input_type,sample_name,accession,cram_source,tables,zip
     #if $advanced.params:
         --values '$advanced.params'
     #end if
@@ -175,15 +159,6 @@ python3 '$__tool_directory__/fill_config.py'
     #end if
     #if $data.cram.cram_source == 'own':
         --set "cram_reference=\$PWD/references/cram_reference/cram_reference.fasta"
-    #end if
-    #if $data.ref.ref_source == 'own':
-        --set "ref_path=\$PWD/references/ref_path"
-    #end if
-    #if $data.feat.feat_source == 'own':
-        --set "features_path=\$PWD/references/features_path"
-    #end if
-    #if $data.sex.sex_source == 'own':
-        --set "sex_path=\$PWD/references/sex_path"
     #end if
     --set "db_path=\$LSW_DB_PATH"
     --set system_exec=local
@@ -206,14 +181,12 @@ results_dir=\$(ls -d results/lab_strain_watch_*) &&
 cp "\$results_dir/report.html" '$report' &&
 mkdir -p '$report.extra_files_path' &&
 cp -r "\$results_dir"/. '$report.extra_files_path' &&
-#if $strain.strain_id_on:
-    ## no strain_identity_report.html without strain panel in the database (warning of the run), or with strain_id_on FALSE in the parameter file
-    if [[ -f "\$results_dir/strain_identity_report.html" ]]; then
-        cp "\$results_dir/strain_identity_report.html" '$strain_report';
-    else
-        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>No strain identity report</title></head><body><p>No strain identity report was produced: see the warnings at the end of the report of the "report and result folder" dataset (no strain panel in the database of the Galaxy server, or strain_id_on set to FALSE by the parameter file).</p></body></html>' > '$strain_report';
-    fi &&
-#end if
+## no strain_identity_report.html without strain panel in the database (warning of the run)
+if [[ -f "\$results_dir/strain_identity_report.html" ]]; then
+    cp "\$results_dir/strain_identity_report.html" '$strain_report';
+else
+    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>No strain identity report</title></head><body><p>No strain identity report was produced: see the warnings at the end of the report of the "report and result folder" dataset (no strain panel in the database of the Galaxy server).</p></body></html>' > '$strain_report';
+fi &&
 #if $output_options.zip:
     (cd results && python3 -m zipfile -c '$results_zip' "\$(basename "\$results_dir")") &&
 #end if
@@ -260,7 +233,7 @@ echo "result folder: \$results_dir"
                 </param>
             </when>
         </conditional>
-        <param name="seq_kind" type="select" label="Kind of sequences (seq_kind)" help="reads: sequencing reads, short or long (long reads are cut into pieces for the bowtie2 alignments, see shred_max_length). assembly: contigs, scaffolds or a whole genome sequence. The depth thresholds kmer_min_depth and marker_min_depth are then set to 1, since an assembly has one copy of each sequence, and the coverage plots no longer measure copy number.">
+        <param name="seq_kind" type="select" label="Kind of sequences (seq_kind)" help="reads: sequencing reads, short or long (long reads are cut into pieces for the bowtie2 alignments, see shred_max_length). assembly: contigs, scaffolds or a whole genome sequence. The depth thresholds kmer_min_depth and marker_min_depth are then set to 1, since an assembly has one copy of each sequence, and the depths of the tool elements and of the native marker genes no longer measure copy number.">
             <option value="reads" selected="true">reads: sequencing reads, short or long</option>
             <option value="assembly">assembly: contigs, scaffolds or a whole genome sequence</option>
         </param>
@@ -269,7 +242,7 @@ echo "result folder: \$results_dir"
             <option value="RNA">RNA</option>
         </param>
         <!-- Data section of nextflow.config: other parameters -->
-        <section name="data" title="Sample handling and reference sequences" expanded="false" help="Data section of nextflow.config. The reference genomes, features and mating type sequences of this section give the coverage plots and the variant counts of report.html (historical part of the pipeline), not the strain identity.">
+        <section name="data" title="Sample handling" expanded="false" help="Data section of nextflow.config.">
             <conditional name="cram">
                 <param name="cram_source" type="select" label="Reference of a CRAM sample (cram_reference)" help="Only for a CRAM sample: the FASTA reference it was compressed against.">
                     <option value="none" selected="true">None (NULL): samtools finds the reference from its checksum, which needs internet access</option>
@@ -282,40 +255,8 @@ echo "result folder: \$results_dir"
             </conditional>
             <param name="shred_max_length" type="integer" value="1000" min="1" label="Maximal length of the aligned sequences (shred_max_length)" help="Sequences longer than this (long reads, contigs) are cut into pieces of shred_length bases before the bowtie2 alignments. The k-mer scan always reads them whole."/>
             <param name="shred_length" type="integer" value="250" min="50" label="Length of the pieces (shred_length)" help="Length of the pieces of the sequences longer than shred_max_length: without overlap for reads, half overlapping for an assembly."/>
-            <conditional name="ref">
-                <param name="ref_source" type="select" label="Genomes of the variant counts (ref_path)" help="Genome(s) against which the variants of the sample are counted (variant_counts.tsv: the genome with the fewest variants is the most probable genetic background).">
-                    <option value="default" selected="true">Genomes of the pipeline: S288C (R64-1-1) and W303</option>
-                    <option value="own">My genome file(s)</option>
-                </param>
-                <when value="default"/>
-                <when value="own">
-                    <param name="ref_files" type="data" format="@REF_FORMATS@" multiple="true" label="Genome file(s)" help="FASTA, GenBank or EMBL files (plain or .gz), or a zip archive of them: one genome per file, named after the dataset. A single file with several sequences is split into one genome per sequence."/>
-                </when>
-            </conditional>
-            <conditional name="feat">
-                <param name="feat_source" type="select" label="Features of the coverage plots (features_path)" help="Feature sequences (cassettes, genes...) of the coverage plots (figures folder) and of the coverage_feat.tsv file.">
-                    <option value="default" selected="true">Features of the pipeline: pieces of the pFA6a-3HA-His3MX6 cassette (3xHA, ADH1 terminator, HIS3MX6)</option>
-                    <option value="own">My feature file(s)</option>
-                </param>
-                <when value="default"/>
-                <when value="own">
-                    <param name="feat_files" type="data" format="@REF_FORMATS@" multiple="true" label="Feature file(s)" help="FASTA, GenBank or EMBL files (plain or .gz), or a zip archive of them: one feature per file, named after the dataset. A single file with several sequences is split into one feature per sequence."/>
-                </when>
-            </conditional>
-            <conditional name="sex">
-                <param name="sex_source" type="select" label="Mating type sequences (sex_path)" help="Mating type sequences of the coverage plots and of the coverage_sex.tsv file. The mating type of the strain identity report is measured with the database, not with these sequences.">
-                    <option value="default" selected="true">Sequences of the pipeline: MATa and MATalpha</option>
-                    <option value="own">My mating type file(s)</option>
-                </param>
-                <when value="default"/>
-                <when value="own">
-                    <param name="sex_files" type="data" format="@REF_FORMATS@" multiple="true" label="Mating type file(s)" help="FASTA, GenBank or EMBL files (plain or .gz), or a zip archive of them: one sequence per file, named after the dataset. A single file with several sequences is split into one file per sequence."/>
-                </when>
-            </conditional>
-            <param name="ylab" type="integer" value="200" min="1" label="Y-axis range of the coverage plots (ylab)" help="Maximal coverage depth shown."/>
         </section>
         <section name="strain" title="Strain identity" expanded="false" help="Strain identity database section of nextflow.config. The strain identity database (Saccharomyces cerevisiae, 1,172 strains, yeast_db) and its reference genome (panel_reference, S288C R64-1-1) are installed on the Galaxy server.">
-            <param name="strain_id_on" type="boolean" checked="true" label="Strain identity (strain_id_on)" help="Strain, mating type, native marker genes, mitochondrial genome and tool elements (strain identity report). No: only the coverage plots and variant counts of report.html."/>
             <param name="kmer_max_bases" type="integer" value="0" min="0" label="Read bases scanned for the strain panel (kmer_max_bases)" help="0 for all of them. The cap is in bases, not reads, because coverage decides whether a site is called. Scanning everything costs about 90 s for 275 Mb. For a much larger genome or a very deep run, 300000000 gives about 25x on a 12 Mb genome."/>
             <param name="kmer_min_depth" type="integer" value="3" min="1" label="Minimal k-mer depth of a panel site (kmer_min_depth)" help="Number of panel k-mer observations required before a site is called. Below it, the site is reported as not covered, never as carrying the reference allele. Set to 1 for an assembly."/>
             <param name="strain_error_rate" type="float" value="0.01" min="0" max="0.5" label="Error rate of the strain scoring (strain_error_rate)" help="Assumed probability that a called allele disagrees with the true strain: sequencing error, culture drift and panel error together. Raising it makes the ranking less confident, it does not change the order."/>
@@ -323,7 +264,7 @@ echo "result folder: \$results_dir"
             <param name="min_concordance" type="float" value="0.90" min="0" max="1" label="Minimal concordance of the strain call (min_concordance)" help="If the best strain matches less than this fraction of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain: this is what catches a strain absent from the database."/>
         </section>
         <section name="output_options" title="Outputs" expanded="true" help="The strain identity report is the main result. The report and result folder dataset always contains the whole result folder: its links work in Galaxy and its download button gives a zip of the folder.">
-            <param name="tables" type="boolean" checked="false" label="Result tables as a collection" help="The .tsv files of the tsv folder of the results (strain_ranking.tsv, site_calls.tsv, marker_genotype.tsv, tool_coverage.tsv, variant_counts.tsv...) as a list collection, to analyze them with other Galaxy tools."/>
+            <param name="tables" type="boolean" checked="false" label="Result tables as a collection" help="The .tsv files of the tsv folder of the results (strain_ranking.tsv, site_calls.tsv, marker_genotype.tsv, tool_coverage.tsv...) as a list collection, to analyze them with other Galaxy tools."/>
             <param name="zip" type="boolean" checked="false" label="Result folder as a separate zip dataset" help="Same content as the download of the report and result folder dataset."/>
         </section>
         <section name="advanced" title="Parameter file" expanded="false">
@@ -331,9 +272,7 @@ echo "result folder: \$results_dir"
         </section>
     </inputs>
     <outputs>
-        <data name="strain_report" format="html" label="${tool.name} on ${on_string}: strain identity report">
-            <filter>strain['strain_id_on']</filter>
-        </data>
+        <data name="strain_report" format="html" label="${tool.name} on ${on_string}: strain identity report"/>
         <data name="report" format="html" label="${tool.name} on ${on_string}: report and result folder"/>
         <data name="results_zip" format="zip" label="${tool.name} on ${on_string}: result folder (zip)">
             <filter>output_options['zip']</filter>
@@ -395,32 +334,31 @@ echo "result folder: \$results_dir"
                 </element>
             </output_collection>
         </test>
-        <!-- paired reads (default sample name), own genome, no strain identity, parameters of the form and of a parameter file -->
-        <test expect_num_outputs="1">
+        <!-- paired reads (default sample name), parameters of the form and of a parameter file -->
+        <test expect_num_outputs="2">
             <conditional name="input">
                 <param name="input_type" value="paired"/>
                 <param name="forward" value="reads_R1.fastq.gz" ftype="fastqsanger.gz"/>
                 <param name="reverse" value="reads_R2.fastq.gz" ftype="fastqsanger.gz"/>
             </conditional>
-            <section name="data">
-                <conditional name="ref">
-                    <param name="ref_source" value="own"/>
-                    <param name="ref_files" value="chrIII_MAT_region.fasta" ftype="fasta"/>
-                </conditional>
-                <param name="ylab" value="100"/>
-            </section>
             <section name="strain">
-                <param name="strain_id_on" value="false"/>
+                <param name="min_concordance" value="0.8"/>
             </section>
             <section name="advanced">
                 <param name="params" value="params.json" ftype="json"/>
             </section>
+            <output name="strain_report" ftype="html">
+                <assert_contents>
+                    <has_text text="lab_strain_watch strain identity"/>
+                </assert_contents>
+            </output>
             <output name="report" ftype="html">
                 <assert_contents>
                     <has_text text="lab_strain_watch Report"/>
                 </assert_contents>
                 <extra_files type="file" name="reports/nextflow.config" value="test2_nextflow_config_lines.txt" compare="contains"/>
-                <extra_files type="file" name="tsv/variant_counts.tsv" value="variant_counts_columns.txt" compare="contains"/>
+                <!-- the reads carry the HIS3MX6 cassette (see galaxy/local/make_test_data.py) -->
+                <extra_files type="file" name="tsv/tool_coverage.tsv" compare="re_match_multiline" value="test2_tool_coverage.txt"/>
             </output>
         </test>
     </tests>
@@ -434,8 +372,7 @@ reads or assembly, to check its identity ("is this tube really the strain writte
 - the mating type (MATa, MATalpha or MATa/alpha),
 - the genotype of the native marker genes (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5),
 - the status of the mitochondrial genome (rho+, rho- or rho0), hence whether the strain is expected to grow on glycerol,
-- the laboratory tool elements present (plasmids, cassettes, drug resistance markers, tags, promoters...),
-- coverage plots and variant counts against reference genomes, features and mating type sequences.
+- the laboratory tool elements present (plasmids, cassettes, drug resistance markers, tags, promoters...).
 
 The form recapitulates the nextflow.config file of the pipeline: same sections, one field per parameter, with the name of the
 parameter in parentheses, so that the documentation of the pipeline (README and nextflow.config) applies. The strain identity
@@ -450,7 +387,6 @@ database and the execution parameters (Local / Cluster execution section) are se
 - Sample sequences (fastq_path): one or several files of a single sample (FASTQ, FASTA, GenBank, EMBL, plain or compressed, BAM, SAM,
   CRAM, or a zip archive), forward and reverse reads, a paired collection, or a run accession (SRA, ENA, DDBJ).
 - Kind of sequences (seq_kind) and molecule (seq_molecule): reads or assembly, DNA or RNA.
-- Reference genomes (ref_path), features (features_path) and mating type sequences (sex_path), optional: those of the pipeline by default.
 - Parameter file (optional): a JSON object {"parameter": "value"} of nextflow.config parameters, which replaces the values of the form.
 
 -----
@@ -460,8 +396,8 @@ database and the execution parameters (Local / Cluster execution section) are se
 - *strain identity report*: the main result, an HTML report with the decision (strain called and the agreement of the mating type,
   native markers and tool elements with its documented genotype), the warnings, the strain ranking, the tool elements, the native
   marker genes and the mitochondrial genome.
-- *report and result folder*: the HTML report of the coverage and variant counts, with a summary of the database used. This dataset
-  also contains the whole result folder of the pipeline (tsv, figures and reports folders, see the OUTPUT section of the README), so
+- *report and result folder*: the HTML report of the run (parameters, summary of the database used, warnings). This dataset
+  also contains the whole result folder of the pipeline (tsv and reports folders, see the OUTPUT section of the README), so
   that the links of the report work in Galaxy. **To save the result folder, click on the download button of this dataset: you get a
   zip of the folder.**
 - *tables* (optional): the .tsv files of the tsv folder, as a list collection, for further analyses in Galaxy.

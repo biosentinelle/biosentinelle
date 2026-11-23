@@ -13,7 +13,7 @@
 # 2) planemo lint of the tool, with the conda requirements
 # 3) planemo shed_lint of the Tool Shed repository (.shed.yml at the root of the repository)
 # 4) planemo test: runs the tests of the tool in a temporary local Galaxy. Each test runs the whole pipeline
-#    (test 1: an assembly with the strain identity, about 10 minutes; test 2: paired reads without strain identity, a few
+#    (test 1: an assembly with the strain identity, about 10 minutes; test 2: paired reads with a parameter file, a few
 #    minutes; much longer the first time, which pulls the container images).
 #    Progress of the nextflow processes of the running test, in a second terminal: python3 galaxy/local/watch.py
 #    Report: ${LSW_WORK_DIR}/tool_test_output.html

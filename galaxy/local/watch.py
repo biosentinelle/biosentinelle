@@ -7,9 +7,9 @@ The Galaxy tool runs nextflow with -ansi-log false, so that its standard output 
 (one line per started task, shown live in the dataset details thanks to live_tool_output_reporting in settings.sh).
 This script rebuilds the progress table of the nextflow console from the .nextflow.log file of the job, every 2 seconds:
 
-    executor >  local (25)
+    executor >  local (14)
     [3f/2a1b3c] PrepareReads (1)       | 1 of 1 ✔
-    [a2/b3c4d5] Bowtie2_ref (2)        | 1 of 2
+    [a2/b3c4d5] MarkerAlign            | 1 of 1
     [-        ] StrainScore            -
 
 followed by the last warnings and errors of nextflow. Differences with the nextflow console:

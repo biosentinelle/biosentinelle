@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
 Writes the sequence files of galaxy/test-data used by the tests of the Galaxy tool (galaxy/lab_strain_watch.xml),
-from the reference files of the repository, so that they can be rebuilt identically (fixed random seed, gzip without date):
+from sequence files of the repository, so that they can be rebuilt identically (fixed random seed, gzip without date):
 
     S288C_chrIII.fasta.gz     chromosome III of the S288C reference genome (references/genome), an assembly
                               carrying the MAT, HML and HMR loci and the LEU2 marker gene (test 1, seq_kind = "assembly")
-    chrIII_MAT_region.fasta   chrIII:192001-207000 of S288C, around the MAT locus (test 2, own genome of the variant counts)
     reads_R1.fastq.gz         simulated paired-end reads (2 x 150 bp, fragments of 300 bp on average, 30x, 0.2% substitutions)
-    reads_R2.fastq.gz         of chrIII_MAT_region and of the pieces of the pFA6a-3HA-His3MX6 cassette of references/features
-                              joined end to end (test 2), so that the features and mating type sequences of the pipeline are covered
+    reads_R2.fastq.gz         of chrIII:192001-207000 of S288C (around the MAT locus) and of the pieces of the pFA6a-3HA-His3MX6
+                              cassette of galaxy/local/cassette joined end to end (test 2), so that the tool scan finds HIS3MX6
 
 The other files of galaxy/test-data (parameter file, expected lines) are written by hand.
 
@@ -24,7 +23,7 @@ import random
 REPO_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 OUT_DIR = os.path.join(REPO_DIR, "galaxy", "test-data")
 GENOME = os.path.join(REPO_DIR, "references", "genome", "S288C_reference_sequence_R64-1-1_20110203.fsa")
-FEATURES = sorted(glob.glob(os.path.join(REPO_DIR, "references", "features", "*.fasta")))
+FEATURES = sorted(glob.glob(os.path.join(REPO_DIR, "galaxy", "local", "cassette", "*.fasta")))
 CHROMOSOME = "NC_001135"  # chromosome III
 REGION = (192000, 207000)  # 0-based, end excluded: chrIII:192001-207000
 READ_LENGTH = 150
@@ -106,11 +105,6 @@ def main():
     print(f"{path}: {len(chromosome)} bp")
 
     region = chromosome[REGION[0]:REGION[1]]
-    path = os.path.join(OUT_DIR, "chrIII_MAT_region.fasta")
-    with open(path, "w") as handle:
-        handle.write(fasta_text(f"chrIII_{REGION[0] + 1}_{REGION[1]} S288C {CHROMOSOME}:{REGION[0] + 1}-{REGION[1]}", region))
-    print(f"{path}: {len(region)} bp")
-
     cassette = "".join(seq for path in FEATURES for _, seq in read_fasta(path))
     read1, read2 = simulate_pairs([region, cassette], rng)
     for name, text in (("reads_R1.fastq.gz", read1), ("reads_R2.fastq.gz", read2)):

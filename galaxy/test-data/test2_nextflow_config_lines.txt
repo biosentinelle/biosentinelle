@@ -1,9 +1,7 @@
 seq_kind = "reads"
 shred_length = "200"
-ylab = "100"
-strain_id_on = "FALSE"
+min_concordance = "0.8"
 kmer_min_depth = "5"
 /sample/reads"
-/references/ref_path"
 system_exec = 'local'
 process.resourceLimits = [cpus:
