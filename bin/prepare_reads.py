@@ -31,9 +31,6 @@ depth of the alignment stays the depth of the sequencing.
 
 A FASTQ file that needs no change (no U, no long read, no assembly) is hard
 linked, or copied when the file system refuses links, rather than rewritten.
-
---to-fasta mode only converts reference files (FASTA, GenBank, EMBL) to plain
-FASTA, for the reference, feature and mating type folders.
 """
 
 import argparse
@@ -323,25 +320,6 @@ def prepare(args):
         sys.exit("ERROR: no sequence left after reading the input")
 
 
-def to_fasta(args):
-    """Reference mode: FASTA, GenBank or EMBL in, one FASTA per input file out."""
-    os.makedirs(args.out_dir, exist_ok=True)
-    for source in list_sources(args.inputs):
-        fmt = detect_format(source)
-        if fmt == "fastq" or fmt == "sam":
-            sys.exit("ERROR: %s is a %s file, a reference must be FASTA, GenBank or EMBL" % (source.label, fmt.upper()))
-        if fmt == "empty":
-            continue
-        with open(os.path.join(args.out_dir, "%s.fasta" % source.stem), "w") as out:
-            if fmt == "fasta":
-                # Copied as is: Split_fasta does its own header cleaning.
-                with source.open_text() as handle:
-                    shutil.copyfileobj(handle, out)
-                continue
-            for name, sequence, _ in records(source, fmt):
-                out.write(">%s\n%s\n" % (name, sequence.upper()))
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("inputs", nargs="+", help="sequence files, compressed or not, or .zip archives")
@@ -351,13 +329,8 @@ def main():
     parser.add_argument("--frag-length", type=int, default=250,
                         help="length of the pieces (default 250)")
     parser.add_argument("--report", default="prepare_reads.tsv")
-    parser.add_argument("--to-fasta", action="store_true", help="reference mode, see the docstring")
-    parser.add_argument("--out-dir", default="fasta", help="output folder of --to-fasta")
     args = parser.parse_args()
-    if args.to_fasta:
-        to_fasta(args)
-    else:
-        prepare(args)
+    prepare(args)
 
 
 if __name__ == "__main__":

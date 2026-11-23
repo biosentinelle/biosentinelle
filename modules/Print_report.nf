@@ -17,10 +17,6 @@ process Print_report{
     val fastq_name
     path config_file // to have the file in the work dir
     path template_rmd // to have the file in the work dir
-    val nb_ref
-    val nb_feat
-    path final_tsv_ch
-    path coverage_ch
     path db_summary_files, stageAs: 'db_summary/*' // database files summarized in the report, or a placeholder
     path final_warning_ch
 
@@ -35,11 +31,6 @@ process Print_report{
     set -o pipefail
     cp ${config_file} config_file.txt
     cp ${template_rmd} report_file.rmd
-    if [[ -d "${out_path}/tsv" ]]; then
-        cp -r "${out_path}/tsv" .
-    else
-        mkdir ./tsv
-    fi
     Rscript -e '
         warning_collect <- readLines("${final_warning_ch}", warn = FALSE) # one string per line
         rmarkdown::render(
@@ -48,8 +39,6 @@ process Print_report{
             # list of the variables waiting to be replaced in the rmd file:
             params = list(
                 fastq_name = "${fastq_name}", 
-                nb_ref = ${nb_ref},
-                nb_feat = ${nb_feat},
                 warning_collect = warning_collect
             ),
             # output_dir = ".",

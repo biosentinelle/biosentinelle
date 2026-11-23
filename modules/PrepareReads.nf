@@ -73,21 +73,3 @@ process PrepareReads {
     cat prepare_reads.tsv >> prepare_reads_report.txt
     """
 }
-
-// Reference, feature and mating type files: GenBank and EMBL to FASTA, FASTA
-// passed through. All the files of one folder in one task.
-process ToFasta {
-    label 'python' // see the withLabel: python in the nextflow config file
-    cache 'true'
-
-    input:
-    path ref_files
-
-    output:
-    path "fasta/*.fasta", emit: fasta_ch
-
-    script:
-    """
-    prepare_reads.py --to-fasta --out-dir fasta ${ref_files}
-    """
-}
