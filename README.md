@@ -66,7 +66,7 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 <br><br>
 ## HOW IT WORKS
 
-No assembly is made. The sample sequences are first compared with a strain identity database (see [here](https://github.com/orgs/lab-strain-watch/repositories)), through three categories:
+No assembly is made. The sample sequences are first compared with a strain identity database (yeast_db for yeast strains, see [here](https://github.com/orgs/lab-strain-watch/repositories)), through three categories:
 
 | Evidence | How | Reference genome used at run time? |
 | :--- | :--- | :--- |
@@ -75,9 +75,9 @@ No assembly is made. The sample sequences are first compared with a strain ident
 | **Native marker genes** (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5) | The reads are aligned with bowtie2 against a whole reference genome (`panel_reference` parameter of the *nextflow.config file*), so that reads from paralogs and repeats get a low mapping quality. The allele of each marker is read from the alignment (substitutions and small indels from the pileup, deletions from the depth, insertions from soft-clipped reads) and compared with the alleles catalogued in the database, judged by the protein it encodes. | Yes |
 
 
-The panel strains tested are ranked by likelihood. If the best strain matches less than `min_concordance` (parameter of the *nextflow.config file*) of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain, which is what flags a strain absent from the database. 
+The panel strains tested are ranked using SNP/indel likelihood. If the best strain matches less than `min_concordance` (parameter of the *nextflow.config file*) of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain. 
 
-Sex (if relevant, e.g., BY4741 / BY4742) and Native marker genes status are then compared to the most probable strain computed.
+Sex (if relevant, e.g., BY4741 / BY4742) and Native marker genes status are then compared to the most probable strain identified.
 
 What is also checked:
 
@@ -87,27 +87,13 @@ What is also checked:
 | **2-micron plasmid** | The plasmid is not in the reference genome: its sequence (database *two_micron/two_micron.fasta*, A form of RefSeq NC_001398.1) is added to the genome of the same alignment, and the depth over it is set against the nuclear depth: present (cir+, every feature covered: FLP1, REP1, REP2, RAF1 and the two inverted repeats), absent (cir0, no read on the plasmid, where a cir+ strain gives tens of times the nuclear depth) or partial (part of the plasmid only: a 2-micron vector without the plasmid itself, or a plasmid deleted in part or diverging from the reference), with the number of copies per nuclear genome (reads of DNA only). Not assessed for an assembly without a 2-micron contig or for RNA reads without its transcripts. A 2-micron vector (YEp) in a cir+ strain is not told apart from the plasmid. In *marker_genotype.json* under `two_micron`, in the Decision of the report (2-micron) and in its own section. | Yes, with the 2-micron sequence added |
 | **Lab tool elements** (plasmids, cassettes, drug resistance markers, ...) | The reads are aligned with bowtie2 against the tool sequences of the database. Each element is scored by breadth of coverage and identity. The elements present are then placed in the genome from the alignment against the whole reference genome made for the native marker genes: reads crossing the junction between the genome and a construct (soft-clipped where the construct begins, the clipped bases being found in the element), read pairs with one read in the element and its mate on the genome, and, for an element the reference itself carries (a yeast promoter or terminator), its native locus. An element joined to the 2-micron plasmid, whose sequence is part of that alignment, is placed on it (*2micron*): it sits on a 2-micron vector. | Only the tool sequences for the scores; the whole reference genome for the positions |
 
-
-Sample sequences other than short DNA reads in FASTQ files (the *tsv/prepare_reads.tsv* output file says what was done with each file):
-
-| Sample sequences | How |
-| :--- | :--- |
-| **FASTA, GenBank, EMBL** | Rewritten as reads with a uniform base quality of 40, since they have none (the pipeline filters on mapping quality, not on base quality). IUPAC ambiguity letters are read as N. |
-| **BAM, SAM, CRAM** | Converted back to reads with samtools, with the mates of each pair kept. The original alignment is not reused: the reads are aligned again. |
-| **Long reads** (Oxford Nanopore, PacBio) | The k-mer scan reads each read whole. For the bowtie2 alignments, which are designed for short reads, the reads longer than `shred_max_length` (1000 bp by default) are cut into pieces of `shred_length` bases (250 by default), without overlap, so that the depth stays the sequencing depth. |
-| **Assembly** | As for long reads, except that every sequence is cut, into half overlapping pieces. The depth thresholds `kmer_min_depth` and `marker_min_depth` are set to 1, since an assembly has a single copy of each sequence, and the depths of the tool elements and of the native marker genes no longer measure copy number. The mating type is read from the number of copies of the a and alpha cassettes (2 : 1 for MATa, 1 : 2 for MATalpha). A short-read assembly often collapses the three nearly identical cassettes (MAT, HML, HMR) into one a and one alpha contig: the mating type is then reported as unknown rather than as a MATa/alpha diploid. |
-| **RNA** | U is read as T. Depths follow gene expression, not copy number: a strain site or a marker gene that is not expressed is reported as not covered, the mitochondrial genome is not assessed, and the 2-micron plasmid is assessed only when its transcripts are seen (present, without copy number). |
-
-
 <br><br>
 ## INPUT
 
 | Required files |
 | :--- |
 | The sequences of a single sample: reads (short or long, DNA or RNA) or an assembly (contigs, scaffolds or complete genome).<br>Either a file, or a folder of files, all analyzed together as one sample (e.g., the two files of paired-end reads, or several runs of the same sample), or a run accession of [SRA](https://www.ncbi.nlm.nih.gov/sra) (SRR...), [ENA](https://www.ebi.ac.uk/ena/browser/home) (ERR...) or [DDBJ](https://www.ddbj.nig.ac.jp/dra/index-e.html) (DRR...), downloaded during the run.<br>Subfolders are not allowed. Hidden files (*.DS_Store*, etc.) and the *\_\_MACOSX* folder added by macOS in zip files are ignored.<br>Accepted formats: see below. |
-| The strain identity database of the organism: for *Saccharomyces cerevisiae*, the *db/yeast* folder of [yeast_db](https://github.com/lab-strain-watch/yeast_db) (see [STRAIN IDENTITY DATABASE](#strain-identity-database)). |
-| The reference genome the database was built on: S288C R64-1-1 for the yeast database, provided in the *references/genome* folder of lab_strain_watch. |
-| Only for a CRAM sample (optional): the FASTA reference genome it was compressed against. Without it, samtools fetches this reference from the EBI server by its checksum, which needs network access. |
+| CRAM samples (optional): the FASTA reference genome compressed against. Without it, samtools fetches this reference from the EBI server by its checksum, which needs network access. |
 
 <br>
 
@@ -129,23 +115,15 @@ Each of these files can be compressed (.gz, .bz2) or put into a .zip archive (ex
 
 Not accepted: raw Nanopore signal (FAST5, POD5), which must be basecalled first (with dorado, for instance), and Illumina BCL run folders, which must be demultiplexed first (with bcl-convert, for instance).
 
-<br><br>
-## STRAIN IDENTITY DATABASE
+Of note, sequences other than short DNA reads FASTQ files are pre-processed like this (see also the *tsv/prepare_reads.tsv* in the output folder):
 
-The database is in the separate repository [yeast_db](https://github.com/lab-strain-watch/yeast_db), which also holds *build_db.nf*, the workflow that builds it. The yeast database is provided in its *db/yeast* folder and is only read by *main.nf*: nothing has to be built to analyze a sample. Clone it next to lab_strain_watch (see [Prerequisite](#1-prerequisite)), or set `db_path` to its *db* folder. It contains:
-
-| Folder | Content |
+| Sample sequences | How |
 | :--- | :--- |
-| *organism.tsv* | Organism, reference genome and summary of the database. |
-| *panels* | Strain SNP and indel panel: *panel_sites.tsv.gz* (sites and expected allele of each strain), *panel_kmers.tsv.gz* (k-mers of each allele), *panel_strains.tsv* (strains of the panel), *panel_report.txt* (build log), *panel_tree.nwk* (tree of the panel strains, opened from the report) and *panel_tree_report.txt* (its build log). |
-| *strains* | Strain catalogue (*strains.tsv*) and strain name aliases (*aliases.tsv*). |
-| *mating* | MATa and MATalpha k-mers (*mating_kmers.tsv*). |
-| *mito* | Mitochondrial genes needed for respiration, exons only (*mito_genes.tsv*), for the mtDNA status (rho+, rho-, rho0) and growth on glycerol. |
-| *two_micron* | Sequence of the 2-micron plasmid, which the reference genome does not hold (*two_micron.fasta*), and its features (*two_micron_features.tsv*: FLP1, REP1, REP2, RAF1, IR1, IR2), for the 2-micron plasmid status (cir+, cir0) and copy number. Without it, the plasmid is not assessed, with a warning. |
-| *markers* | Native marker gene loci (*marker_loci.tsv*, *.bed*, *.fasta*), allele catalogue (*marker_alleles.tsv*), documented genotypes of laboratory strains (*documented_genotypes.tsv*) and repeats masked in the flanks (*marker_repeats.tsv*). |
-| *tools* | Laboratory tool element sequences (*tools.fasta*) and their description (*tools.tsv*). |
-
-The way each part was made, the sources, the choice of k and the validation of the yeast panel are described in the *db/README.md* file of yeast_db, together with the commands to rebuild them. Warning: `panel_reference` must be the reference genome the database was built on.
+| **FASTA, GenBank, EMBL** | Rewritten as reads with a uniform base quality of 40, since they have none (the pipeline filters on mapping quality, not on base quality). IUPAC ambiguity letters are read as N. |
+| **BAM, SAM, CRAM** | Converted back to reads with samtools, with the mates of each pair kept. The original alignment is not reused: the reads are aligned again. |
+| **Long reads** (Oxford Nanopore, PacBio) | The k-mer scan reads each read whole. For the bowtie2 alignments, which are designed for short reads, the reads longer than `shred_max_length` (1000 bp by default) are cut into pieces of `shred_length` bases (250 by default), without overlap, so that the depth stays the sequencing depth. |
+| **Assembly** | As for long reads, except that every sequence is cut, into half overlapping pieces. The depth thresholds `kmer_min_depth` and `marker_min_depth` are set to 1, since an assembly has a single copy of each sequence, and the depths of the tool elements and of the native marker genes no longer measure copy number. The mating type is read from the number of copies of the a and alpha cassettes (2 : 1 for MATa, 1 : 2 for MATalpha). A short-read assembly often collapses the three nearly identical cassettes (MAT, HML, HMR) into one a and one alpha contig: the mating type is then reported as unknown rather than as a MATa/alpha diploid. |
+| **RNA** | U is read as T. Depths follow gene expression, not copy number: a strain site or a marker gene that is not expressed is reported as not covered, the mitochondrial genome is not assessed, and the 2-micron plasmid is assessed only when its transcripts are seen (present, without copy number). |
 
 <br><br>
 ## HOW TO RUN
@@ -509,6 +487,9 @@ Files of the strain identity branch (*strain_identity_report.html*, *site_calls.
         </td>
     </tr>
 </table>
+
+
+
 
 
 <br><br>
