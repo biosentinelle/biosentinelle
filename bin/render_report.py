@@ -245,6 +245,27 @@ HELP = {
              "fully covered by a diverged sequence, or a perfect but partial one, is not the "
              "element of the database.",
     "status": "From the score: present (&ge; 99), partial (90 to 99), absent (&lt; 90).",
+    "position": "<b>Where the element sits in the genome</b>, for the elements present only, as "
+                "chromosome:first-last base of the reference genome (1-based, both ends "
+                "included). Found in the alignment of the reads to the whole genome: a read "
+                "crossing the junction between the genome and a construct aligns on its genomic "
+                "part and is cut (soft-clipped) where the construct begins, the cut bases being "
+                "found in the element; with paired reads, a read in the element whose mate is on "
+                "the genome also points at the junction.<br><b>insertion</b>: both junctions "
+                "seen to the base (give or take the few bases the genome and the element may "
+                "share at a junction). The construct replaces the bases given (a gene deleted with a "
+                "cassette), or sits between the two bases given. An element inside a construct "
+                "(a promoter of a cassette, a terminator between a tag and its marker) gets the "
+                "position of the construct.<br><b>one junction</b>: one side seen, the construct "
+                "begins after, or ends before, the base given.<br><b>approximate</b> (~): a side "
+                "seen by read pairs only, the junction lying within about a fragment length of "
+                "the position given.<br><b>native locus</b>: the reference genome itself carries "
+                "this sequence there (a yeast promoter, terminator or gene used in cassettes), so "
+                "an unmodified strain has it there too.<br><b>not found</b>: no read joins the "
+                "element to the genome: it may be on a plasmid, or inside a longer construct "
+                "whose ends are not in the database; reads under about 50 bases, unpaired, "
+                "cannot show a junction. Mouse over a position, or click the ? of the element, "
+                "for the evidence.",
     "element_id": "Unique identifier of the element in the database: its name, two underscores, "
                   "then the first 6 characters of the SHA-256 fingerprint of its DNA sequence. "
                   "Two elements with the same name but different sequences get different "
@@ -554,6 +575,19 @@ select, .pager button {
 .decision details > ul { margin-top: 4px; }
 .documented { list-style: none; padding-left: 0; }
 .documented > li { margin: 0 0 10px 0; }
+/* the documented genotypes, in a drop-down list */
+details.doc-list > summary {
+  display: inline-flex; align-items: baseline; gap: 8px; cursor: pointer; list-style: none;
+  padding: 1px 10px; border: 1px solid var(--border-strong); border-radius: 4px;
+  background: var(--bg-raised); font-size: 0.92rem;
+}
+details.doc-list > summary::-webkit-details-marker { display: none; }
+details.doc-list > summary::after { content: "▾"; color: var(--fg-muted); }
+details.doc-list[open] > summary::after { content: "▴"; }
+details.doc-list > summary:hover { border-color: var(--accent); }
+details.doc-list > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+details.doc-list > ul { margin-top: 8px; }
+td.pos > span { white-space: nowrap; }
 .marker-grid {
   display: grid; grid-template-columns: max-content max-content max-content;
   column-gap: 14px; row-gap: 2px; margin: 2px 0;
@@ -683,6 +717,15 @@ function fillElement(body, eid) {
          'found in any strain, with or without a cassette.');
   } else if (t.origin === 'foreign') {
     para(body, 'Origin', 'foreign: absent from the yeast genome, so a hit means a construct.');
+  }
+  if (t.positions) {
+    if (!t.positions.length) {
+      para(body, 'Position in the genome', 'not found: ' + (t.position_note || ''));
+    }
+    for (i = 0; i < t.positions.length; i++) {
+      para(body, i === 0 ? 'Position in the genome' : '', t.positions[i].label + ' (' +
+           t.positions[i].kind + '): ' + t.positions[i].detail + '.');
+    }
   }
   var mk = (data().markers || {}).markers || [];
   for (i = 0; i < mk.length; i++) {
@@ -2583,6 +2626,29 @@ def render_sex(d):
 </section>""".format(items=items)
 
 
+POSITION_KIND = {"native": "native locus", "insertion": "insertion",
+                 "one junction": "one junction", "approximate": "approximate"}
+
+
+def position_cell(t):
+    """Where an element present sits in the genome; empty for the others, and
+    'not searched' when the positions were not looked for (no genome
+    alignment)."""
+    if colour_of(t) != "green":
+        return "<td></td>"
+    if "positions" not in t:
+        return '<td class="muted">not searched</td>'
+    positions = t.get("positions") or []
+    if not positions:
+        return '<td><span class="muted" title="{n}">not found</span></td>'.format(
+            n=esc(t.get("position_note")))
+    return '<td class="pos">{}</td>'.format("<br>".join(
+        '<span title="{d}"><code>{l}</code> <span class="muted">{k}</span></span>'.format(
+            d=esc(p.get("detail")), l=esc(p.get("label")),
+            k=esc(POSITION_KIND.get(p.get("kind"), p.get("kind"))))
+        for p in positions))
+
+
 def tool_row(t):
     c = colour_of(t)
     return """      <tr data-eclass="{ec}">
@@ -2594,9 +2660,11 @@ def tool_row(t):
         <td class="n">{depth}</td>
         <td class="n">{score}</td>
         <td class="status {c}"><span class="g">{glyph}</span>{label}</td>
+        {position}
         <td style="white-space:nowrap"><code>{eid}</code> <button type="button" class="help" data-help="element" data-eid="{eid}"
             aria-label="Explain {eid}" title="Explain {eid}">?</button></td>
       </tr>""".format(
+        position=position_cell(t),
         ec=esc(t.get("element_class") or "unclassified"),
         name=esc(t.get("name") or "?"),
         ecls=esc(t.get("element_class") or "unclassified"),
@@ -2612,11 +2680,12 @@ def tool_row(t):
 
 TOOL_HEAD = """      <tr><th>name</th><th>class {}</th><th class="n">length (bp) {}</th>
         <th class="n">breadth {}</th><th class="n">identity {}</th><th class="n">mean depth {}</th>
-        <th class="n">score {}</th><th>status {}</th><th>element_id {}</th></tr>""".format(
+        <th class="n">score {}</th><th>status {}</th><th>position in the genome {}</th>
+        <th>element_id {}</th></tr>""".format(
     help_btn("class", "class"), help_btn("length", "length"), help_btn("breadth", "breadth"),
     help_btn("identity", "identity"), help_btn("mean_depth", "mean depth"),
     help_btn("score", "the score"), help_btn("status", "status"),
-    help_btn("element_id", "element_id"))
+    help_btn("position", "the position in the genome"), help_btn("element_id", "element_id"))
 
 
 def render_tools(d):
@@ -2666,6 +2735,20 @@ def render_tools(d):
     scorable = [t for t in tools if (t.get("scorable") or "yes") != "short"]
     short = [t for t in tools if (t.get("scorable") or "yes") == "short"]
 
+    placed = d.get("tool_positions") or {}
+    if placed.get("searched"):
+        position_note = ("  <p class=\"note\">Position in the genome {h}: where the reads place each "
+                         "element present, on the reference genome {r} (chromosome:first-last base). "
+                         "The positions are also in <i>tool_positions.tsv</i>.{n}</p>").format(
+            h=help_btn("position", "the position in the genome"),
+            r=esc(d.get("reference") or ""),
+            n="".join(" Note: {}.".format(esc(x)) for x in placed.get("notes") or []))
+    else:
+        position_note = ("  <p class=\"note\">The positions in the genome of the elements present were "
+                         "not searched: they need the native marker database and "
+                         "<code>panel_reference</code>, for the alignment of the reads to the whole "
+                         "genome.</p>")
+
     classes = sorted({str(t.get("element_class") or "unclassified") for t in scorable})
     options = "\n".join(
         '      <option value="{v}">{v}</option>'.format(v=esc(c)) for c in classes)
@@ -2707,6 +2790,7 @@ def render_tools(d):
 {tiles}
   </div>
 {legend}
+{position_note}
   <div class="controls">
     <label for="tool-class-filter">Filter by element class:</label>
     <select id="tool-class-filter">
@@ -2717,7 +2801,8 @@ def render_tools(d):
 {main_tbl}
 {short_tbl}
 </section>""".format(ns=len(scorable), nsh=len(short), tiles=tiles, legend=legend,
-                     options=options, main_tbl=main_tbl, short_tbl=short_tbl)
+                     position_note=position_note, options=options, main_tbl=main_tbl,
+                     short_tbl=short_tbl)
 
 
 MITO_STATUS = {
@@ -2883,8 +2968,23 @@ def render_markers(d):
     markers = mk.get("markers") or []
     if not markers:
         return ""
-    matches = [m for m in (mk.get("documented_genotype_matches") or [])][:4]
-    match_items = "\n".join(documented_match(m, len(markers)) for m in matches)
+    # Every documented genotype, in a drop-down list (closed), the one agreeing
+    # at the most markers first, as genotype_markers.py sorts them.
+    matches = list(mk.get("documented_genotype_matches") or [])
+    if matches:
+        first = matches[0]
+        documented = """  <details class="doc-list">
+    <summary>{n} documented genotype{s}, by number of markers that agree: {f} first ({a} of {c})</summary>
+    <ul class="documented">
+{items}
+    </ul>
+  </details>""".format(n=len(matches), s="s" if len(matches) > 1 else "", f=esc(first["strain"]),
+                       a=first["agree"], c=first["compared"],
+                       items="\n".join(documented_match(m, len(markers)) for m in matches))
+    else:
+        documented = """  <ul class="documented">
+    <li>none documented</li>
+  </ul>"""
     limits = "\n".join("    <li>{}</li>".format(esc(x)) for x in mk.get("limits") or [])
     # Expected status per gene in the first strain of the SNP ranking. The two
     # readings are kept side by side, neither one corrects the other.
@@ -2915,9 +3015,7 @@ def render_markers(d):
     </tbody>
   </table>
   <h3>Documented genotypes</h3>
-  <ul class="documented">
-{matches}
-  </ul>
+{documented}
   <h3>Limits</h3>
   <ul>
 {limits}
@@ -2929,7 +3027,7 @@ def render_markers(d):
                      effect_help=help_btn("marker_effect", "the effect"),
                      rows="\n".join(marker_row(m, expected_by_gene.get(m.get("gene"), {})
                                                if ex else None) for m in markers),
-                     matches=match_items or "    <li>none documented</li>", limits=limits)
+                     documented=documented, limits=limits)
 
 
 # --------------------------------------------------------------------------- #

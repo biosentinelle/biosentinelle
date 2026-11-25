@@ -64,3 +64,46 @@ process ToolScore {
         --out tool_coverage.tsv |& tee -a tool_score_report.txt
     """
 }
+
+// Where the tool elements present sit in the genome, from the reads of the
+// genome alignment of MarkerAlign that cross a junction with an element, the
+// read pairs with one read in an element, and the stretches of the reference
+// that carry an element (native loci).
+process ToolPosition {
+    label 'python' // see the withLabel: python in the nextflow config file
+    publishDir "${out_path}/tsv", mode: 'copy', pattern: "tool_positions.tsv", overwrite: false
+    cache 'true'
+
+    input:
+    tuple path(clips), path(tool_reads), path(mates), path(chunks), path(read_length), path(read_layout)
+    path tools_fasta
+    path tools_manifest
+    path tool_coverage
+    path reference
+    val seq_kind
+
+    output:
+    path "tool_positions.json", emit: tool_positions_json_ch
+    path "tool_positions.tsv", emit: tool_positions_tsv_ch
+    path "tool_position_report.txt", emit: tool_position_log_ch
+
+    script:
+    """
+    echo -e "\\n\\n<br /><br />\\n\\n### TOOL ELEMENT POSITIONS\\n\\n" > tool_position_report.txt
+
+    locate_tools.py \\
+        --clips ${clips} \\
+        --reads ${tool_reads} \\
+        --mates ${mates} \\
+        --chunks ${chunks} \\
+        --read-length ${read_length} \\
+        --layout ${read_layout} \\
+        --tools ${tools_fasta} \\
+        --manifest ${tools_manifest} \\
+        --coverage ${tool_coverage} \\
+        --reference ${reference} \\
+        --seq-kind ${seq_kind} \\
+        --out tool_positions.json \\
+        --tsv tool_positions.tsv |& tee -a tool_position_report.txt
+    """
+}

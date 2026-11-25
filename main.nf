@@ -31,7 +31,7 @@ include {Print_warnings} from './modules/Print_warnings.nf'
 include {Print_report} from './modules/Print_report.nf'
 include {Backup} from './modules/Backup.nf'
 include {KmerScan} from './modules/KmerScan.nf'
-include {ToolDepth; ToolScore} from './modules/ToolScan.nf'
+include {ToolDepth; ToolScore; ToolPosition} from './modules/ToolScan.nf'
 include {StrainScore; StrainReport} from './modules/StrainID.nf'
 include {MarkerAlign; MarkerGenotype} from './modules/MarkerGenotype.nf'
 include {AlignmentToFastq; PrepareReads} from './modules/PrepareReads.nf'
@@ -191,7 +191,8 @@ workflow {
     // Strain identity: the panel carries both allele k-mers, so the sample is
     // never variant called (alignment-free strain and mating type calls), and
     // the reads are aligned only for the tool elements of the database and for
-    // the native marker genes and the mitochondrial genome.
+    // the native marker genes, the mitochondrial genome and the positions of
+    // the tool elements in the genome.
     db_dir = "${db_path}/${organism_dir}"
     panel_sites = file("${db_dir}/panels/panel_sites.tsv.gz", checkIfExists: false)
     panel_kmers = file("${db_dir}/panels/panel_kmers.tsv.gz", checkIfExists: false)
@@ -250,10 +251,11 @@ workflow {
         marker_alleles = file("${db_dir}/markers/marker_alleles.tsv", checkIfExists: false)
         marker_reference = file("${panel_reference}", checkIfExists: false)
         if( ! marker_loci.exists() || ! marker_alleles.exists() || ! marker_reference.exists()){
-            warn3 = "\n\nWARNING:\nNO NATIVE MARKER DATABASE IN ${db_dir}/markers, OR panel_reference NOT FOUND.\nNATIVE MARKER GENOTYPING IS SKIPPED.\n"
+            warn3 = "\n\nWARNING:\nNO NATIVE MARKER DATABASE IN ${db_dir}/markers, OR panel_reference NOT FOUND.\nNATIVE MARKER GENOTYPING IS SKIPPED, AND THE TOOL ELEMENTS PRESENT ARE NOT PLACED IN THE GENOME.\n"
             print(warn3)
             warning_ch = warning_ch.mix(Channel.value(warn3))
             marker_json_ch = Channel.of('{}').collectFile(name: 'no_markers.json')
+            tool_positions_ch = Channel.of('{}').collectFile(name: 'no_tool_positions.json')
         }else{
             // mtDNA status (rho, growth on glycerol): skipped, with a warning,
             // when the database predates mito/mito_genes.tsv.
@@ -271,9 +273,25 @@ workflow {
                 align_ch,
                 marker_reference,
                 file("${db_dir}/markers/marker_loci.bed", checkIfExists: true),
-                mito_genes
+                mito_genes,
+                tools_fasta
             )
             copyLogFile('marker_align_report.log', MarkerAlign.out.marker_align_log_ch, out_path)
+
+            // Positions in the genome of the tool elements present, from the
+            // same genome alignment: reads crossing a junction between the
+            // genome and an element, read pairs with one read in an element,
+            // and the native loci of the elements the reference carries.
+            ToolPosition(
+                MarkerAlign.out.tool_evidence_ch,
+                tools_fasta,
+                tools_manifest,
+                ToolScore.out.tool_coverage_ch,
+                marker_reference,
+                seq_kind
+            )
+            copyLogFile('tool_position_report.log', ToolPosition.out.tool_position_log_ch, out_path)
+            tool_positions_ch = ToolPosition.out.tool_positions_json_ch
 
             MarkerGenotype(
                 fastq_name,
@@ -307,6 +325,7 @@ workflow {
             tools_manifest,
             ToolScore.out.tool_coverage_ch,
             marker_json_ch,
+            tool_positions_ch,
             organism_name,
             reference_name,
             strain_error_rate,
