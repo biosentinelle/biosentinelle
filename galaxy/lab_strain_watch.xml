@@ -233,11 +233,11 @@ echo "result folder: \$results_dir"
                 </param>
             </when>
         </conditional>
-        <param name="seq_kind" type="select" label="Kind of sequences (seq_kind)" help="reads: sequencing reads, short or long (long reads are cut into pieces for the bowtie2 alignments, see shred_max_length). assembly: contigs, scaffolds or a whole genome sequence. The depth thresholds kmer_min_depth and marker_min_depth are then set to 1, since an assembly has one copy of each sequence, and the depths of the tool elements and of the native marker genes no longer measure copy number.">
+        <param name="seq_kind" type="select" label="Kind of sequences (seq_kind)" help="reads: sequencing reads, short or long. assembly: contigs, scaffolds or a complete genome sequence. See the HOW IT WORKS section of the README for what changes with long reads and assemblies.">
             <option value="reads" selected="true">reads: sequencing reads, short or long</option>
-            <option value="assembly">assembly: contigs, scaffolds or a whole genome sequence</option>
+            <option value="assembly">assembly: contigs, scaffolds or a complete genome sequence</option>
         </param>
-        <param name="seq_molecule" type="select" label="Molecule (seq_molecule)" help="RNA for RNA-seq reads or direct RNA reads: the analysis is the same, U is read as T, but the report warns that depths then follow gene expression, and that a strain site or a marker gene that is not expressed is reported as not covered.">
+        <param name="seq_molecule" type="select" label="Molecule (seq_molecule)" help="DNA, or RNA for RNA-seq reads or direct RNA reads. See the HOW IT WORKS section of the README for what changes with RNA.">
             <option value="DNA" selected="true">DNA</option>
             <option value="RNA">RNA</option>
         </param>
@@ -253,15 +253,15 @@ echo "result folder: \$results_dir"
                     <param name="cram_fasta" type="data" format="fasta" label="FASTA reference of the CRAM file"/>
                 </when>
             </conditional>
-            <param name="shred_max_length" type="integer" value="1000" min="1" label="Maximal length of the aligned sequences (shred_max_length)" help="Sequences longer than this (long reads, contigs) are cut into pieces of shred_length bases before the bowtie2 alignments. The k-mer scan always reads them whole."/>
-            <param name="shred_length" type="integer" value="250" min="50" label="Length of the pieces (shred_length)" help="Length of the pieces of the sequences longer than shred_max_length: without overlap for reads, half overlapping for an assembly."/>
+            <param name="shred_max_length" type="integer" value="1000" min="1" label="Maximal length of the aligned sequences (shred_max_length)" help="Length (bp) above which the sequences are cut into pieces of shred_length bases, for the bowtie2 alignments only. Every sequence is cut for an assembly."/>
+            <param name="shred_length" type="integer" value="250" min="50" label="Length of the pieces (shred_length)" help="Length (bp) of the pieces of the sequences cut for the bowtie2 alignments (see shred_max_length)."/>
         </section>
         <section name="strain" title="Strain identity" expanded="false" help="Strain identity database section of nextflow.config. The strain identity database (Saccharomyces cerevisiae, 1,172 strains, yeast_db) and its reference genome (panel_reference, S288C R64-1-1) are installed on the Galaxy server.">
-            <param name="kmer_max_bases" type="integer" value="0" min="0" label="Read bases scanned for the strain panel (kmer_max_bases)" help="0 for all of them. The cap is in bases, not reads, because coverage decides whether a site is called. Scanning everything costs about 90 s for 275 Mb. For a much larger genome or a very deep run, 300000000 gives about 25x on a 12 Mb genome."/>
+            <param name="kmer_max_bases" type="integer" value="0" min="0" label="Read bases scanned for the strain panel (kmer_max_bases)" help="0 for all of them (about 90 s for 275 Mb). Example: 300000000 for a very deep run or a larger genome (about 25x on a 12 Mb genome)."/>
             <param name="kmer_min_depth" type="integer" value="3" min="1" label="Minimal k-mer depth of a panel site (kmer_min_depth)" help="Number of panel k-mer observations required before a site is called. Below it, the site is reported as not covered, never as carrying the reference allele. Set to 1 for an assembly."/>
             <param name="strain_error_rate" type="float" value="0.01" min="0" max="0.5" label="Error rate of the strain scoring (strain_error_rate)" help="Assumed probability that a called allele disagrees with the true strain: sequencing error, culture drift and panel error together. Raising it makes the ranking less confident, it does not change the order."/>
             <param name="marker_min_depth" type="integer" value="4" min="1" label="Minimal depth of the native marker genes (marker_min_depth)" help="Number of well mapped reads (mapping quality 20 or more) needed at a position of a native marker gene before it is read. Below it, the position is unknown, never the reference. Set to 1 for an assembly."/>
-            <param name="min_concordance" type="float" value="0.90" min="0" max="1" label="Minimal concordance of the strain call (min_concordance)" help="If the best strain matches less than this fraction of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain: this is what catches a strain absent from the database."/>
+            <param name="min_concordance" type="float" value="0.90" min="0" max="1" label="Minimal concordance of the strain call (min_concordance)" help="If the best strain matches less than this fraction of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain."/>
         </section>
         <section name="output_options" title="Outputs" expanded="true" help="The strain identity report is the main result. The report and result folder dataset always contains the whole result folder: its links work in Galaxy and its download button gives a zip of the folder.">
             <param name="tables" type="boolean" checked="false" label="Result tables as a collection" help="The .tsv files of the tsv folder of the results (strain_ranking.tsv, site_calls.tsv, marker_genotype.tsv, tool_coverage.tsv...) as a list collection, to analyze them with other Galaxy tools."/>
