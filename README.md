@@ -83,7 +83,7 @@ The panel strains are then ranked by likelihood. If the best strain matches less
 
 | Parameter | Description |
 | :--- | :--- |
-| Either a run accession of SRA (SRR...), ENA (ERR...) or DDBJ (DRR...), or a fastq file, or a folder of fastq files. All the files of a folder are analyzed together as a single sample. |
+| `fastq_path` | The sample sequences, despite the parameter name not only FASTQ. Either a run accession of SRA (SRR...), ENA (ERR...) or DDBJ (DRR...), downloaded with fastq-dump, or a file, or a folder of files. All the files of a folder are analyzed together as a single sample. |
 | `seq_kind` | `"reads"` (default) for sequencing reads, short or long, or `"assembly"` for contigs, scaffolds or a complete genome sequence. |
 | `seq_molecule` | `"DNA"` (default) or `"RNA"` (RNA-seq or direct RNA reads). The analysis is the same, but the report warns that depths then follow gene expression, and that a strain site or a marker gene that is not expressed is reported as not covered. |
 | `cram_reference` | Only for a CRAM sample: the FASTA reference it was compressed against. If "NULL", samtools finds the reference from its checksum, which needs network access. |
