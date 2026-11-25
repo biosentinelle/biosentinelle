@@ -31,12 +31,12 @@
 ## AIM
 
 Check the identity of a sequenced laboratory strain, i.e., answer "is this tube really the strain written on its label?". From the sequences of a single sample (reads or assembly), lab_strain_watch reports:
-
-- the most probable strain among the strains of a database (1,172 *Saccharomyces cerevisiae* strains for the yeast database), or "unassigned" if none fits well enough,
-- the mating type (MATa, MATalpha or MATa/alpha),
-- the genotype of the native auxotrophic and counter-selection marker genes (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5),
-- the status of the mitochondrial genome (rho+, rho- or rho0), hence whether the strain is expected to grow on glycerol,
-- the laboratory tool elements present (plasmids, cassettes, drug resistance markers, tags, promoters, ...).
+- **Yeast**
+    - the most probable strain among the strains of a database (1,172 *Saccharomyces cerevisiae* strains for the yeast database), or "unassigned" if none fits well enough,
+    - the mating type (MATa, MATalpha or MATa/alpha),
+    - the genotype of the native auxotrophic and counter-selection marker genes (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5),
+    - the status of the mitochondrial genome (rho+, rho- or rho0), hence whether the strain is expected to grow on glycerol,
+    - the laboratory tool elements present (plasmids, cassettes, drug resistance markers, tags, promoters, ...).
 
 <br><br>
 ## WARNINGS
@@ -44,7 +44,7 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 - Currently dedicated to *Saccharomyces cerevisiae*: only the yeast database (`db/yeast` of [yeast_db](https://github.com/lab-strain-watch/yeast_db)) is provided. Another organism needs its own database, built with the *build_db.nf* file of yeast_db (see [STRAIN IDENTITY DATABASE](#strain-identity-database)).
 - The strain probability is a posterior over the strains of the database, which are assumed to be exhaustive. It is not the probability that the sample *is* that strain. The concordance (fraction of the expected alleles found) is the measure of fit. See the [OUTPUT](#output) section.
 - A single sample per run. All the files of the `fastq_path` folder are analyzed together as one sample.
-- Laboratory stocks drift: a few mismatching sites between a sample and its documented strain are expected (see *db/README.md* of yeast_db).
+- Laboratory stocks drift: a few mismatching sites between a sample and its documented strain are expected (see [here](https://github.com/lab-strain-watch/yeast_db/tree/agent/db)).
 
 <br><br>
 ## CONTENT
@@ -67,16 +67,25 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 <br><br>
 ## HOW IT WORKS
 
-No assembly is made. The sample sequences are compared with a strain identity database (*db/\<organism\>* of [yeast_db](https://github.com/lab-strain-watch/yeast_db), built once by its *build_db.nf* from a reference genome and the sequences of 1,172 *S. cerevisiae* strains), through three independent kinds of evidence:
+No assembly is made. The sample sequences are first compared with a strain identity database (see [here](https://github.com/orgs/lab-strain-watch/repositories)), through three categories:
 
 | Evidence | How | Reference genome used at run time? |
 | :--- | :--- | :--- |
-| **Strain SNP and indel panel** | Alignment-free. For each panel site, the database holds the k-mers of each allele. The sample sequences are streamed once and the k-mers of each allele are counted, giving one allele per site where the depth is at least `kmer_min_depth`. The same is done for the mating type (MATa / MATalpha) k-mers. | No |
-| **Native marker genes** (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5) | The reads are aligned with bowtie2 against the whole reference genome (`panel_reference`), so that reads from paralogs and repeats get a low mapping quality. The allele of each marker is read from the alignment (substitutions and small indels from the pileup, deletions from the depth, insertions from soft-clipped reads) and compared with the alleles catalogued in the database, judged by the protein it encodes. | Yes |
+| **Strain SNP and indel panel** | Alignment-free. For each panel site, the database holds the k-mers of each allele. The sample sequences are streamed once and the k-mers of each allele are counted, giving one allele per site where the depth is at least `kmer_min_depth`. | No |
+| **Sex** | Alignment-free. Same as SNP and indels. | No |
+| **Native marker genes** (URA3, HIS3, LEU2, TRP1, LYS2, ADE2, MET15, CAN1, ARG4, LEU5) | The reads are aligned with bowtie2 against a whole reference genome (`panel_reference` parameter of the *nextflow.config file*), so that reads from paralogs and repeats get a low mapping quality. The allele of each marker is read from the alignment (substitutions and small indels from the pileup, deletions from the depth, insertions from soft-clipped reads) and compared with the alleles catalogued in the database, judged by the protein it encodes. | Yes |
+
+
+The panel strains tested are ranked by likelihood. If the best strain matches less than `min_concordance` (parameter of the *nextflow.config file*) of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain, which is what flags a strain absent from the database. 
+
+Sex (if relevant, e.g., BY4741 / BY4742) and Native marker genes status are then compared to the most probable strain computed.
+
+What is also checked:
+
+| Evidence | How | Reference genome used at run time? |
 | **Mitochondrial genome, growth on glycerol** | From the same alignment, the depth over the exons of the mitochondrial genes needed for respiration (database *mito/mito_genes.tsv*), against the nuclear depth: rho+ (every gene covered, growth on glycerol expected), rho- (whole genes missing), rho0 (no mtDNA), uncertain (genes covered in part). Optional introns are not counted, point mutations (mit-) and nuclear respiratory mutations are not seen. In *marker_genotype.json* under `mitochondria`, in the Decision of the report (Glycerol) and in its own section. | Yes |
 | **Lab tool elements** (plasmids, cassettes, drug resistance markers, ...) | The reads are aligned with bowtie2 against the tool sequences of the database. Each element is scored by breadth of coverage and identity. The elements present are then placed in the genome from the alignment against the whole reference genome made for the native marker genes: reads crossing the junction between the genome and a construct (soft-clipped where the construct begins, the clipped bases being found in the element), read pairs with one read in the element and its mate on the genome, and, for an element the reference itself carries (a yeast promoter or terminator), its native locus. | Only the tool sequences for the scores; the whole reference genome for the positions |
 
-The panel strains are then ranked by likelihood. If the best strain matches less than `min_concordance` of its expected alleles, the sample is reported as unassigned rather than forced onto the closest strain, which is what flags a strain absent from the database. The result is the *strain_identity_report.html* file. Its *tree* button, next to *Strains in the panel*, opens the tree of all the panel strains in a new page, with the strain called highlighted.
 
 <br><br>
 ## INPUT
