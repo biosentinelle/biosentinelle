@@ -191,8 +191,8 @@ workflow {
     // Strain identity: the panel carries both allele k-mers, so the sample is
     // never variant called (alignment-free strain and mating type calls), and
     // the reads are aligned only for the tool elements of the database and for
-    // the native marker genes, the mitochondrial genome and the positions of
-    // the tool elements in the genome.
+    // the native marker genes, the mitochondrial genome, the 2-micron plasmid
+    // and the positions of the tool elements in the genome.
     db_dir = "${db_path}/${organism_dir}"
     panel_sites = file("${db_dir}/panels/panel_sites.tsv.gz", checkIfExists: false)
     panel_kmers = file("${db_dir}/panels/panel_kmers.tsv.gz", checkIfExists: false)
@@ -268,12 +268,28 @@ workflow {
                 warning_ch = warning_ch.mix(Channel.value(warn4))
                 mito_genes = Channel.of('').collectFile(name: 'NO_MITO').first()
             }
+            // 2-micron plasmid status (cir+, cir0), its sequence being added to
+            // the reference genome for the alignment: skipped, with a warning,
+            // when the database predates two_micron/.
+            two_micron_fasta_file = file("${db_dir}/two_micron/two_micron.fasta", checkIfExists: false)
+            two_micron_features_file = file("${db_dir}/two_micron/two_micron_features.tsv", checkIfExists: false)
+            if(two_micron_fasta_file.exists() && two_micron_features_file.exists()){
+                two_micron_fasta = Channel.value(two_micron_fasta_file)
+                two_micron_features = Channel.value(two_micron_features_file)
+            }else{
+                warn_two_micron = "\n\nWARNING:\nNO ${db_dir}/two_micron/two_micron.fasta OR two_micron_features.tsv.\nTHE 2-MICRON PLASMID (CIR+, CIR0) IS NOT ASSESSED. UPDATE THE CLONE OF yeast_db.\n"
+                print(warn_two_micron)
+                warning_ch = warning_ch.mix(Channel.value(warn_two_micron))
+                two_micron_fasta = Channel.of('').collectFile(name: 'NO_2MICRON').first()
+                two_micron_features = two_micron_fasta
+            }
             MarkerAlign(
                 fastq_name,
                 align_ch,
                 marker_reference,
                 file("${db_dir}/markers/marker_loci.bed", checkIfExists: true),
                 mito_genes,
+                two_micron_fasta,
                 tools_fasta
             )
             copyLogFile('marker_align_report.log', MarkerAlign.out.marker_align_log_ch, out_path)
@@ -306,6 +322,8 @@ workflow {
                 marker_min_depth_used,
                 MarkerAlign.out.mito_evidence_ch,
                 mito_genes,
+                MarkerAlign.out.two_micron_evidence_ch,
+                two_micron_features,
                 seq_kind,
                 seq_molecule
             )

@@ -4,8 +4,10 @@
 // alone, so a read from a paralog or a repeat gets a low mapping quality instead
 // of landing in a marker. Only the reads over the loci are kept afterwards,
 // plus the depth over the mitochondrial genome and the read count of every
-// chromosome, for the mtDNA (rho, growth on glycerol) status, and the reads
-// that place the tool elements in the genome (ToolPosition).
+// chromosome, for the mtDNA (rho, growth on glycerol) status, the depth over
+// the 2-micron plasmid, whose sequence is added to the reference genome, for
+// its status (cir+, cir0) and copy number, and the reads that place the tool
+// elements in the genome (ToolPosition).
 process MarkerAlign {
     label 'bowtie2' // see the withLabel: bowtie2 in the nextflow config file
     cache 'true'
@@ -16,11 +18,13 @@ process MarkerAlign {
     path reference
     path loci_bed
     path mito_genes // mito_genes.tsv of the database, or NO_MITO
+    path two_micron_fasta // two_micron.fasta of the database, or NO_2MICRON
     path tools_fasta // tools.fasta of the database, for the positions of the tool elements
 
     output:
     tuple path("markers.pileup"), path("markers.depth"), path("markers.sam"), emit: marker_evidence_ch
     tuple path("mito.depth"), path("genome.idxstats"), path("read_length.txt"), emit: mito_evidence_ch
+    path "two_micron.depth", emit: two_micron_evidence_ch
     tuple path("tool_clips.tsv.gz"), path("tool_reads.tsv"), path("tool_mates.tsv"), path("tool_chunks.tsv"), path("read_length.txt"), path("read_layout.txt"), emit: tool_evidence_ch
     path "marker_align_report.txt", emit: marker_align_log_ch
 
@@ -34,7 +38,18 @@ process MarkerAlign {
         (files.any{ it.name.startsWith('S__') } ? ' pieces' : '') // S__: pieces of long sequences
     """
     echo -e "\\n\\n<br /><br />\\n\\n### NATIVE MARKER ALIGNMENT for ${sample_name}\\n\\n" > marker_align_report.txt
-    bowtie2-build --threads ${task.cpus} ${reference} genome_ref > /dev/null 2>> marker_align_report.txt
+    # The 2-micron plasmid is not part of the reference genome: its sequence is
+    # added to the genome the reads are aligned to, so that its reads land on it.
+    two_micron_chrom=""
+    if [[ "${two_micron_fasta}" != "NO_2MICRON" ]]; then
+        two_micron_chrom=\$(awk 'NR == 1 {print substr(\$1, 2)}' ${two_micron_fasta})
+        if [[ "${reference}" == *.gz ]]; then zcat ${reference}; else cat ${reference}; fi | awk 1 > genome_ref.fasta
+        awk 1 ${two_micron_fasta} >> genome_ref.fasta
+        bowtie2-build --threads ${task.cpus} genome_ref.fasta genome_ref > /dev/null 2>> marker_align_report.txt
+        rm genome_ref.fasta
+    else
+        bowtie2-build --threads ${task.cpus} ${reference} genome_ref > /dev/null 2>> marker_align_report.txt
+    fi
 
     # Local mode on purpose: reads crossing a junction with foreign sequence (a
     # Ty1, a cassette) are soft-clipped at the junction instead of being dropped,
@@ -45,15 +60,24 @@ process MarkerAlign {
     samtools view -b -L ${loci_bed} genome.bam > markers.bam
     samtools index markers.bam
 
-    # mtDNA: reads per chromosome (nuclear depth), the depth of every base of the
-    # mitochondrial chromosome, all mapping qualities, and the mean read length.
-    samtools idxstats genome.bam > genome.idxstats
+    # mtDNA: reads per chromosome of the reference genome (nuclear depth), the
+    # depth of every base of the mitochondrial chromosome, all mapping
+    # qualities, and the mean read length.
+    samtools idxstats genome.bam | awk -F '\\t' -v plasmid="\${two_micron_chrom}" '\$1 != plasmid' > genome.idxstats
     samtools stats genome.bam | awk -F '\\t' '\$1 == "SN" && \$2 == "average length:" {print \$3}' > read_length.txt
     if [[ "${mito_genes}" != "NO_MITO" ]]; then
         mito_chrom=\$(awk -F '\\t' 'NR == 2 {print \$4}' ${mito_genes})
         samtools depth -a -Q 0 -r "\${mito_chrom}" genome.bam > mito.depth
     else
         touch mito.depth
+    fi
+    # 2-micron plasmid: the depth of every base, read or not (-aa), all mapping
+    # qualities (the reads of the two inverted repeats have a low one).
+    if [[ -n "\${two_micron_chrom}" ]]; then
+        samtools depth -aa -Q 0 -r "\${two_micron_chrom}" genome.bam > two_micron.depth
+        echo "reads on the 2-micron plasmid (\${two_micron_chrom}): \$(samtools view -c genome.bam "\${two_micron_chrom}")" >> marker_align_report.txt
+    else
+        touch two_micron.depth
     fi
 
     # Tool elements, for their positions in the genome (locate_tools.py, in
@@ -139,6 +163,8 @@ process MarkerGenotype {
     val min_depth
     tuple path(mito_depth), path(idxstats), path(read_length)
     path mito_genes // mito_genes.tsv of the database, or NO_MITO
+    path two_micron_depth
+    path two_micron_features // two_micron_features.tsv of the database, or NO_2MICRON
     val seq_kind
     val seq_molecule
 
@@ -164,6 +190,25 @@ process MarkerGenotype {
             --out mito_status.json |& tee -a marker_genotype_report.txt
         mito_arg="--mito mito_status.json"
     fi
+    # 2-micron plasmid status (cir+, cir0) and copy number. The nuclear depth
+    # leaves out the mitochondrial chromosome, as in mito_status.py.
+    two_micron_arg=""
+    if [[ "${two_micron_features}" != "NO_2MICRON" ]]; then
+        mito_chrom_arg=""
+        if [[ "${mito_genes}" != "NO_MITO" ]]; then
+            mito_chrom_arg="--mito-chrom \$(awk -F '\\t' 'NR == 2 {print \$4}' ${mito_genes})"
+        fi
+        two_micron_status.py \\
+            --features ${two_micron_features} \\
+            --depth ${two_micron_depth} \\
+            --idxstats ${idxstats} \\
+            --read-length \$(cat ${read_length}) \\
+            --seq-kind ${seq_kind} \\
+            --seq-molecule ${seq_molecule} \\
+            --min-depth ${min_depth} \${mito_chrom_arg} \\
+            --out two_micron_status.json |& tee -a marker_genotype_report.txt
+        two_micron_arg="--two-micron two_micron_status.json"
+    fi
     genotype_markers.py \\
         --loci ${loci} \\
         --loci-fasta ${loci_fasta} \\
@@ -177,6 +222,6 @@ process MarkerGenotype {
         --tools-manifest ${tools_manifest} \\
         --min-depth ${min_depth} \\
         --out marker_genotype.json \\
-        --tsv marker_genotype.tsv \${mito_arg} |& tee -a marker_genotype_report.txt
+        --tsv marker_genotype.tsv \${mito_arg} \${two_micron_arg} |& tee -a marker_genotype_report.txt
     """
 }

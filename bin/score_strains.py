@@ -699,6 +699,10 @@ def marker_warnings(markers):
         out.append("mitochondrial genome %s, growth on glycerol: %s; %s"
                    % (mito["status"], mito.get("glycerol"), mito.get("reason")))
     out.extend("mitochondrial genome: %s" % note for note in mito.get("notes", []))
+    two_micron = markers.get("two_micron") or {}
+    if two_micron.get("status") == "partial":
+        out.append("2-micron plasmid partial: %s" % two_micron.get("reason"))
+    out.extend("2-micron plasmid: %s" % note for note in two_micron.get("notes", []))
     return out
 
 

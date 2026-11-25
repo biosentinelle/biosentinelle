@@ -261,7 +261,10 @@ HELP = {
                 "seen by read pairs only, the junction lying within about a fragment length of "
                 "the position given.<br><b>native locus</b>: the reference genome itself carries "
                 "this sequence there (a yeast promoter, terminator or gene used in cassettes), so "
-                "an unmodified strain has it there too.<br><b>not found</b>: no read joins the "
+                "an unmodified strain has it there too.<br><b>2micron</b> in place of a "
+                "chromosome: the element is joined to the 2-micron plasmid, whose sequence is "
+                "added to the reference genome for the alignment: it sits on a 2-micron vector "
+                "(YEp), or in the plasmid itself.<br><b>not found</b>: no read joins the "
                 "element to the genome: it may be on a plasmid, or inside a longer construct "
                 "whose ends are not in the database; reads under about 50 bases, unpaired, "
                 "cannot show a junction. Mouse over a position, or click the ? of the element, "
@@ -280,6 +283,23 @@ HELP = {
             "reduced to a fragment, no growth. <b>rho0</b>: no mtDNA, no growth. "
             "<b>uncertain</b>: every gene there but some only in part. A point mutation in a "
             "mitochondrial gene (mit-) or a nuclear respiratory mutation (pet) is not seen.",
+    "two_micron": "The <b>2-micron plasmid</b> (6,318 bp) lives in the nucleus of most "
+                  "<i>S. cerevisiae</i> strains, at tens of copies per haploid genome. Its "
+                  "four genes keep it there: FLP1 amplifies it by recombining its two inverted "
+                  "repeats (IR1, IR2), REP1 and REP2 partition it at division, RAF1 relieves the "
+                  "repression of FLP1. The cell does not need it, and some strains have lost it. "
+                  "The 2-micron vectors (YEp) that carry only its origin and STB rely on the REP1 "
+                  "and REP2 proteins of the native plasmid. The plasmid is not in the reference "
+                  "genome: its sequence (A form, RefSeq NC_001398.1) is added to the genome the "
+                  "reads are aligned to, and the depth over it is set against the nuclear depth. "
+                  "<b>present (cir+)</b>: every feature covered. <b>absent (cir0)</b>: no read "
+                  "on the plasmid, where a cir+ strain gives tens of times the nuclear depth. "
+                  "<b>partial</b>: part of the plasmid only: a 2-micron vector without the "
+                  "plasmid itself, or a plasmid deleted in part or diverging from the reference. "
+                  "<b>Copies per nuclear genome</b>: median depth over the covered bases divided "
+                  "by the nuclear depth (reads of DNA only). <b>not assessed</b>: an assembly "
+                  "without a 2-micron contig, or RNA reads without its transcripts. A 2-micron "
+                  "vector in a cir+ strain is not told apart from the plasmid.",
     "marker_status": "Status of the gene measured in the sample: active when the encoded protein "
                       "is intact (or a known functional form), inactive when it is lost "
                       "(deletion, frameshift, stop, or a known loss-of-function allele).",
@@ -2409,6 +2429,10 @@ def render_decision(d):
     mito = (d.get("markers") or {}).get("mitochondria")
     glycerol = ('<li><strong>Glycerol:</strong> {} {}</li>'.format(
         mito_state(mito), help_btn("mito", "the mtDNA status")) if mito else "")
+    two_micron = (d.get("markers") or {}).get("two_micron")
+    plasmid = ('<li><strong>2-micron:</strong> {} {}</li>'.format(
+        two_micron_state(two_micron), help_btn("two_micron", "the 2-micron plasmid status"))
+        if two_micron else "")
     tool_check = d.get("tool_check")
     if tool_check is None:   # result file older than tool_check
         elements = [{"name": t.get("name"), "status": COLOUR_LABEL[colour_of(t)],
@@ -2435,10 +2459,11 @@ def render_decision(d):
   {mating}
   {markers}
   {glycerol}
+  {plasmid}
   {tools}
   </ul>
 </section>""".format(strain=strain, decided=render_decided_by(d), mating=mating,
-                    markers=markers, glycerol=glycerol, tools=tools)
+                    markers=markers, glycerol=glycerol, plasmid=plasmid, tools=tools)
 
 
 def render_unassigned(d):
@@ -2877,6 +2902,90 @@ def render_mito(d):
 </section>""".format(items=items, table=table, notes=note_items)
 
 
+TWO_MICRON_STATUS = {
+    # status -> (colour class, glyph); never hue alone
+    "present": ("green", "&#9679;"),
+    "absent": ("red", "&#9632;"),
+}
+
+
+def copies_text(value):
+    """Copy number, one decimal under 10."""
+    value = float(value)
+    return "{:.1f}".format(value) if value < 10 else "{:.0f}".format(value)
+
+
+def two_micron_state(plasmid):
+    """2-micron plasmid status, with cir+ / cir0 and the copy number."""
+    status = plasmid.get("status") or "?"
+    colour, glyph = TWO_MICRON_STATUS.get(status, ("orange", "&#9650;"))
+    extra = [plasmid["cir"]] if plasmid.get("cir") else []
+    if plasmid.get("copies_per_nuclear_genome") is not None:
+        extra.append("{} copies per nuclear genome".format(
+            copies_text(plasmid["copies_per_nuclear_genome"])))
+    return '<span class="status {c}"><span class="g">{g}</span>{s}</span>{x}'.format(
+        c=colour, g=glyph, s=esc(status.replace("_", " ")),
+        x=' <span class="muted">{}</span>'.format(esc(", ".join(extra))) if extra else "")
+
+
+def render_two_micron(d):
+    """2-micron plasmid: present (cir+), absent (cir0) or partial, and its copy number."""
+    plasmid = (d.get("markers") or {}).get("two_micron")
+    if not plasmid:
+        return ""
+
+    def depth(value):
+        return "n/a" if value is None else "{:.1f}".format(float(value))
+    rows = [("Status " + help_btn("two_micron", "the 2-micron plasmid status"),
+             two_micron_state(plasmid)),
+            ("Reason", esc(plasmid.get("reason") or ""))]
+    if plasmid.get("nuclear_depth") is not None:
+        rows.append(("Nuclear depth", esc(depth(plasmid["nuclear_depth"])) + "x"))
+    if plasmid.get("covered_fraction") is not None:
+        rows.append(("Plasmid covered", "{} of {} bp".format(
+            esc(pct(plasmid["covered_fraction"], 0)), esc(plasmid.get("length_bp")))))
+    if plasmid.get("median_depth"):
+        rows.append(("Plasmid depth (median)", esc(depth(plasmid["median_depth"])) + "x"))
+    if plasmid.get("copies_per_nuclear_genome") is not None:
+        rows.append(("Copies per nuclear genome",
+                     esc(depth(plasmid["copies_per_nuclear_genome"]))))
+    items = "\n".join("    <div><dt>{}</dt><dd>{}</dd></div>".format(k, v) for k, v in rows)
+    features = plasmid.get("features") or []
+    state_colour = {"present": ("green", "&#9679;"), "absent": ("red", "&#9632;"),
+                    "partial": ("orange", "&#9650;")}
+    table = ""
+    if features:
+        table = """  <table>
+    <thead><tr><th>feature</th><th>role</th><th>bp</th><th>covered</th><th>median depth</th>
+      <th>state</th></tr></thead>
+    <tbody>
+{}
+    </tbody>
+  </table>""".format("\n".join(
+            "      <tr><td><strong>{f}</strong></td><td>{r}</td><td>{bp}</td><td>{cov}</td>"
+            "<td>{dp}</td><td><span class=\"status {c}\"><span class=\"g\">{gl}</span>{st}"
+            "</span></td></tr>".format(
+                f=esc(x.get("feature")), r=esc(x.get("role")), bp=esc(x.get("length_bp")),
+                cov=esc(pct(x.get("covered_fraction"), 0)), dp=esc(depth(x.get("median_depth"))),
+                c=state_colour.get(x.get("state"), ("orange", ""))[0],
+                gl=state_colour.get(x.get("state"), ("orange", "&#9650;"))[1],
+                st=esc(x.get("state")))
+            for x in features))
+    notes = (plasmid.get("notes") or []) + (plasmid.get("limits") or [])
+    note_items = "\n".join("    <li>{}</li>".format(esc(x)) for x in notes)
+    return """<section id="two_micron">
+  <h2>2-micron plasmid</h2>
+  <dl class="meta">
+{items}
+  </dl>
+{table}
+  <h3>Notes and limits</h3>
+  <ul>
+{notes}
+  </ul>
+</section>""".format(items=items, table=table, notes=note_items)
+
+
 MARKER_STATUS = {
     # status -> (colour class, glyph, label); never hue alone
     "active": ("green", "&#9679;", "active"),
@@ -3219,7 +3328,7 @@ def read_tree(newick_path, strains_path, d):
 # contents (the warnings and the unassigned banner are not sections).
 TOC = [("decision", "Decision"), ("strains", "Strain ranking"), ("sex", "Sex"),
        ("markers", "Native marker genes"), ("mito", "Mitochondrial genome"),
-       ("tools", "Tool elements")]
+       ("two_micron", "2-micron plasmid"), ("tools", "Tool elements")]
 
 
 def render_toc(sections):
@@ -3263,7 +3372,7 @@ def render(d, title, tree=None):
             s=strain, src=esc(ex.get("source")), a=alleles)
     sections = {"decision": render_decision(d), "strains": render_strains(d),
                 "sex": render_sex(d), "markers": render_markers(d), "mito": render_mito(d),
-                "tools": render_tools(d)}
+                "two_micron": render_two_micron(d), "tools": render_tools(d)}
     parts = [
         "<!DOCTYPE html>",
         '<html lang="en">',
@@ -3285,6 +3394,7 @@ def render(d, title, tree=None):
         sections["sex"],
         sections["markers"],
         sections["mito"],
+        sections["two_micron"],
         sections["tools"],
         '<footer class="page">lab_strain_watch report &mdash; rendered {} by '
         "<code>render_report.py</code>. Self-contained: no network access required."

@@ -518,6 +518,8 @@ def main():
     parser.add_argument("--tsv", help="one line per gene")
     parser.add_argument("--mito", help="mito_status.json from mito_status.py, carried into the "
                                        "output as 'mitochondria'")
+    parser.add_argument("--two-micron", help="two_micron_status.json from two_micron_status.py, "
+                                             "carried into the output as 'two_micron'")
     args = parser.parse_args()
 
     loci = load_tsv(args.loci)
@@ -828,6 +830,9 @@ def main():
     if args.mito:
         with open(args.mito) as handle:
             report["mitochondria"] = json.load(handle)
+    if args.two_micron:
+        with open(args.two_micron) as handle:
+            report["two_micron"] = json.load(handle)
     with open(args.out, "w") as handle:
         json.dump(report, handle, indent=1)
     if args.tsv:
