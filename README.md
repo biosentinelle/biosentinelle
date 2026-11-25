@@ -57,6 +57,7 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 | **bin folder** | Contains the scripts (Python, R, Rmarkdown) required by the *main.nf* file. |
 | **modules folder** | Contains the Nextflow processes required by the *main.nf* file. |
 | **conf folder** | Contains the parameter checks of the *main.nf* file. |
+| **references folder** | Contains the reference genome of the yeast database (S288C R64-1-1), required by the *main.nf* file. |
 | **test folder** | Validation scripts of the database and of the strain identity branch (*smoke_test_strain_id.py*, *validate_markers.py*, *validate_panel.py*). |
 | **galaxy folder** | Galaxy tool running the whole pipeline in a single Galaxy job, whose form recapitulates *nextflow.config*, and planemo scripts to run it in a local Galaxy (see [galaxy/README.md](galaxy/README.md)). |
 | **.shed.yml** | Description of the Tool Shed repository of the Galaxy tool. |
@@ -90,33 +91,44 @@ What is also checked:
 | **Lab tool elements** (plasmids, cassettes, drug resistance markers, ...) | The reads are aligned with bowtie2 against the tool sequences of the database. Each element is scored by breadth of coverage and identity. The elements present are then placed in the genome from the alignment against the whole reference genome made for the native marker genes: reads crossing the junction between the genome and a construct (soft-clipped where the construct begins, the clipped bases being found in the element), read pairs with one read in the element and its mate on the genome, and, for an element the reference itself carries (a yeast promoter or terminator), its native locus. An element joined to the 2-micron plasmid, whose sequence is part of that alignment, is placed on it (*2micron*): it sits on a 2-micron vector. | Only the tool sequences for the scores; the whole reference genome for the positions |
 
 
+Sample sequences other than short DNA reads in FASTQ files (the *tsv/prepare_reads.tsv* output file says what was done with each file):
+
+| Sample sequences | How |
+| :--- | :--- |
+| **FASTA, GenBank, EMBL** | Rewritten as reads with a uniform base quality of 40, since they have none (the pipeline filters on mapping quality, not on base quality). IUPAC ambiguity letters are read as N. |
+| **BAM, SAM, CRAM** | Converted back to reads with samtools, with the mates of each pair kept. The original alignment is not reused: the reads are aligned again. |
+| **Long reads** (Oxford Nanopore, PacBio) | The k-mer scan reads each read whole. For the bowtie2 alignments, which are designed for short reads, the reads longer than `shred_max_length` (1000 bp by default) are cut into pieces of `shred_length` bases (250 by default), without overlap, so that the depth stays the sequencing depth. |
+| **Assembly** | As for long reads, except that every sequence is cut, into half overlapping pieces. The depth thresholds `kmer_min_depth` and `marker_min_depth` are set to 1, since an assembly has a single copy of each sequence, and the depths of the tool elements and of the native marker genes no longer measure copy number. The mating type is read from the number of copies of the a and alpha cassettes (2 : 1 for MATa, 1 : 2 for MATalpha). A short-read assembly often collapses the three nearly identical cassettes (MAT, HML, HMR) into one a and one alpha contig: the mating type is then reported as unknown rather than as a MATa/alpha diploid. |
+| **RNA** | U is read as T. Depths follow gene expression, not copy number: a strain site or a marker gene that is not expressed is reported as not covered, the mitochondrial genome is not assessed, and the 2-micron plasmid is assessed only when its transcripts are seen (present, without copy number). |
+
+
 <br><br>
 ## INPUT
 
-| Parameter | Description |
-| :--- | :--- |
-| `fastq_path` | The sample sequences, despite the parameter name not only FASTQ. Either a run accession of SRA (SRR...), ENA (ERR...) or DDBJ (DRR...), downloaded with fastq-dump, or a file, or a folder of files. All the files of a folder are analyzed together as a single sample. |
-| `seq_kind` | `"reads"` (default) for sequencing reads, short or long, or `"assembly"` for contigs, scaffolds or a complete genome sequence. |
-| `seq_molecule` | `"DNA"` (default) or `"RNA"` (RNA-seq or direct RNA reads). The analysis is the same, but the report warns that depths then follow gene expression, and that a strain site or a marker gene that is not expressed is reported as not covered. |
-| `cram_reference` | Only for a CRAM sample: the FASTA reference it was compressed against. If "NULL", samtools finds the reference from its checksum, which needs network access. |
-| `db_path`, `organism_dir` | Strain identity database used: *\<db_path\>/\<organism_dir\>* (*../yeast_db/db/yeast* by default, i.e., yeast_db cloned next to lab_strain_watch). |
-| `panel_reference` | Reference genome of the database (S288C R64-1-1 for yeast), used to genotype the native marker genes. |
+| Required files |
+| :--- |
+| The sequences of a single sample: reads (short or long, DNA or RNA) or an assembly (contigs, scaffolds or complete genome).<br>Either a file, or a folder of files, all analyzed together as one sample (e.g., the two files of paired-end reads, or several runs of the same sample), or a run accession of [SRA](https://www.ncbi.nlm.nih.gov/sra) (SRR...), [ENA](https://www.ebi.ac.uk/ena/browser/home) (ERR...) or [DDBJ](https://www.ddbj.nig.ac.jp/dra/index-e.html) (DRR...), downloaded during the run.<br>Subfolders are not allowed. Hidden files (*.DS_Store*, etc.) and the *\_\_MACOSX* folder added by macOS in zip files are ignored.<br>Accepted formats: see below. |
+| The strain identity database of the organism: for *Saccharomyces cerevisiae*, the *db/yeast* folder of [yeast_db](https://github.com/lab-strain-watch/yeast_db) (see [STRAIN IDENTITY DATABASE](#strain-identity-database)). |
+| The reference genome the database was built on: S288C R64-1-1 for the yeast database, provided in the *references/genome* folder of lab_strain_watch. |
+| Only for a CRAM sample (optional): the FASTA reference genome it was compressed against. Without it, samtools fetches this reference from the EBI server by its checksum, which needs network access. |
 
-See the *nextflow.config* file for the other parameters (`kmer_min_depth`, `marker_min_depth`, `strain_error_rate`, `min_concordance`, `kmer_max_bases`, `shred_max_length`, `shred_length`, ...), each one described there.
+<br>
+
+The dataset used in the *nextflow.config* file, as an example, is the SRA run [SRR26617475](https://www.ncbi.nlm.nih.gov/sra/SRR26617475), downloaded during the run: whole-genome DNA of a BY4741 strain (input control of a ChIP-seq experiment, BioProject [PRJNA1034023](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1034023)), sequenced as 3.9 million pairs of 35 bp Illumina reads.
+
+<br>
 
 Accepted sample formats (recognized from the file content, except BAM, SAM and CRAM, recognized from the extension):
 
 | Format | Extensions | Note |
 | :--- | :--- | :--- |
 | FASTQ | .fastq, .fq | Paired files are recognized by their _1/_2 or _R1/_R2 suffix (example: sample_R1.fastq.gz and sample_R2.fastq.gz). |
-| FASTA | .fasta, .fa, .fna, .fas, .seq, .txt | Reads or assembly contigs. A uniform base quality of 40 is given. |
-| GenBank | .gb, .gbk, .gbff | The sequence of the ORIGIN section is used. |
-| EMBL | .embl, .dat | The sequence of the SQ section is used. |
-| BAM, SAM, CRAM | .bam, .sam, .cram | Converted back to reads with samtools (pairs kept). The original alignment is not reused. |
+| FASTA | .fasta, .fa, .fna, .fas, .seq, .txt | Reads or assembly contigs. |
+| GenBank | .gb, .gbk, .gbff | The sequence must be in the ORIGIN section. |
+| EMBL | .embl, .dat | The sequence must be in the SQ section. |
+| BAM, SAM, CRAM | .bam, .sam, .cram | Reads aligned against any reference, or unaligned. |
 
-Each of these files can be compressed (.gz, .bz2) or put into a .zip archive (except BAM, SAM and CRAM). U is read as T (RNA) and IUPAC ambiguity letters as N.
-
-Long reads (Oxford Nanopore, PacBio) and assemblies: the k-mer scan reads each sequence whole. For the bowtie2 alignments, which are designed for short reads, the sequences longer than `shred_max_length` (1000 bp by default) are cut into pieces of `shred_length` bases (250 by default), without overlap for reads (the depth stays the sequencing depth), and with half overlapping pieces for an assembly. With `seq_kind = "assembly"`, the depth thresholds `kmer_min_depth` and `marker_min_depth` are set to 1, since an assembly has a single copy of each sequence, and the depths of the tool elements and of the native marker genes no longer measure copy number. The mating type of an assembly is read from the number of copies of the a and alpha cassettes (2 : 1 for MATa, 1 : 2 for MATalpha). A short-read assembly often collapses the three nearly identical cassettes (MAT, HML, HMR) into one a and one alpha contig: the mating type is then reported as unknown rather than as a MATa/alpha diploid. The *tsv/prepare_reads.tsv* output file describes what was done with each input file.
+Each of these files can be compressed (.gz, .bz2) or put into a .zip archive (except BAM, SAM and CRAM). U (RNA) and IUPAC ambiguity letters are accepted in the sequences.
 
 Not accepted: raw Nanopore signal (FAST5, POD5), which must be basecalled first (with dorado, for instance), and Illumina BCL run folders, which must be demultiplexed first (with bcl-convert, for instance).
 
