@@ -17,7 +17,6 @@
    - [CONTENT](#content)
    - [HOW IT WORKS](#how-it-works)
    - [INPUT](#input)
-   - [STRAIN IDENTITY DATABASE](#strain-identity-database)
    - [HOW TO RUN](#how-to-run)
    - [OUTPUT](#output)
    - [VERSIONS](#versions)
@@ -42,7 +41,7 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 <br><br>
 ## WARNINGS
 
-- Currently dedicated to *Saccharomyces cerevisiae*: only the yeast database (`db/yeast` of [yeast_db](https://github.com/lab-strain-watch/yeast_db)) is provided. Another organism needs its own database, built with the *build_db.nf* file of yeast_db (see [STRAIN IDENTITY DATABASE](#strain-identity-database)).
+- Currently dedicated to *Saccharomyces cerevisiae*: only the yeast database (`db/yeast` of [yeast_db](https://github.com/lab-strain-watch/yeast_db)) is provided. Another organism needs its own database, built with the *build_db.nf* file of yeast_db (see [here](https://github.com/lab-strain-watch/yeast_db#how-to-build)).
 - The strain probability is a posterior over the strains of the database, which are assumed to be exhaustive. It is not the probability that the sample *is* that strain. The concordance (fraction of the expected alleles found) is the measure of fit. See the [OUTPUT](#output) section.
 - A single sample per run. All the files of the `fastq_path` folder are analyzed together as one sample.
 - Laboratory stocks drift: a few mismatching sites between a sample and its documented strain are expected (see [here](https://github.com/lab-strain-watch/yeast_db/tree/agent/db)).
@@ -108,7 +107,7 @@ Sample sequences other than short DNA reads in FASTQ files (the *tsv/prepare_rea
 | Required files |
 | :--- |
 | The sequences of a single sample: reads (short or long, DNA or RNA) or an assembly (contigs, scaffolds or complete genome).<br>Either a file, or a folder of files, all analyzed together as one sample (e.g., the two files of paired-end reads, or several runs of the same sample), or a run accession of [SRA](https://www.ncbi.nlm.nih.gov/sra) (SRR...), [ENA](https://www.ebi.ac.uk/ena/browser/home) (ERR...) or [DDBJ](https://www.ddbj.nig.ac.jp/dra/index-e.html) (DRR...), downloaded during the run.<br>Subfolders are not allowed. Hidden files (*.DS_Store*, etc.) and the *\_\_MACOSX* folder added by macOS in zip files are ignored.<br>Accepted formats: see below. |
-| The strain identity database of the organism: for *Saccharomyces cerevisiae*, the *db/yeast* folder of [yeast_db](https://github.com/lab-strain-watch/yeast_db) (see [STRAIN IDENTITY DATABASE](#strain-identity-database)). |
+| The strain identity database of the organism: for *Saccharomyces cerevisiae*, the *db/yeast* folder of [yeast_db](https://github.com/lab-strain-watch/yeast_db), installed on galaxy.pasteur.fr by the Galaxy administrators (see [galaxy/README.md](galaxy/README.md)). |
 | The reference genome the database was built on: S288C R64-1-1 for the yeast database, provided in the *references/genome* folder of lab_strain_watch. |
 | Only for a CRAM sample (optional): the FASTA reference genome it was compressed against. Without it, samtools fetches this reference from the EBI server by its checksum, which needs network access. |
 
@@ -131,24 +130,6 @@ Accepted sample formats (recognized from the file content, except BAM, SAM and C
 Each of these files can be compressed (.gz, .bz2) or put into a .zip archive (except BAM, SAM and CRAM). U (RNA) and IUPAC ambiguity letters are accepted in the sequences.
 
 Not accepted: raw Nanopore signal (FAST5, POD5), which must be basecalled first (with dorado, for instance), and Illumina BCL run folders, which must be demultiplexed first (with bcl-convert, for instance).
-
-<br><br>
-## STRAIN IDENTITY DATABASE
-
-The database is in the separate repository [yeast_db](https://github.com/lab-strain-watch/yeast_db), which also holds *build_db.nf*, the workflow that builds it. The yeast database is provided in its *db/yeast* folder and is only read by *main.nf*: nothing has to be built to analyze a sample. On galaxy.pasteur.fr, it is installed on the server by the Galaxy administrators (see [galaxy/README.md](galaxy/README.md)). It contains:
-
-| Folder | Content |
-| :--- | :--- |
-| *organism.tsv* | Organism, reference genome and summary of the database. |
-| *panels* | Strain SNP and indel panel: *panel_sites.tsv.gz* (sites and expected allele of each strain), *panel_kmers.tsv.gz* (k-mers of each allele), *panel_strains.tsv* (strains of the panel), *panel_report.txt* (build log), *panel_tree.nwk* (tree of the panel strains, opened from the report) and *panel_tree_report.txt* (its build log). |
-| *strains* | Strain catalogue (*strains.tsv*) and strain name aliases (*aliases.tsv*). |
-| *mating* | MATa and MATalpha k-mers (*mating_kmers.tsv*). |
-| *mito* | Mitochondrial genes needed for respiration, exons only (*mito_genes.tsv*), for the mtDNA status (rho+, rho-, rho0) and growth on glycerol. |
-| *two_micron* | Sequence of the 2-micron plasmid, which the reference genome does not hold (*two_micron.fasta*), and its features (*two_micron_features.tsv*: FLP1, REP1, REP2, RAF1, IR1, IR2), for the 2-micron plasmid status (cir+, cir0) and copy number. Without it, the plasmid is not assessed, with a warning. |
-| *markers* | Native marker gene loci (*marker_loci.tsv*, *.bed*, *.fasta*), allele catalogue (*marker_alleles.tsv*), documented genotypes of laboratory strains (*documented_genotypes.tsv*) and repeats masked in the flanks (*marker_repeats.tsv*). |
-| *tools* | Laboratory tool element sequences (*tools.fasta*) and their description (*tools.tsv*). |
-
-The way each part was made, the sources, the choice of k and the validation of the yeast panel are described in the *db/README.md* file of yeast_db, together with the commands to rebuild them. Warning: `panel_reference` must be the reference genome the database was built on.
 
 <br><br>
 ## HOW TO RUN
