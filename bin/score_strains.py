@@ -725,6 +725,9 @@ def main():
     parser.add_argument("--tools", help="tool element manifest TSV")
     parser.add_argument("--tool-coverage", help="per-element coverage TSV")
     parser.add_argument("--markers", help="marker_genotype.json from genotype_markers.py")
+    parser.add_argument("--tool-positions",
+                        help="tool_positions.json from locate_tools.py: positions in the genome "
+                             "of the tool elements present")
     parser.add_argument("--sample", required=True)
     parser.add_argument("--organism", default="Saccharomyces cerevisiae")
     parser.add_argument("--reference", default="")
@@ -795,6 +798,18 @@ def main():
         for tool in tools:
             if tool["scorable"] == "yes" and tool["origin"] != "native":
                 tool_summary[tool["colour"]] += 1
+
+    # Positions in the genome of the elements present (green), attached to
+    # each of them; absent from the JSON when they were not searched.
+    tool_positions = {}
+    if args.tool_positions and os.path.getsize(args.tool_positions) > 2:
+        with open(args.tool_positions) as handle:
+            tool_positions = json.load(handle)
+    placed = tool_positions.get("elements") or {}
+    for tool in tools:
+        if tool["element_id"] in placed:
+            tool["positions"] = placed[tool["element_id"]].get("positions") or []
+            tool["position_note"] = placed[tool["element_id"]].get("note") or ""
 
     # Depth over the sites that were called, used to tell an off-panel strain
     # apart from a shallow run. The median is taken rather than the mean so a
@@ -942,6 +957,9 @@ def main():
         "strains": results[:args.report_top],
         "tools": tools,
         "tool_summary": tool_summary,
+        "tool_positions": {key: tool_positions.get(key) for key in
+                           ("searched", "seq_kind", "read_layout", "read_length", "notes",
+                            "sites")} if tool_positions else {"searched": False},
         "warnings": warnings,
         "markers": markers,
         "markers_expected": markers_expected,

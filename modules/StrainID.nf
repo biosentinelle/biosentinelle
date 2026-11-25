@@ -17,6 +17,7 @@ process StrainScore {
     path tools_manifest
     path tool_coverage
     path marker_json
+    path tool_positions // tool_positions.json of ToolPosition, or no_tool_positions.json
     val organism
     val reference_name
     val error_rate
@@ -44,6 +45,7 @@ process StrainScore {
         --tools ${tools_manifest} \\
         --tool-coverage ${tool_coverage} \\
         --markers ${marker_json} \\
+        --tool-positions ${tool_positions} \\
         --sample "${sample_name}" \\
         --organism "${organism}" \\
         --reference "${reference_name}" \\
