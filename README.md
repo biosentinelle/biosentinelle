@@ -17,7 +17,6 @@
    - [CONTENT](#content)
    - [HOW IT WORKS](#how-it-works)
    - [INPUT](#input)
-   - [STRAIN IDENTITY DATABASE](#strain-identity-database)
    - [HOW TO RUN](#how-to-run)
    - [OUTPUT](#output)
    - [VERSIONS](#versions)
@@ -42,7 +41,7 @@ Check the identity of a sequenced laboratory strain, i.e., answer "is this tube 
 <br><br>
 ## WARNINGS
 
-- Currently dedicated to *Saccharomyces cerevisiae*: only the yeast database (`db/yeast` of [yeast_db](https://github.com/lab-strain-watch/yeast_db)) is provided. Another organism needs its own database, built with the *build_db.nf* file of yeast_db (see [STRAIN IDENTITY DATABASE](#strain-identity-database)).
+- Currently dedicated to *Saccharomyces cerevisiae*: only the yeast database (`db/yeast` of [yeast_db](https://github.com/lab-strain-watch/yeast_db)) is provided. Another organism needs its own database, built with the *build_db.nf* file of yeast_db (see [here](https://github.com/lab-strain-watch/yeast_db#how-to-build)).
 - The strain probability is a posterior over the strains of the database, which are assumed to be exhaustive. It is not the probability that the sample *is* that strain. The concordance (fraction of the expected alleles found) is the measure of fit. See the [OUTPUT](#output) section.
 - A single sample per run. All the files of the `fastq_path` folder are analyzed together as one sample.
 - Laboratory stocks drift: a few mismatching sites between a sample and its documented strain are expected (see [here](https://github.com/lab-strain-watch/yeast_db/tree/agent/db)).
@@ -275,7 +274,7 @@ NO SNP PANEL IN .../db/yeast/panels.
 STRAIN RANKING IS SKIPPED. CHECK db_path (A CLONE OF yeast_db) OR RUN ITS build_db.nf FIRST.
 ```
 
-The *panel_sites.tsv.gz*, *panel_kmers.tsv.gz* or *panel_strains.tsv* file is missing in *\<db_path\>/\<organism_dir\>/panels*. Check the `db_path` and `organism_dir` parameters of the *nextflow.config* file, or build the panel (see [STRAIN IDENTITY DATABASE](#strain-identity-database)). No *strain_identity_report.html* file is produced in that case.
+The *panel_sites.tsv.gz*, *panel_kmers.tsv.gz* or *panel_strains.tsv* file is missing in *\<db_path\>/\<organism_dir\>/panels*. Check the `db_path` and `organism_dir` parameters of the *nextflow.config* file, or build the panel (see [here](https://github.com/lab-strain-watch/yeast_db#how-to-build)). No *strain_identity_report.html* file is produced in that case.
 
 #### Message 4
 
