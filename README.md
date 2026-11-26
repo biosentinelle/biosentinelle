@@ -96,7 +96,7 @@ What is also checked:
 
 <br>
 
-The dataset used in the *nextflow.config* file, as an example, is the SRA run [SRR26617475](https://www.ncbi.nlm.nih.gov/sra/SRR26617475), downloaded during the run: whole-genome DNA of a BY4741 strain (input control of a ChIP-seq experiment, BioProject [PRJNA1034023](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1034023)), sequenced as 3.9 million pairs of 35 bp Illumina reads.
+The dataset used in the *nextflow.config* file, as an example, is the SRA run [SRR26617475](https://www.ncbi.nlm.nih.gov/sra/SRR26617475), claimed to be the ChIP-seq of a BY4741 strain, sequenced as 3.9 million pairs of 35 bp Illumina reads.
 
 <br>
 
@@ -123,6 +123,8 @@ Of note, sequences other than short DNA reads FASTQ files are pre-processed like
 | **Long reads** (Oxford Nanopore, PacBio) | The k-mer scan reads each read whole. For the bowtie2 alignments, which are designed for short reads, the reads longer than `shred_max_length` (1000 bp by default) are cut into pieces of `shred_length` bases (250 by default), without overlap, so that the depth stays the sequencing depth. |
 | **Assembly** | As for long reads, except that every sequence is cut, into half overlapping pieces. The depth thresholds `kmer_min_depth` and `marker_min_depth` are set to 1, since an assembly has a single copy of each sequence, and the depths of the tool elements and of the native marker genes no longer measure copy number. The mating type is read from the number of copies of the a and alpha cassettes (2 : 1 for MATa, 1 : 2 for MATalpha). A short-read assembly often collapses the three nearly identical cassettes (MAT, HML, HMR) into one a and one alpha contig: the mating type is then reported as unknown rather than as a MATa/alpha diploid. |
 | **RNA** | U is read as T. Depths follow gene expression, not copy number: a strain site or a marker gene that is not expressed is reported as not covered, the mitochondrial genome is not assessed, and the 2-micron plasmid is assessed only when its transcripts are seen (present, without copy number). |
+
+Of note, data from distant repo are store in the *dataset* folder, where *main.nf* is.
 
 <br><br>
 ## HOW TO RUN
