@@ -17,3 +17,25 @@ process Fastq_dump { // section 24.1 of the labbook 20200707
     fastq-dump --split-3 ${fastq_path} |& tee -a fastq_dump_report.txt
     """
 }
+
+// Gzipped copy of each downloaded file in dataset/<accession>/, where main.nf
+// is (folder ignored by git). This folder can then be given as fastq_path, to
+// analyze the run again without downloading it. The analysis does not wait for
+// this copy: it uses the uncompressed files of Fastq_dump.
+process Fastq_save {
+    label 'bash' // see the withLabel: bash in the nextflow config file
+    publishDir "${projectDir}/dataset/${accession}", mode: 'copy', overwrite: false
+    cache 'true'
+
+    input:
+    val accession
+    path fastq
+
+    output:
+    path "${fastq}.gz"
+
+    script:
+    """
+    gzip -c ${fastq} > ${fastq}.gz
+    """
+}
