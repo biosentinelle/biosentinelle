@@ -175,6 +175,7 @@ process MarkerGenotype {
 
     script:
     """
+    set -o pipefail # a script failure in the pipes to tee below must stop the process
     echo -e "\\n\\n<br /><br />\\n\\n### NATIVE MARKER GENOTYPE for ${sample_name}\\n\\n" > marker_genotype_report.txt
     # mtDNA status (rho+, rho-, rho0), hence growth on glycerol.
     mito_arg=""

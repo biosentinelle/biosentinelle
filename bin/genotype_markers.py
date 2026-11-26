@@ -303,6 +303,18 @@ def catalogue_events(row):
             for a, b, alt in decode_events(row["events"])]
 
 
+def event_order(event):
+    """Sort key of an event, by position.
+
+    A junction (an insertion of unknown sequence, alt None) can sit at the very
+    site of a small insertion called from the pileup, and None does not compare
+    with a string: at the same site, the unknown sequence goes after the known
+    one. Events with a known sequence keep the order of the plain tuples.
+    """
+    start, end, alt = event
+    return (start, end, alt is None, alt or "")
+
+
 def hidden(event, missing, slack=10):
     """Could the reads have missed this event, given where they cannot see."""
     start = event[0]
@@ -664,14 +676,15 @@ def main():
                       if not any(s <= p < e for s, e, _ in large if e > s)]
 
         def to_locus(events):
-            return sorted(genome_event_to_locus(e, locus) for e in events)
+            return sorted((genome_event_to_locus(e, locus) for e in events), key=event_order)
 
         gene_rows = [r for r in catalogue if r["gene"] == gene]
         large_locus, snap_notes = snap_deletions(to_locus(large), gene_rows)
         notes.extend(snap_notes)
-        haplotypes = [("hom", sorted(to_locus(homs) + large_locus))]
+        haplotypes = [("hom", sorted(to_locus(homs) + large_locus, key=event_order))]
         if hets:
-            haplotypes.append(("het", sorted(to_locus(homs + hets) + large_locus)))
+            haplotypes.append(("het", sorted(to_locus(homs + hets) + large_locus,
+                                             key=event_order)))
 
         missing = [iv for iv in intervals_of(
             [genome_event_to_locus((p, p + 1, ""), locus)[0] for p in unreadable])
