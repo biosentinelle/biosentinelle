@@ -21,6 +21,7 @@ process KmerScan {
 
     script:
     """
+    set -o pipefail # a script failure in the pipe to tee below must stop the process
     echo -e "\\n\\n<br /><br />\\n\\n### PANEL K-MER SCAN for ${sample_name}\\n\\n" > kmer_scan_report.txt
 
     scan_kmers.py \\
@@ -30,6 +31,7 @@ process KmerScan {
         --extra-kmers ${mating_kmers} \\
         --extra-out mating_counts.tsv \\
         --max-bases ${max_bases} \\
-        --min-depth ${min_depth} |& tee -a kmer_scan_report.txt
+        --min-depth ${min_depth} \\
+        --threads ${task.cpus} |& tee -a kmer_scan_report.txt
     """
 }
