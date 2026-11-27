@@ -28,8 +28,9 @@
             LSW_APPTAINER_OPTIONS (optional) apptainer run options, default: "no-home and bind /pasteur" (two dashes before each option).
                                   The folders of the Galaxy datasets, of the job and of LSW_DB_PATH must be visible in the containers
             APPTAINER_TMPDIR      (optional) temporary folder used to build the images, default: the job working folder
-        - destination with at least 12 cores and 12 GB for full speed
-          (MarkerAlign process of nextflow.config, the largest one; lower values are applied by process.resourceLimits)
+        - destination with at least 8 cores and 6 GB (KmerScan, MarkerAlignSlice and MarkerAlign processes of nextflow.config;
+          lower values are applied by process.resourceLimits), and more cores for deep samples: the slices of the reads
+          aligned on the genome (MarkerAlignSlice, 8 cores each) run in parallel
         - allow the two HTML reports to be displayed without sanitization (Admin > Allowlist), otherwise their scripts and styles are removed
         - the Run accession option downloads the reads with fastq-dump during the job: it needs an internet access from the computing node
         - optional: live_tool_output_reporting: true in the parameters of the destination, so that the users follow the nextflow processes
@@ -257,7 +258,7 @@ echo "result folder: \$results_dir"
             <param name="shred_length" type="integer" value="250" min="50" label="Length of the pieces (shred_length)" help="Length (bp) of the pieces of the sequences cut for the bowtie2 alignments (see shred_max_length)."/>
         </section>
         <section name="strain" title="Strain identity" expanded="false" help="Strain identity database section of nextflow.config. The strain identity database (Saccharomyces cerevisiae, 1,172 strains, yeast_db) and its reference genome (panel_reference, S288C R64-1-1) are installed on the Galaxy server.">
-            <param name="kmer_max_bases" type="integer" value="0" min="0" label="Read bases scanned for the strain panel (kmer_max_bases)" help="0 for all of them (about 90 s for 275 Mb). Example: 300000000 for a very deep run or a larger genome (about 25x on a 12 Mb genome)."/>
+            <param name="kmer_max_bases" type="integer" value="0" min="0" label="Read bases scanned for the strain panel (kmer_max_bases)" help="0 for all of them (about 20 s for 2.6 Gb). Example: 300000000 for a very deep run or a larger genome (about 25x on a 12 Mb genome)."/>
             <param name="kmer_min_depth" type="integer" value="3" min="1" label="Minimal k-mer depth of a panel site (kmer_min_depth)" help="Number of panel k-mer observations required before a site is called. Below it, the site is reported as not covered, never as carrying the reference allele. Set to 1 for an assembly."/>
             <param name="strain_error_rate" type="float" value="0.01" min="0" max="0.5" label="Error rate of the strain scoring (strain_error_rate)" help="Assumed probability that a called allele disagrees with the true strain: sequencing error, culture drift and panel error together. Raising it makes the ranking less confident, it does not change the order."/>
             <param name="marker_min_depth" type="integer" value="4" min="1" label="Minimal depth of the native marker genes (marker_min_depth)" help="Number of well mapped reads (mapping quality 20 or more) needed at a position of a native marker gene before it is read. Below it, the position is unknown, never the reference. Set to 1 for an assembly."/>
