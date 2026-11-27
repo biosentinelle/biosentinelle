@@ -33,7 +33,7 @@ include {Backup} from './modules/Backup.nf'
 include {KmerScan} from './modules/KmerScan.nf'
 include {ToolDepth; ToolScore; ToolPosition} from './modules/ToolScan.nf'
 include {StrainScore; StrainReport} from './modules/StrainID.nf'
-include {MarkerAlign; MarkerGenotype} from './modules/MarkerGenotype.nf'
+include {MarkerIndex; ReadSlices; MarkerAlignSlice; MarkerAlign; MarkerGenotype} from './modules/MarkerGenotype.nf'
 include {AlignmentToFastq; PrepareReads} from './modules/PrepareReads.nf'
 include {Bowtie2 as Bowtie2_tools} from './modules/Bowtie2.nf'
 //////// end Modules
@@ -287,9 +287,31 @@ workflow {
                 two_micron_fasta = Channel.of('').collectFile(name: 'NO_2MICRON').first()
                 two_micron_features = two_micron_fasta
             }
+            // The genome alignment, in slices of the reads aligned in
+            // parallel, one per 300 MB of FASTQ, which MarkerAlign merges.
+            MarkerIndex(
+                marker_reference,
+                two_micron_fasta,
+                tools_fasta
+            )
+            ReadSlices(
+                align_ch,
+                300000000
+            )
+            MarkerAlignSlice(
+                ReadSlices.out.read_slices_ch.splitText().map{ it.trim().tokenize(' ') },
+                align_ch,
+                MarkerIndex.out.genome_index_ch,
+                MarkerIndex.out.tools_index_ch
+            )
             MarkerAlign(
                 fastq_name,
                 align_ch,
+                MarkerAlignSlice.out.slice_bam_ch.collect(),
+                MarkerAlignSlice.out.slice_tool_reads_ch.collect(),
+                MarkerAlignSlice.out.slice_log_ch.collect(),
+                MarkerIndex.out.marker_index_log_ch,
+                MarkerIndex.out.genome_index_ch,
                 marker_reference,
                 file("${db_dir}/markers/marker_loci.bed", checkIfExists: true),
                 mito_genes,

@@ -8,10 +8,14 @@ Reads are canonicalised, so strand does not matter.
 
 Throughput note
 ---------------
-This is pure Python: expect roughly 1-3 Mbp of reads per second. That is fine
-for a subsampled run and for the yeast proof of concept, and too slow for a
-deep whole-genome sample scanned end to end. Two ways out, in order of
-preference:
+The k-mers of the reads are turned into 2-bit integer codes with numpy and
+looked up among the codes of the panel k-mers, by --threads worker processes
+that each take a block of reads: roughly 8 Mbp of reads per second and per
+thread, so that a deep whole-genome sample (2.6 Gbp, 220x on yeast) is scanned
+in about a minute on 12 threads. Without numpy, or for k above 32, the k-mers
+are counted one by one in pure Python, in one process, at 1-3 Mbp per second.
+The counts, hence the output files, are the same either way. Two ways to spend
+less time:
 
   * --max-bases  Subsample to a number of bases. Coverage, not read count, is
     what decides whether a site gets called, and read length varies by an order
@@ -29,11 +33,20 @@ k-mer is also what low coverage looks like.
 """
 
 import argparse
+import collections
 import csv
+import gc
 import gzip
+import mmap
+import multiprocessing
 import os
 import subprocess
 import sys
+
+try:
+    import numpy as np
+except ImportError:  # the k-mers are then counted in pure Python
+    np = None
 
 COMPLEMENT = str.maketrans("ACGTN", "TGCAN")
 
@@ -98,8 +111,15 @@ def iter_sequences(paths, max_reads, max_bases=0):
                         chunks = []
                     elif line:
                         chunks.append(line)
-                if chunks:
-                    yield "".join(chunks).upper()
+                if chunks:  # the last sequence of the file counts towards the caps too
+                    sequence = "".join(chunks).upper()
+                    yield sequence
+                    emitted += 1
+                    emitted_bases += len(sequence)
+                    if max_reads and emitted >= max_reads:
+                        return
+                    if max_bases and emitted_bases >= max_bases:
+                        return
 
 
 def count_python(paths, wanted, k, max_reads, progress_every, max_bases=0):
@@ -143,6 +163,350 @@ def count_jellyfish(paths, wanted, k, threads, hash_size, workdir):
     return counts, 0
 
 
+# numpy counter. Bases get 2-bit codes (A, C, G, T = 0, 1, 2, 3) and a k-mer
+# the code of its bases, first base in the high bits, so that codes sort as
+# the k-mers do. A read k-mer is canonicalised in count_python, which is the
+# same as looking it up as it is among the panel k-mers and their reverse
+# complements. The codes of the first 16 bases of every read window are
+# hashed into a table that marks those of the panel k-mers: the few windows
+# that pass get the code of all their k bases, which is looked up among the
+# sorted panel codes. A window holding anything but A, C, G or T, of either
+# case, is skipped, as the N that splits a read in count_python. Reads are
+# joined with a newline, which no window may hold either.
+READ_BLOCK = 1 << 22  # bytes of FASTQ records, or of FASTA sequences, sent to a worker at a time
+SLOT_BYTES = 2 * READ_BLOCK  # a block is handed to a worker in a slot of shared memory, if it fits
+BATCH_BASES = 1 << 21  # bases encoded at a time in a worker, which bounds its memory
+HEAD = 16  # bases of a window hashed into the table
+TABLE_BITS = 26  # the table holds 2^26 booleans (64 MB)
+HASH_MULT = 0x9E3779B1
+CODE_WIDTH = {1: "uint8", 2: "uint8", 4: "uint16", 8: "uint32"}  # holds the code of 2 x this many bases
+
+# Set before the workers are forked, which share them: (k, table, sorted codes,
+# panel index of each code), and the slots of shared memory, which carry the
+# blocks 7 times faster than the pipe of the pool.
+_lookup = None
+_slots = None
+
+
+def base_values(letters):
+    """Base code of every byte value: 0 to 3 for the letters of A, C, G, T, 4 for anything else."""
+    values = np.full(256, 4, dtype=np.uint8)
+    for code, bases in enumerate(letters):
+        for letter in bases:
+            values[ord(letter)] = code
+    return values
+
+
+if np is not None:
+    READ_VALUES = base_values(("Aa", "Cc", "Gg", "Tt"))  # reads are upper-cased in count_python
+    PANEL_VALUES = base_values(("A", "C", "G", "T"))
+
+
+def panel_codes(kmers, k):
+    """Codes a read k-mer is looked up among, sorted, and the index in kmers of each.
+
+    The panel k-mers a read can match, each with its reverse complement: as
+    count_python finds a k-mer only once canonicalised and upper-cased, a panel
+    k-mer that is not canonical, or that holds anything but A, C, G and T in
+    upper case, never gets a count.
+    """
+    bases = PANEL_VALUES[np.frombuffer("".join(kmers).encode("ascii", "replace"), dtype=np.uint8)]
+    bases = bases.reshape(len(kmers), k)
+    usable = (bases < 4).all(axis=1)
+    forward = np.zeros(len(kmers), dtype=np.uint64)
+    reverse = np.zeros(len(kmers), dtype=np.uint64)
+    for position in range(k):
+        column = bases[:, position].astype(np.uint64)
+        forward = (forward << np.uint64(2)) | column
+        reverse |= (np.uint64(3) - column) << np.uint64(2 * position)
+    owner = np.flatnonzero(usable & (forward <= reverse))
+    codes = np.concatenate((forward[owner], reverse[owner]))
+    owner = np.concatenate((owner, owner))
+    order = np.argsort(codes)
+    codes, owner = codes[order], owner[order]
+    single = np.ones(len(codes), dtype=bool)  # a palindrome is its own reverse complement
+    single[1:] = codes[1:] != codes[:-1]
+    return codes[single], owner[single]
+
+
+def hash_slots(codes):
+    """Slot in the table of each code of HEAD bases (uint32)."""
+    return (codes * np.uint32(HASH_MULT)) >> np.uint32(32 - TABLE_BITS)
+
+
+def head_codes(bases, length):
+    """Codes (uint32) of the windows of length bases (16 at most) of bases (0 to 3).
+
+    The codes of 2, 4, 8 and 16 bases are built from those of half the length,
+    then those of length bases from the powers of 2 that add up to it.
+    """
+    parts = [power for power in (16, 8, 4, 2, 1) if length & power]
+    codes = {1: bases}
+    power = 1
+    while power < parts[0]:
+        width = np.dtype(CODE_WIDTH[power]).type
+        half = codes[power].astype(width, copy=False)
+        codes[2 * power] = (half[:-power] << width(2 * power)) | half[power:]
+        power *= 2
+    size = len(bases) - length + 1
+    head = codes[parts[0]][:size].astype(np.uint32)
+    offset = parts[0]
+    for power in parts[1:]:
+        head = (head << np.uint32(2 * power)) | codes[power][offset:offset + size]
+        offset += power
+    return head
+
+
+def panel_hits(data):
+    """Index in the panel k-mers of each one found in data (reads joined by newlines)."""
+    k, table, codes, owner = _lookup
+    values = READ_VALUES[np.frombuffer(data, dtype=np.uint8)]
+    found = [np.zeros(0, dtype=np.int64)]
+    if len(codes):
+        for start in range(0, len(values) - k + 1, BATCH_BASES):
+            found.append(batch_hits(values[start:start + BATCH_BASES + k - 1], k, table, codes, owner))
+    return np.concatenate(found)
+
+
+def batch_hits(values, k, table, codes, owner):
+    """panel_hits of the windows of a batch of read base codes (4: not a base)."""
+    head = min(k, HEAD)
+    bases = values & np.uint8(3)
+    size = len(values) - k + 1
+    prefix = head_codes(bases, head)[:size]
+    start = np.flatnonzero(table[hash_slots(prefix)])  # windows whose first bases may be a panel k-mer's
+    windows = prefix[start].astype(np.uint64)
+    for position in range(head, k):
+        windows = (windows << np.uint64(2)) | bases[start + position]
+    missing = np.zeros(len(values) + 1, dtype=np.int32)  # running count of what is not a base
+    np.cumsum(values > 3, dtype=np.int32, out=missing[1:])
+    windows = windows[missing[start + k] == missing[start]]
+    windows.sort()  # searchsorted is much faster on sorted keys
+    index = np.searchsorted(codes, windows)
+    np.minimum(index, len(codes) - 1, out=index)
+    return owner[index[codes[index] == windows]]
+
+
+def tally(sequences, first_empty):
+    """What a worker sends back: the panel indices found and how many times, the read lengths."""
+    lengths = np.fromiter(map(len, sequences), dtype=np.int64, count=len(sequences))
+    index, times = np.unique(panel_hits(b"\n".join(sequences)), return_counts=True)
+    return index.astype(np.int32), times.astype(np.int32), lengths, first_empty
+
+
+def fastq_sequences(block, count=None):
+    """Sequences of a block of FASTQ records, read as iter_sequences does.
+
+    Four lines a record, the second one stripped. An empty sequence ends the
+    file there: the sequences before it are returned, with its index (else -1).
+    """
+    lines = block.split(b"\n")
+    if block.endswith(b"\n"):
+        lines.pop()
+    sequences = [line.strip() for line in lines[1:None if count is None else 4 * count:4]]
+    first_empty = -1
+    if not all(sequences):
+        first_empty = sequences.index(b"")
+        del sequences[first_empty:]
+    return sequences, first_empty
+
+
+def block_of(slot, data):
+    """A block handed to a worker: data itself, or its length when it is in a slot."""
+    if slot is None:
+        return data
+    return _slots[slot * SLOT_BYTES:slot * SLOT_BYTES + data]
+
+
+def scan_fastq(slot, data):
+    return tally(*fastq_sequences(block_of(slot, data)))
+
+
+def scan_fasta(slot, data):
+    return tally(block_of(slot, data).split(b"\n"), -1)
+
+
+def record_end(buffer):
+    """Length of the whole 4-line records at the start of buffer, 0 if there are none."""
+    lines = buffer.count(b"\n")
+    extra = lines % 4
+    if lines == extra:
+        return 0
+    end = len(buffer)
+    for _ in range(extra + 1):
+        end = buffer.rfind(b"\n", 0, end)
+    return end + 1
+
+
+def open_binary(path):
+    """Binary handle on a file, gunzipped by a gzip process when available (a core of its own)."""
+    if not path.endswith(".gz"):
+        return open(path, "rb"), None
+    try:
+        process = subprocess.Popen(["gzip", "-dc", path], stdout=subprocess.PIPE)
+    except OSError:
+        return gzip.open(path, "rb"), None
+    return process.stdout, process
+
+
+def read_blocks(paths, scan):
+    """(file index, worker task, block) over the inputs, in order, until the scan stops.
+
+    FASTQ: blocks of whole records. FASTA: blocks of sequences joined by
+    newlines, read by iter_sequences itself.
+    """
+    for file_index, path in enumerate(paths):
+        if scan.done:
+            return
+        handle, process = open_binary(path)
+        complete = False  # read to its end
+        try:
+            first = handle.readline()
+            fastq = first.startswith(b"@")
+            complete = not first
+            if fastq:
+                buffer = first
+                while not scan.done and file_index not in scan.ended:
+                    chunk = handle.read(READ_BLOCK)
+                    if not chunk:
+                        complete = True
+                        if buffer:
+                            yield file_index, scan_fastq, buffer
+                        break
+                    buffer += chunk
+                    end = record_end(buffer)
+                    if end:
+                        yield file_index, scan_fastq, buffer[:end]
+                        buffer = buffer[end:]
+        finally:
+            if process is not None and not complete:
+                process.kill()  # the rest of the file is not needed
+            handle.close()
+            if process is not None and process.wait() and complete:
+                sys.exit("gzip -dc failed on %s" % path)
+        if first and not fastq:
+            batch, size = [], 0
+            for sequence in iter_sequences([path], 0, 0):
+                if scan.done:
+                    return
+                batch.append(sequence)
+                size += len(sequence) + 1
+                if size >= READ_BLOCK:
+                    yield file_index, scan_fasta, "\n".join(batch).encode("ascii", "replace")
+                    batch, size = [], 0
+            if batch:
+                yield file_index, scan_fasta, "\n".join(batch).encode("ascii", "replace")
+
+
+class Scan:
+    """Totals of the worker results, taken in file order, with the reads caps.
+
+    The caps, the progress lines and the end of a file at an empty sequence
+    follow iter_sequences and count_python read by read.
+    """
+
+    def __init__(self, size, max_reads, max_bases, progress_every):
+        self.counts = np.zeros(size, dtype=np.int64)
+        self.reads = 0
+        self.bases = 0
+        self.max_reads = max_reads
+        self.max_bases = max_bases
+        self.progress_every = progress_every
+        self.done = False  # a cap is reached
+        self.ended = set()  # files ended by an empty sequence
+
+    def add(self, file_index, task, block, result):
+        index, times, lengths, first_empty = result.get()  # also frees the slot of the block
+        if self.done or file_index in self.ended:
+            return
+        stop = None
+        if self.max_reads and self.reads + len(lengths) >= self.max_reads:
+            stop = self.max_reads - self.reads
+        if self.max_bases and self.bases + int(lengths.sum()) >= self.max_bases:
+            reached = int(np.searchsorted(np.cumsum(lengths), self.max_bases - self.bases)) + 1
+            stop = reached if stop is None else min(stop, reached)
+        if stop is not None:
+            self.done = True
+            if stop < len(lengths):  # the reads of the block after the cap are not counted
+                if task is scan_fastq:
+                    sequences = fastq_sequences(block, stop)[0]
+                else:
+                    sequences = block.split(b"\n")[:stop]
+                index, times = tally(sequences, -1)[:2]
+                lengths = lengths[:stop]
+        self.counts[index] += times
+        if self.progress_every:
+            cumulative = self.bases + np.cumsum(lengths)
+            for read in range(self.reads // self.progress_every + 1,
+                              (self.reads + len(lengths)) // self.progress_every + 1):
+                read *= self.progress_every
+                sys.stderr.write("  %d reads, %.1f Mbp\n" % (read, cumulative[read - self.reads - 1] / 1e6))
+            sys.stderr.flush()
+        self.reads += len(lengths)
+        self.bases += int(lengths.sum())
+        if first_empty >= 0:
+            self.ended.add(file_index)
+
+
+class Done:
+    """Result of a task run in the main process, like a pool's AsyncResult."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def get(self):
+        return self.value
+
+
+def count_numpy(paths, wanted, k, max_reads, progress_every, max_bases, threads):
+    """Same counts as count_python, with numpy and threads worker processes."""
+    global _lookup, _slots
+    kmers = list(wanted)  # all of length k
+    codes, owner = panel_codes(kmers, k)
+    table = np.zeros(1 << TABLE_BITS, dtype=bool)
+    table[hash_slots((codes >> np.uint64(2 * (k - min(k, HEAD)))).astype(np.uint32))] = True
+    _lookup = (k, table, codes, owner)
+    scan = Scan(len(kmers), max_reads, max_bases, progress_every)
+    pool = None
+    free = []  # slots of shared memory not in use
+    if threads > 1:
+        # Forked workers share the parent's memory as long as nothing writes
+        # to it: frozen, the panel objects are left alone by their garbage
+        # collector. At most 2 x threads blocks are pending at a time.
+        gc.freeze()
+        free = list(range(2 * threads + 1))
+        _slots = mmap.mmap(-1, len(free) * SLOT_BYTES)
+        pool = multiprocessing.get_context("fork").Pool(threads)
+    pending = collections.deque()
+    try:
+        for file_index, task, block in read_blocks(paths, scan):
+            slot = None
+            if pool is None:
+                result = Done(task(None, block))
+            elif len(block) <= SLOT_BYTES:
+                slot = free.pop()
+                _slots[slot * SLOT_BYTES:slot * SLOT_BYTES + len(block)] = block
+                result = pool.apply_async(task, (slot, len(block)))
+            else:  # a block larger than a slot (a long sequence) goes through the pipe
+                result = pool.apply_async(task, (None, block))
+            pending.append((file_index, task, block, result, slot))
+            while len(pending) > 2 * threads:
+                *taken, slot = pending.popleft()
+                scan.add(*taken)
+                if slot is not None:
+                    free.append(slot)
+        while pending:
+            scan.add(*pending.popleft()[:4])
+    finally:
+        if pool:
+            pool.terminate()
+            pool.join()
+    counts = dict.fromkeys(wanted, 0)
+    for position in np.flatnonzero(scan.counts):
+        counts[kmers[position]] = int(scan.counts[position])
+    return counts, scan.bases
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -169,7 +533,8 @@ def main():
     parser.add_argument("--extra-out", help="output TSV of the --extra-kmers counts")
     parser.add_argument("--jellyfish", action="store_true",
                         help="count with jellyfish instead of in Python")
-    parser.add_argument("--threads", type=int, default=4)
+    parser.add_argument("--threads", type=int, default=4,
+                        help="worker processes of the numpy counter, or jellyfish threads (default 4)")
     parser.add_argument("--hash-size", default="100M")
     parser.add_argument("--workdir", default=".")
     parser.add_argument("--progress-every", type=int, default=100000)
@@ -181,10 +546,15 @@ def main():
     sites = {}
     wanted = set()
     with opener(args.kmers) as handle:
-        for row in csv.DictReader(handle, delimiter="\t"):
-            kmer = row["kmer"]
-            wanted.add(kmer)
-            sites.setdefault(row["site_id"], {}).setdefault(row["allele"], []).append(kmer)
+        rows = csv.reader(handle, delimiter="\t")  # 1.5 million rows: faster than a DictReader
+        header = next(rows, None)
+        if header:
+            columns = [header.index(name) for name in ("kmer", "site_id", "allele")]
+            for row in rows:
+                if row:  # empty lines are skipped, as by a DictReader
+                    kmer, site_id, allele = (row[column] for column in columns)
+                    wanted.add(kmer)
+                    sites.setdefault(site_id, {}).setdefault(allele, []).append(kmer)
     if not wanted:
         sys.exit("empty k-mer panel: %s" % args.kmers)
     extra = {}
@@ -202,8 +572,12 @@ def main():
         counts, bases = count_jellyfish(args.reads, wanted, k, args.threads,
                                         args.hash_size, args.workdir)
     else:
-        counts, bases = count_python(args.reads, wanted, k, args.max_reads,
-                                     args.progress_every, args.max_bases)
+        if np is not None and k <= 32 and "-" not in args.reads:
+            counts, bases = count_numpy(args.reads, wanted, k, args.max_reads,
+                                        args.progress_every, args.max_bases, args.threads)
+        else:
+            counts, bases = count_python(args.reads, wanted, k, args.max_reads,
+                                         args.progress_every, args.max_bases)
         sys.stderr.write("scanned %.1f Mbp\n" % (bases / 1e6))
 
     rows = []

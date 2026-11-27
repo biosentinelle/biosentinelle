@@ -22,12 +22,13 @@ process Bowtie2 { // section 24.1 of the labbook 20200707
     def reads = (r1 ? "-1 ${r1.join(',')} -2 ${r2.join(',')} " : "") + (unpaired ? "-U ${unpaired.join(',')}" : "")
     """
     echo -e "\\n\\n<br /><br />\\n\\n###  Bowtie2 indexing of the reference sequence (${ref_name})\\n\\n" > bowtie2_report.txt
-    bowtie2-build ${ref} ${ref_name} |& tee -a bowtie2_report.txt
+    bowtie2-build --threads ${task.cpus} ${ref} ${ref_name} |& tee -a bowtie2_report.txt
     echo -e "\\n\\n<br /><br />\\n\\n###  Bowtie2 alignment vs ${ref_name}\\n\\n" >> bowtie2_report.txt
     set -o pipefail # a bowtie2 failure in the pipe below must stop the process
-    bowtie2 --sensitive -x ${ref_name} ${reads} -t 2> tempo.txt | samtools sort -o ${fastq_name}_vs_${ref_name}.bam - 2> samtools_sort.txt
+    bowtie2 --sensitive -p ${task.cpus} --no-unal -x ${ref_name} ${reads} -t 2> tempo.txt | samtools sort -o ${fastq_name}_vs_${ref_name}.bam - 2> samtools_sort.txt
     # --fast: no soft clipping allowed and very sensitive seed alignment
     # -t time displayed
+    # --no-unal: the reads that align nowhere (most of them) are left out of the bam, which ToolDepth reads for the aligned reads only
     # sam piped directly into samtools sort, so that no large intermediate .sam or unsorted .bam file is written in the work folder
     cat tempo.txt
     cat tempo.txt >> bowtie2_report.txt
