@@ -8,6 +8,117 @@
 // the 2-micron plasmid, whose sequence is added to the reference genome, for
 // its status (cir+, cir0) and copy number, and the reads that place the tool
 // elements in the genome (ToolPosition).
+// The reads are aligned in slices, by MarkerAlignSlice tasks that run in
+// parallel, and MarkerAlign merges them. A read is aligned the same way in a
+// slice as among all the reads: bowtie2 seeds its pseudo-random choices for
+// each read with the read itself.
+
+// bowtie2 indexes of the reference genome, with the 2-micron plasmid, and of
+// the tool elements.
+process MarkerIndex {
+    label 'bowtie2' // see the withLabel: bowtie2 in the nextflow config file
+    cache 'true'
+
+    input:
+    path reference
+    path two_micron_fasta // two_micron.fasta of the database, or NO_2MICRON
+    path tools_fasta // tools.fasta of the database, for the positions of the tool elements
+
+    output:
+    path "genome_ref.*", emit: genome_index_ch
+    path "tools_ref.*", emit: tools_index_ch
+    path "*_index_report.txt", emit: marker_index_log_ch
+
+    script:
+    """
+    touch genome_index_report.txt
+    # The 2-micron plasmid is not part of the reference genome: its sequence is
+    # added to the genome the reads are aligned to, so that its reads land on it.
+    if [[ "${two_micron_fasta}" != "NO_2MICRON" ]]; then
+        if [[ "${reference}" == *.gz ]]; then zcat ${reference}; else cat ${reference}; fi | awk 1 > genome.fasta
+        awk 1 ${two_micron_fasta} >> genome.fasta
+        bowtie2-build --threads ${task.cpus} genome.fasta genome_ref > /dev/null 2>> genome_index_report.txt
+        rm genome.fasta
+    else
+        bowtie2-build --threads ${task.cpus} ${reference} genome_ref > /dev/null 2>> genome_index_report.txt
+    fi
+    bowtie2-build --threads ${task.cpus} ${tools_fasta} tools_ref > /dev/null 2> tools_index_report.txt
+    """
+}
+
+// The slices of the reads for MarkerAlignSlice: one per slice_bytes bytes of
+// FASTQ (at least one), each with the same number of reads. bowtie2 reads the
+// files one after the other, as a single run of reads, and a slice is given by
+// the number of reads skipped and the number aligned.
+process ReadSlices {
+    label 'bash' // see the withLabel: bash in the nextflow config file
+    cache 'true'
+
+    input:
+    path fastq
+    val slice_bytes
+
+    output:
+    path "read_slices.txt", emit: read_slices_ch
+
+    script:
+    def files = (fastq instanceof List) ? fastq : [fastq]
+    """
+    set -o pipefail
+    for f in ${files.join(' ')} ; do
+        if [[ "\$f" == *.gz ]] ; then gzip -dc "\$f" ; else cat "\$f" ; fi | wc -lc
+    done | awk -v slice_bytes=${slice_bytes} '
+        { reads += int((\$1 + 3) / 4) ; bytes += \$2 }
+        END {
+            slices = int(bytes / slice_bytes + 0.5)
+            if (slices < 1) slices = 1
+            size = int((reads + slices - 1) / slices)
+            # slice number, reads skipped, reads aligned (0: all the rest, for the last slice)
+            for (i = 0 ; i < slices ; i++) print i, i * size, (i < slices - 1 ? size : 0)
+        }' > read_slices.txt
+    """
+}
+
+// The genome alignment of a slice of the reads, and the reads of the slice
+// that align on the tool elements.
+process MarkerAlignSlice {
+    label 'bowtie2' // see the withLabel: bowtie2 in the nextflow config file
+    cache 'true'
+
+    input:
+    tuple val(slice), val(skip), val(count) // a line of ReadSlices
+    path fastq
+    path genome_index
+    path tools_index
+
+    output:
+    path "genome_*.bam", emit: slice_bam_ch
+    path "tool_reads_*.tsv", emit: slice_tool_reads_ch
+    path "*_align_*.txt", emit: slice_log_ch
+
+    script:
+    // Every fastq file, joined for -U: pairing is not needed here, and the
+    // second mate is free depth. Mates keep the same read name, which is how
+    // ToolPosition finds the mate of a read of a tool element.
+    def files = (fastq instanceof List) ? fastq : [fastq]
+    def reads = files.join(',')
+    def range = "--skip ${skip}" + (count.toLong() > 0 ? " --upto ${count}" : "") // --upto 0 would align no read
+    def name = String.format('%05d', slice.toInteger()) // the order of the slices for MarkerAlign
+    """
+    set -o pipefail # a bowtie2 failure in the pipes below must stop the process
+    # Local mode on purpose: reads crossing a junction with foreign sequence (a
+    # Ty1, a cassette) are soft-clipped at the junction instead of being dropped,
+    # and those clips are the evidence for an insertion.
+    bowtie2 --sensitive-local -p ${task.cpus} -x genome_ref -U ${reads} ${range} 2> genome_align_${name}.txt \\
+        | samtools sort -@ ${task.cpus} -m 128M -o genome_${name}.bam - # 128 MB at most per thread
+    # The reads of the tool elements, aligned end to end on tools.fasta (see MarkerAlign).
+    bowtie2 --sensitive -p ${task.cpus} --no-unal --no-hd -x tools_ref -U ${reads} ${range} 2> tools_align_${name}.txt \\
+        | awk -F '\\t' -v OFS='\\t' '{print \$1, \$2, \$3, \$4, \$6, \$10}' > tool_reads_${name}.tsv
+    """
+}
+
+// The slices merged, then what the markers, the mtDNA, the 2-micron plasmid and
+// the positions of the tool elements need from the genome alignment.
 process MarkerAlign {
     label 'bowtie2' // see the withLabel: bowtie2 in the nextflow config file
     cache 'true'
@@ -15,6 +126,11 @@ process MarkerAlign {
     input:
     val sample_name
     path fastq
+    path slice_bams
+    path slice_tool_reads
+    path slice_logs
+    path index_logs
+    path genome_index
     path reference
     path loci_bed
     path mito_genes // mito_genes.tsv of the database, or NO_MITO
@@ -29,42 +145,55 @@ process MarkerAlign {
     path "marker_align_report.txt", emit: marker_align_log_ch
 
     script:
-    // Every fastq file, joined for -U: pairing is not needed here, and the
-    // second mate is free depth. Mates keep the same read name, which is how
-    // ToolPosition finds the mate of a read of a tool element.
     def files = (fastq instanceof List) ? fastq : [fastq]
-    def reads = files.join(',')
     def layout = (files.any{ it.name.startsWith('R1__') } ? 'paired' : 'single') +
         (files.any{ it.name.startsWith('S__') } ? ' pieces' : '') // S__: pieces of long sequences
+    def bams = ((slice_bams instanceof List) ? slice_bams : [slice_bams]).sort{ it.name }
+    def tool_reads = ((slice_tool_reads instanceof List) ? slice_tool_reads : [slice_tool_reads]).sort{ it.name }
     """
+    set -o pipefail # a failure in the pipes below must stop the process
+    # The alignment summaries of the slices added up, as bowtie2 writes it for
+    # unpaired reads, after the warnings.
+    summary() {
+        awk '
+            function percent(part, all) { return all ? 100 * part / all : 0 }
+            / reads; of these:\$/ { total += \$1 ; next }
+            / were unpaired; of these:\$/ { unpaired += \$1 ; next }
+            / aligned 0 times\$/ { none += \$1 ; next }
+            / aligned exactly 1 time\$/ { once += \$1 ; next }
+            / aligned >1 times\$/ { more += \$1 ; next }
+            /^0 reads\$/ || / overall alignment rate\$/ { next }
+            { print }
+            END {
+                printf "%.0f reads; of these:\\n", total
+                printf "  %.0f (%.2f%%) were unpaired; of these:\\n", unpaired, percent(unpaired, total)
+                printf "    %.0f (%.2f%%) aligned 0 times\\n", none, percent(none, unpaired)
+                printf "    %.0f (%.2f%%) aligned exactly 1 time\\n", once, percent(once, unpaired)
+                printf "    %.0f (%.2f%%) aligned >1 times\\n", more, percent(more, unpaired)
+                printf "%.2f%% overall alignment rate\\n", percent(once + more, total)
+            }' "\$@"
+    }
     echo -e "\\n\\n<br /><br />\\n\\n### NATIVE MARKER ALIGNMENT for ${sample_name}\\n\\n" > marker_align_report.txt
-    # The 2-micron plasmid is not part of the reference genome: its sequence is
-    # added to the genome the reads are aligned to, so that its reads land on it.
+    cat genome_index_report.txt >> marker_align_report.txt
+    summary genome_align_*.txt >> marker_align_report.txt
     two_micron_chrom=""
     if [[ "${two_micron_fasta}" != "NO_2MICRON" ]]; then
         two_micron_chrom=\$(awk 'NR == 1 {print substr(\$1, 2)}' ${two_micron_fasta})
-        if [[ "${reference}" == *.gz ]]; then zcat ${reference}; else cat ${reference}; fi | awk 1 > genome_ref.fasta
-        awk 1 ${two_micron_fasta} >> genome_ref.fasta
-        bowtie2-build --threads ${task.cpus} genome_ref.fasta genome_ref > /dev/null 2>> marker_align_report.txt
-        rm genome_ref.fasta
-    else
-        bowtie2-build --threads ${task.cpus} ${reference} genome_ref > /dev/null 2>> marker_align_report.txt
     fi
-
-    # Local mode on purpose: reads crossing a junction with foreign sequence (a
-    # Ty1, a cassette) are soft-clipped at the junction instead of being dropped,
-    # and those clips are the evidence for an insertion.
-    bowtie2 --sensitive-local -p ${task.cpus} -x genome_ref -U ${reads} 2>> marker_align_report.txt \\
-        | samtools sort -@ ${task.cpus} -o genome.bam -
-    samtools index genome.bam
-    samtools view -b -L ${loci_bed} genome.bam > markers.bam
+    if [[ ${bams.size()} -gt 1 ]]; then
+        samtools merge -@ ${task.cpus} genome.bam ${bams.join(' ')}
+    else
+        ln -s ${bams[0]} genome.bam
+    fi
+    samtools index -@ ${task.cpus} genome.bam
+    samtools view -@ ${task.cpus} -b -L ${loci_bed} genome.bam > markers.bam
     samtools index markers.bam
 
     # mtDNA: reads per chromosome of the reference genome (nuclear depth), the
     # depth of every base of the mitochondrial chromosome, all mapping
     # qualities, and the mean read length.
     samtools idxstats genome.bam | awk -F '\\t' -v plasmid="\${two_micron_chrom}" '\$1 != plasmid' > genome.idxstats
-    samtools stats genome.bam | awk -F '\\t' '\$1 == "SN" && \$2 == "average length:" {print \$3}' > read_length.txt
+    samtools stats -@ ${task.cpus} genome.bam | awk -F '\\t' '\$1 == "SN" && \$2 == "average length:" {print \$3}' > read_length.txt
     if [[ "${mito_genes}" != "NO_MITO" ]]; then
         mito_chrom=\$(awk -F '\\t' 'NR == 2 {print \$4}' ${mito_genes})
         samtools depth -a -Q 0 -r "\${mito_chrom}" genome.bam > mito.depth
@@ -82,16 +211,17 @@ process MarkerAlign {
 
     # Tool elements, for their positions in the genome (locate_tools.py, in
     # ToolPosition). (1) The reads of the elements, aligned end to end on
-    # tools.fasta. (2) In the genome alignment, with a mapping quality of 20 or
-    # more: the reads soft-clipped by 15 bases or more (chromosome, junction,
-    # side, aligned part, clipped bases, name), the clipped bases being looked up in
-    # the elements afterwards, and the reads named like a read of an element
-    # (its mate). (3) Pieces of 50 bases of the elements, one every 10 bases,
-    # aligned to the genome: where the reference itself carries an element.
-    bowtie2-build --threads ${task.cpus} ${tools_fasta} tools_ref > /dev/null 2>> marker_align_report.txt
-    bowtie2 --sensitive -p ${task.cpus} --no-unal --no-hd -x tools_ref -U ${reads} 2>> marker_align_report.txt \\
-        | awk -F '\\t' -v OFS='\\t' '{print \$1, \$2, \$3, \$4, \$6, \$10}' > tool_reads.tsv
-    samtools view -F 0x904 -q 20 genome.bam | awk -F '\\t' -v OFS='\\t' -v names=tool_reads.tsv -v min_clip=15 '
+    # tools.fasta (MarkerAlignSlice). (2) In the genome alignment, with a
+    # mapping quality of 20 or more: the reads soft-clipped by 15 bases or more
+    # (chromosome, junction, side, aligned part, clipped bases, name), the clipped
+    # bases being looked up in the elements afterwards, and the reads named like
+    # a read of an element (its mate). (3) Pieces of 50 bases of the elements,
+    # one every 10 bases, aligned to the genome: where the reference itself
+    # carries an element.
+    cat tools_index_report.txt >> marker_align_report.txt
+    summary tools_align_*.txt >> marker_align_report.txt
+    cat ${tool_reads.join(' ')} > tool_reads.tsv
+    samtools view -@ ${task.cpus} -F 0x904 -q 20 genome.bam | awk -F '\\t' -v OFS='\\t' -v names=tool_reads.tsv -v min_clip=15 '
         BEGIN {
             while ((getline line < names) > 0) { split(line, f, "\\t"); n = f[1]; sub(/\\/[12]\$/, "", n); keep[n] = 1 }
             close(names)
